@@ -135,6 +135,38 @@ body::before {
 
 /* ── LAYOUT ── */
 .wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px; position: relative; z-index: 1; }
+
+/* ══ DOCK FLOTANTE: GUARDAR TODO / ELIMINAR FICHA ══
+   Fijo respecto a la ventana (no al scroll de la página), siempre pegado justo debajo
+   del topbar. En reposo solo asoma una pequeña pestaña; al tocarla se despliega por
+   completo mostrando ambos botones, sin importar en qué parte de la pantalla esté el usuario. */
+.dock-guardar-todo {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  width: min(860px, calc(100% - 32px));
+  z-index: 150;
+  display: flex; justify-content: center;
+  pointer-events: none;
+}
+.dock-guardar-todo-panel {
+  pointer-events: auto;
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-top: none;
+  border-radius: 0 0 14px 14px;
+  box-shadow: 0 10px 28px var(--accent-dim);
+  overflow: hidden;
+  max-height: 30px;
+  transition: max-height 0.28s ease;
+  cursor: pointer;
+}
+.dock-guardar-todo-panel.expanded { max-height: 220px; cursor: default; }
+.dock-guardar-todo-grip {
+  height: 30px; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  color: var(--accent-bright); background: var(--accent-dim);
+}
+.dock-guardar-todo-body { display: flex; gap: 10px; padding: 12px 14px; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 .col-2  { grid-column: span 2; }
@@ -312,7 +344,6 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
   white-space: pre-line; background: rgba(148,163,184,0.06);
 }
 .ultima-accion-guardada b { color: var(--text); }
-#btnGuardarAccion:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── BARRAS DE PROGRESO ── */
 .bar-row   { margin-bottom: 12px; }
@@ -624,6 +655,18 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
       <span id="themeLabel">Claro</span>
     </button>
     <button class="icon-btn" id="btnNuevo" onclick="crearNuevaFicha()">✚ Nueva ficha</button>
+  </div>
+</div>
+
+<!-- ══ DOCK GUARDAR TODO / ELIMINAR FICHA ══ -->
+<div class="dock-guardar-todo" id="dockGuardarTodo">
+  <div class="dock-guardar-todo-panel" id="panelGuardarTodo" onclick="toggleDockGuardarTodo()">
+    <div class="dock-guardar-todo-grip">⋯ Acciones de la ficha ⋯</div>
+    <div class="dock-guardar-todo-body" onclick="event.stopPropagation()">
+      <button class="btn-primary" id="btnGuardarTodo" onclick="guardarTodo()" style="flex:3">💾 Guardar todo</button>
+      <button class="btn-sm danger" id="btnEliminarFicha" onclick="eliminarContactoActual()" style="flex:1; white-space:nowrap">🗑️ Eliminar ficha</button>
+    </div>
+    <div id="msgGuardarTodo" style="display:none;margin:0 14px 12px;font-size:12px;text-align:center"></div>
   </div>
 </div>
 
@@ -948,7 +991,7 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
       </div>
     </div>
     <div id="estadoAccionInfo" style="font-size:11.5px; margin-top:9px; display:none"></div>
-    <button class="btn-sm" id="btnGuardarAccion" style="margin-top:10px; width:100%" onclick="guardarAccionSeguirSheets()" disabled>💾 Guardar</button>
+    <button class="btn-sm" id="btnCrearSiguienteAccion" style="margin-top:10px; width:100%" onclick="crearSiguienteAccionManual()">🆕 Crear siguiente acción recomendada</button>
   </div>
 
   <!-- ══ DATOS DEL CLIENTE ══ -->
@@ -1128,13 +1171,6 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
       </select>
     </div>
 
-    <!-- BOTÓN GUARDAR CLIENTE EN SHEETS -->
-    <div style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <button class="btn-primary full" id="btnGuardarCliente" onclick="guardarClienteSheets()">
-        ☁️ Guardar cliente en Google Sheets
-      </button>
-    </div>
-    <div id="msgGuardarCliente" style="display:none;margin-top:8px;font-size:12px;text-align:center"></div>
   </div>
 
   <!-- ══ INFORMACIÓN ADICIONAL ══ -->
@@ -1299,7 +1335,7 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
         <button class="btn-sm" onclick="generarMensajeWAPrimeraVisita()">🔄 Regenerar</button>
       </div>
     </div>
-    <button class="btn-primary full" id="btnGuardarPrimeraVisita">💾 Guardar como gestión</button>
+    <button class="btn-primary full" id="btnGuardarPrimeraVisita">💾 Generar gestión</button>
 
   </div>
 
@@ -1339,7 +1375,7 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
       </div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap">
-      <button class="btn-primary full" id="btnGuardar" style="flex:2">💾 Guardar gestión</button>
+      <button class="btn-primary full" id="btnGuardar" style="flex:2">💾 Generar gestión</button>
       <button class="btn-ghost" id="btnWhatsApp" style="flex:1">💬 Mensaje IA</button>
     </div>
   </div>
@@ -1433,6 +1469,8 @@ function confirmarNuevaFicha() {
     localStorage.removeItem('crm_gestiones');
     localStorage.removeItem('crm_accion_seguir');
     localStorage.removeItem('crm_postventa_step');
+    localStorage.removeItem('crm_accion_manual_counter');
+    if (typeof accionManualCounter !== 'undefined') accionManualCounter = 0;
     if (typeof postventaStep !== 'undefined') postventaStep = 0;
     if (typeof accionSeguir !== 'undefined') { accionSeguir.texto=''; accionSeguir.estado=null; accionSeguir.fecha=''; accionSeguir.motivo=''; accionSeguir.hora=''; }
     const ultimaAccionBox = document.getElementById('ultimaAccionGuardada');
@@ -1502,10 +1540,31 @@ function toggleTheme() {
   document.getElementById('themeLabel').textContent = next === 'dark' ? 'Claro' : 'Oscuro';
 }
 
+/* ─── DOCK FLOTANTE: GUARDAR TODO / ELIMINAR FICHA ─── */
+function posicionarDockGuardarTodo() {
+  const topbar = document.querySelector('.topbar');
+  const dock = document.getElementById('dockGuardarTodo');
+  if (topbar && dock) dock.style.top = topbar.offsetHeight + 'px';
+}
+window.addEventListener('resize', posicionarDockGuardarTodo);
+posicionarDockGuardarTodo();
+
+function toggleDockGuardarTodo() {
+  const panel = document.getElementById('panelGuardarTodo');
+  if (panel) panel.classList.toggle('expanded');
+}
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('panelGuardarTodo');
+  if (panel && panel.classList.contains('expanded') && !panel.contains(e.target)) {
+    panel.classList.remove('expanded');
+  }
+});
+
 /* ─── STATE ─── */
 let gestiones   = JSON.parse(localStorage.getItem('crm_gestiones') || '[]');
 let clienteData = JSON.parse(localStorage.getItem('crm_cliente')   || '{}');
 let accionSeguir = JSON.parse(localStorage.getItem('crm_accion_seguir') || 'null') || { texto:'', estado:null, fecha:'', motivo:'' };
+let accionManualCounter = parseInt(localStorage.getItem('crm_accion_manual_counter') || '0', 10);
 let postventaStep = parseInt(localStorage.getItem('crm_postventa_step') || '0', 10) || 0;
 let accionPlazoActual = '';
 
@@ -1682,7 +1741,10 @@ function fechaCompletaEs(d) {
 }
 
 /* ─── SIGUIENTE PASO / ACCIÓN A SEGUIR ─── */
-function actualizarPasoSiguiente() {
+
+/* Cálculo base, instantáneo y sin IA (reglas de negocio). Sirve como respuesta inmediata
+   ante cualquier cambio de campo y como respaldo si la llamada a IA fallara. */
+function calcularAccionBase() {
   const estado = document.getElementById('estadoOperacion').value;
   const prueba = document.getElementById('pruebaManejo').value;
   const tipoOp = document.getElementById('tipoOperacion').value;
@@ -1699,19 +1761,83 @@ function actualizarPasoSiguiente() {
   else if (!tipoOp)              { texto = `Presentar a ${nombre} las opciones de financiamiento y pago de contado. Preparar cotización formal.`; plazo = 'en los próximos 2-3 días'; }
   else                           { texto = `Dar seguimiento a la decisión de ${nombre}. Resolver objeciones pendientes y proponer fecha de cierre.`; plazo = 'en las próximas 48-72 horas'; }
 
-  accionPlazoActual = plazo;
   texto += ` Recomendado: hacerlo ${plazo}.`;
+  return { texto, plazo };
+}
+
+/* Aplica un texto de acción recomendada (base o generado por IA) a la interfaz y al estado. */
+function aplicarAccionRecomendada(texto, plazo) {
+  accionPlazoActual = plazo;
 
   document.getElementById('nextStepFecha').textContent = `📅 Fecha de gestión: ${fechaCompletaEs()}`;
   document.getElementById('nextStepText').textContent = texto;
 
-  // Si la acción recomendada cambió (por nuevos datos, gestiones, o avance de postventa), es una acción NUEVA:
-  // se reinicia el estado para que el usuario vuelva a decidir manualmente.
+  // Si la acción recomendada cambió (por nuevos datos, gestiones, análisis, resúmenes o avance de
+  // postventa), es una acción NUEVA: se reinicia el estado para que el usuario vuelva a decidir manualmente.
   if (accionSeguir.texto !== texto) {
     accionSeguir = { texto, estado: null, fecha: '', motivo: '' };
     localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
   }
   renderEstadoAccion();
+}
+
+/* Recalculo rápido (sin IA), usado ante cualquier cambio de campo y en la carga inicial,
+   para que la interfaz nunca se quede esperando una respuesta de red. */
+function actualizarPasoSiguiente() {
+  const base = calcularAccionBase();
+  aplicarAccionRecomendada(base.texto, base.plazo);
+}
+
+/* Recalculo coordinado con IA: sincroniza la acción recomendada con TODA la información ya
+   generada por el resto del "equipo" — datos del cliente, análisis inteligente, resúmenes y
+   gestiones — en vez de limitarse a no contradecirla. Se dispara en los momentos clave en que
+   esa otra información cambia (nueva gestión, nuevo análisis, nuevo resumen, guardado general),
+   no en cada tecla, para no saturar de llamadas a la IA. */
+let _generandoAccionIA = false;
+async function generarAccionRecomendadaIA() {
+  if (_generandoAccionIA) return;
+  const nombre = document.getElementById('nombre').value.trim();
+  const base = calcularAccionBase();
+
+  // Sin datos mínimos del cliente no tiene caso llamar a la IA: nos quedamos con la base.
+  if (!nombre) { aplicarAccionRecomendada(base.texto, base.plazo); return; }
+
+  const analisisEl = document.getElementById('resumenAnalisis');
+  const analisisTxt = analisisEl ? analisisEl.innerText.trim() : '';
+  const analisisPrevio = analisisTxt && !analisisTxt.startsWith('Registra una gestión') ? analisisTxt.slice(0, 3000) : '';
+
+  let resumenPrevio = '';
+  try {
+    const guardado = JSON.parse(localStorage.getItem('nexus_ultimo_resumen') || 'null');
+    if (guardado && guardado.texto) resumenPrevio = String(guardado.texto).slice(0, 2000);
+  } catch(e) {}
+
+  _generandoAccionIA = true;
+  const prevTexto = document.getElementById('nextStepText').textContent;
+  document.getElementById('nextStepText').textContent = '⏳ Coordinando la siguiente acción con el resto del expediente…';
+
+  const prompt = `Eres el gerente de ventas que coordina a un equipo: el Análisis Inteligente ya diagnosticó al cliente, el Resumen ya sintetizó el expediente y las Gestiones ya documentaron cada contacto. Tu única función es decidir, con visión de conjunto, cuál es EL SIGUIENTE PASO concreto que el vendedor debe dar ahora — sin repetir el trabajo de los demás, sin contradecirlo, dándole continuidad natural y coherente a la estrategia ya iniciada, con empatía profesional hacia el cliente.
+
+Expediente y gestiones:
+${buildContexto()}
+${analisisPrevio ? `\nDiagnóstico ya generado por el Análisis Inteligente:\n${analisisPrevio}\n` : ''}${resumenPrevio ? `\nÚltimo resumen guardado del expediente:\n${resumenPrevio}\n` : ''}
+Recomendación base calculada por reglas (referencia, puedes ajustarla, mejorarla o reemplazarla si el resto de la información sugiere algo distinto): "${base.texto}"
+
+Responde ÚNICAMENTE con la recomendación final en 1-2 frases, en español, tono profesional y empático. Sé específico y accionable, menciona al cliente por su nombre (${nombre}), y termina indicando el plazo recomendado para hacerlo. No agregues encabezados, comillas ni explicaciones adicionales.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const texto = (data.content?.map(b => b.text || '').join('') || '').trim();
+    aplicarAccionRecomendada(texto || base.texto, base.plazo);
+  } catch(e) {
+    document.getElementById('nextStepText').textContent = prevTexto;
+    aplicarAccionRecomendada(base.texto, base.plazo);
+  }
+  _generandoAccionIA = false;
 }
 
 /* Formatea una fecha ISO (yyyy-mm-dd) [+ hora opcional HH:MM] a texto legible es-MX */
@@ -1764,7 +1890,6 @@ function renderEstadoAccion() {
   const bloqueMotivo = document.getElementById('bloqueMotivoNoRealizado');
   const inputMotivo = document.getElementById('motivoNoRealizado');
   const info = document.getElementById('estadoAccionInfo');
-  const btnGuardar = document.getElementById('btnGuardarAccion');
 
   btnR.classList.toggle('success', accionSeguir.estado === 'realizado');
   btnN.classList.toggle('danger',  accionSeguir.estado === 'no_realizado');
@@ -1778,50 +1903,39 @@ function renderEstadoAccion() {
   }
   if (accionSeguir.estado === 'no_realizado') inputMotivo.value = accionSeguir.motivo || '';
 
-  // El botón GUARDAR permanece siempre visible; solo se habilita cuando el registro es válido.
-  btnGuardar.textContent = '💾 Guardar';
-  btnGuardar.disabled = true;
-
+  // El estado (Realizado/No realizado/Posponer) queda registrado localmente de inmediato;
+  // se refleja en la base de datos junto con todo lo demás al presionar "Guardar todo".
   if (!accionSeguir.estado) {
-    info.style.display = 'none';
+    info.style.display = 'block';
+    info.style.color = 'var(--muted)';
+    info.textContent = '🕓 Pendiente. Puedes marcarla como Realizado / No realizado / Posponer y luego presionar "Guardar todo".';
   } else if (accionSeguir.estado === 'realizado') {
     info.style.display = 'block';
     info.style.color = 'var(--green)';
-    info.textContent = '✅ Marcada como realizada. Presiona Guardar para reflejarlo en el expediente.';
-    btnGuardar.disabled = false;
+    info.textContent = '✅ Marcada como realizada. Presiona "Guardar todo" para reflejarlo en el expediente.';
   } else if (accionSeguir.estado === 'no_realizado') {
     info.style.display = 'block';
     info.style.color = 'var(--red)';
     if (accionSeguir.motivo && accionSeguir.motivo.trim()) {
-      info.textContent = '✗ Marcada como no realizada. Presiona Guardar para reflejarlo en el expediente.';
-      btnGuardar.disabled = false;
+      info.textContent = '✗ Marcada como no realizada. Presiona "Guardar todo" para reflejarlo en el expediente.';
     } else {
-      info.textContent = '✗ Escribe el motivo por el que no se realizó para poder guardar.';
+      info.textContent = '✗ Escribe el motivo por el que no se realizó antes de guardar todo.';
     }
   } else { // posponer
     info.style.display = 'block';
     if (accionSeguir.fecha) {
       info.style.color = 'var(--orange)';
       info.textContent = `⏸ Pospuesta — próximo seguimiento: ${formatearFechaCorta(accionSeguir.fecha, accionSeguir.hora)}`;
-      btnGuardar.disabled = false;
     } else {
       info.style.color = 'var(--orange)';
-      info.textContent = '⏸ Selecciona la fecha del próximo seguimiento para poder guardar.';
+      info.textContent = '⏸ Selecciona la fecha del próximo seguimiento antes de guardar todo.';
     }
   }
 }
 
-async function guardarAccionSeguirSheets() {
-  const nombre = document.getElementById('nombre').value.trim();
-  if (!nombre) { mostrarToast('⚠️ Ingresa el nombre del cliente'); return; }
-  if (!accionSeguir.estado) { mostrarToast('⚠️ Selecciona Realizado, No realizado o Posponer primero'); return; }
-  if (accionSeguir.estado === 'posponer' && !accionSeguir.fecha) { mostrarToast('⚠️ Selecciona la fecha del próximo seguimiento'); return; }
-  if (accionSeguir.estado === 'no_realizado' && !(accionSeguir.motivo || '').trim()) { mostrarToast('⚠️ Escribe el motivo por el que no se realizó'); return; }
-  if (!getSheetsUrl()) { mostrarToast('⚠️ Configura la URL de Sheets en ⚙️ Config'); toggleConfigModal(); return; }
-
-  const btn = document.getElementById('btnGuardarAccion');
-  btn.disabled = true; btn.textContent = '⏳ Guardando…';
-
+/* Guarda solo la parte de "acción a seguir" en Sheets y avanza el flujo de postventa si aplica.
+   Ya no tiene botón propio: es invocada internamente por guardarTodo(). */
+async function guardarAccionSeguirInterno(nombre) {
   const estadoOperacionActual = document.getElementById('estadoOperacion').value;
   const fechaGestionHoy = new Date().toISOString().slice(0,10);
 
@@ -1829,7 +1943,7 @@ async function guardarAccionSeguirSheets() {
     ? postventaStep + 1
     : postventaStep;
 
-  await enviarASheets({
+  const result = await enviarASheets({
     tipo: 'accion_seguir',
     nombreCliente: nombre,
     fechaGestion: fechaGestionHoy,
@@ -1860,11 +1974,41 @@ async function guardarAccionSeguirSheets() {
   postventaStep = nuevoPostventaStep;
   localStorage.setItem('crm_postventa_step', String(postventaStep));
 
-  btn.disabled = false; btn.textContent = '💾 Guardar';
-  mostrarToast('☁️ Acción a seguir guardada en Sheets');
+  return result;
+}
 
-  // Recalcular la recomendación (puede haber avanzado de paso de postventa)
-  actualizarPasoSiguiente();
+/* Frases genéricas de seguimiento, usadas cuando el usuario pide manualmente una nueva acción
+   recomendada (ej. después de marcar "Realizado") y los datos del cliente no cambiaron lo
+   suficiente como para que el sistema calcule automáticamente un paso distinto. */
+const SEGUIMIENTOS_MANUALES = [
+  (nombre) => `Dar un nuevo seguimiento a ${nombre} para reforzar el interés y resolver cualquier duda pendiente.`,
+  (nombre) => `Contactar nuevamente a ${nombre} para confirmar los siguientes pasos y mantener el impulso de la venta.`,
+  (nombre) => `Hacer un nuevo acercamiento con ${nombre}, aportando información de valor (disponibilidad, promociones, testimonios).`,
+  (nombre) => `Reforzar el vínculo con ${nombre} y evaluar si conviene una llamada del gerente de ventas para destrabar la decisión.`,
+  (nombre) => `Retomar contacto con ${nombre} para revisar si surgieron nuevas objeciones y ajustar la estrategia de cierre.`
+];
+
+/* El usuario indica manualmente que quiere una acción NUEVA (por ejemplo, después de marcar
+   Realizado, cuando el sistema no generó automáticamente un paso distinto). Genera una nueva
+   acción recomendada, reinicia su estado a "pendiente" y dejarla lista para guardar/gestionar. */
+function crearSiguienteAccionManual() {
+  const nombre = document.getElementById('nombre').value.trim() || 'el cliente';
+
+  accionManualCounter = (accionManualCounter || 0) + 1;
+  localStorage.setItem('crm_accion_manual_counter', String(accionManualCounter));
+
+  const genFn = SEGUIMIENTOS_MANUALES[(accionManualCounter - 1) % SEGUIMIENTOS_MANUALES.length];
+  const plazo = 'en las próximas 24-48 horas';
+  const texto = genFn(nombre) + ` Recomendado: hacerlo ${plazo}.`;
+
+  accionPlazoActual = plazo;
+  document.getElementById('nextStepFecha').textContent = `📅 Fecha de gestión: ${fechaCompletaEs()}`;
+  document.getElementById('nextStepText').textContent = texto;
+
+  accionSeguir = { texto, estado: null, fecha: '', motivo: '', hora: '' };
+  localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
+  renderEstadoAccion();
+  mostrarToast('🆕 Nueva acción recomendada generada. Presiona Guardar para registrarla.');
 }
 
 /* Muestra en la tarjeta el último registro de gestión guardado (fecha, acción, plazo, estado, motivo/fecha) */
@@ -2042,6 +2186,8 @@ function guardarGestion(tipo, calidad, comentarios, origenMsg) {
   localStorage.setItem('crm_gestiones', JSON.stringify(gestiones));
   renderHistorial(); recalcScore(); actualizarPasoSiguiente();
   mostrarToast(origenMsg || '✓ Gestión guardada correctamente');
+  // Sincroniza la acción recomendada con la nueva gestión recién registrada.
+  generarAccionRecomendadaIA();
   return true;
 }
 
@@ -2179,6 +2325,8 @@ Sé específico, profesional y bien desarrollado en cada sección — tienes esp
     });
     const data = await res.json();
     out.innerHTML = formatMD(data.content?.map(b => b.text||'').join('')||'Sin respuesta.');
+    // Con un análisis nuevo disponible, la acción recomendada se recalcula en coordinación con él.
+    generarAccionRecomendadaIA();
   } catch(e) {
     out.innerHTML = '<span style="color:var(--red)">Error al conectar con IA. Verifica tu conexión.</span>';
   }
@@ -2499,6 +2647,29 @@ function confirmarAccion(tipo, titulo, msg, callback) {
 function closeConfirm() { document.getElementById('confirmModal').classList.remove('open'); _confirmCallback = null; }
 function closeConfirmOutside(e) { if (e.target === document.getElementById('confirmModal')) closeConfirm(); }
 function executeConfirm() { if (_confirmCallback) _confirmCallback(); closeConfirm(); }
+/* Elimina por completo al contacto actual: lo borra de Google Sheets (fila en "Clientes" y
+   todas sus gestiones) y libera el espacio en pantalla para capturar un nuevo cliente. */
+function eliminarContactoActual() {
+  const nombre = document.getElementById('nombre').value.trim();
+  if (!nombre) { mostrarToast('⚠️ No hay un cliente cargado para eliminar'); return; }
+  confirmarAccion(
+    'eliminar_cliente',
+    '¿Eliminar este contacto?',
+    `Se eliminará permanentemente a "${nombre}" de la base de datos (Google Sheets), junto con todo su historial de gestiones. Este espacio quedará libre para un nuevo cliente. Esta acción no se puede deshacer.`,
+    () => ejecutarEliminarContacto(nombre)
+  );
+}
+
+async function ejecutarEliminarContacto(nombre) {
+  if (getSheetsUrl()) {
+    mostrarToast('⏳ Eliminando contacto de Sheets…');
+    await enviarASheets({ tipo: 'eliminar_cliente', nombreCliente: nombre });
+  }
+  // Limpia todo el formulario y el estado local para dejar la ficha lista para un nuevo cliente
+  confirmarNuevaFicha();
+  mostrarToast('🗑️ Contacto eliminado de la base de datos');
+}
+
 function eliminarTodasApiKeys() {
   ['claude','openai','gemini','grok'].forEach(p => {
     localStorage.removeItem('nexus_apikey_' + p);
@@ -2706,24 +2877,62 @@ async function syncGestionSheets(gestion) {
   if (!getSheetsUrl()) return;
   await enviarASheets({ tipo:'gestion', nombreCliente:document.getElementById('nombre').value.trim()||'Sin nombre', ...gestion });
 }
-async function guardarClienteSheets() {
-  const btn = document.getElementById('btnGuardarCliente');
-  const msg = document.getElementById('msgGuardarCliente');
-  const nombre = document.getElementById('nombre').value.trim();
-  if (!nombre) { mostrarToast('⚠️ Ingresa el nombre del cliente'); return; }
-  if (!getSheetsUrl()) { mostrarToast('⚠️ Configura la URL de Sheets en ⚙️ Config'); toggleConfigModal(); return; }
-  btn.disabled = true; btn.textContent = '⏳ Guardando…'; if(msg) msg.style.display = 'none';
-  const result = await enviarASheets(buildClientePayload());
-  btn.disabled = false; btn.textContent = '☁️ Guardar cliente en Google Sheets';
-  if (msg) { msg.style.display='block'; msg.innerHTML = result.ok!==false ? '<span style="color:var(--green)">✅ Cliente guardado en Sheets</span>' : '<span style="color:var(--red)">❌ Error. Verifica la URL del Web App.</span>'; }
-  mostrarToast(result.ok!==false ? '☁️ Cliente guardado' : '❌ Error al guardar');
-}
 document.getElementById('btnGuardar').addEventListener('click', async () => {
   if (getSheetsUrl() && gestiones.length > 0) await syncGestionSheets(gestiones[0]);
 }, { capture: false });
 document.getElementById('btnGuardarPrimeraVisita').addEventListener('click', async () => {
   if (getSheetsUrl() && gestiones.length > 0) await syncGestionSheets(gestiones[0]);
 }, { capture: false });
+
+/* ══════════════════════════════════════════════════════
+   ☁️ GUARDAR TODO — botón central único
+   Guarda en una sola operación: datos del contacto (cliente + proceso
+   de venta), la acción a seguir/recomendada y todas las gestiones.
+══════════════════════════════════════════════════════ */
+async function guardarTodo() {
+  const nombre = document.getElementById('nombre').value.trim();
+  if (!nombre) { mostrarToast('⚠️ Ingresa el nombre del cliente'); return; }
+  if (accionSeguir.estado === 'posponer' && !accionSeguir.fecha) { mostrarToast('⚠️ Selecciona la fecha del próximo seguimiento'); return; }
+  if (accionSeguir.estado === 'no_realizado' && !(accionSeguir.motivo || '').trim()) { mostrarToast('⚠️ Escribe el motivo por el que no se realizó'); return; }
+
+  const btn = document.getElementById('btnGuardarTodo');
+  const msg = document.getElementById('msgGuardarTodo');
+  const textoOriginal = btn.textContent;
+  btn.disabled = true; btn.textContent = '⏳ Guardando todo…';
+  if (msg) msg.style.display = 'none';
+
+  if (!getSheetsUrl()) {
+    btn.disabled = false; btn.textContent = textoOriginal;
+    mostrarToast('⚠️ Configura la URL de Sheets en ⚙️ Config para guardar en la nube');
+    toggleConfigModal();
+    return;
+  }
+
+  // 1. Datos del contacto + gestiones (expediente completo)
+  const resultCliente = await enviarASheets({
+    ...buildClientePayload(),
+    tipo: 'sync_completo',
+    gestiones: gestiones.map(g => ({ ...g, nombreCliente: nombre }))
+  });
+
+  // 2. Acción a seguir / recomendada (incluye avance de flujo de postventa)
+  const resultAccion = await guardarAccionSeguirInterno(nombre);
+
+  btn.disabled = false; btn.textContent = textoOriginal;
+
+  const ok = resultCliente.ok !== false && resultAccion.ok !== false;
+  if (msg) {
+    msg.style.display = 'block';
+    msg.innerHTML = ok
+      ? '<span style="color:var(--green)">✅ Todo guardado correctamente</span>'
+      : '<span style="color:var(--red)">❌ Hubo un error al guardar. Verifica la URL del Web App.</span>';
+  }
+  mostrarToast(ok ? '☁️ Todo guardado' : '❌ Error al guardar');
+
+  // Recalcula la acción recomendada (puede haber avanzado el flujo de postventa)
+  // coordinando con el resto de la información ya guardada.
+  generarAccionRecomendadaIA();
+}
 
 /* ══════════════════════════════════════════════════════
    ✨ RESUMEN IA
@@ -2841,7 +3050,7 @@ Responde EXACTAMENTE en este formato JSON (sin markdown, sin explicaciones extra
     document.getElementById('resumenPasos').textContent     = data.pasos     || '';
     document.getElementById('resumenMensajes').textContent  = data.mensajes  || '';
 
-    _resumenTextoCompleto = `📋 RESUMEN DE GESTIONES\n${data.gestiones}\n\n📍 SITUACIÓN ACTUAL\n${data.situacion}\n\n🎯 PRÓXIMOS PASOS\n${data.pasos}\n\n💬 MENSAJES\n${data.mensajes}`;
+    _resumenTextoCompleto = `📋 RESUMEN DE GESTIONES\n${data.gestiones}\n\n?? SITUACIÓN ACTUAL\n${data.situacion}\n\n🎯 PRÓXIMOS PASOS\n${data.pasos}\n\n💬 MENSAJES\n${data.mensajes}`;
 
     document.getElementById('resumenTyping').style.display     = 'none';
     document.getElementById('resumenContenido').style.display  = 'block';
@@ -2906,6 +3115,9 @@ async function guardarResumenComoGestion() {
 
   document.getElementById('resumenGuardadoMsg').style.display = 'inline';
   btn.disabled = false;
+
+  // El resumen recién guardado también forma parte del "equipo" de información: sincroniza la acción recomendada.
+  generarAccionRecomendadaIA();
 }
 
 /* ══════════════════════════════════════════════════════
