@@ -301,6 +301,18 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
 }
 .next-step-text { font-size: 14px; color: var(--text); line-height: 1.6; }
 .next-step-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.next-step-fecha {
+  display: inline-block; font-size: 11.5px; font-weight: 700; color: var(--accent-bright);
+  background: var(--accent-glow); border-radius: var(--radius-pill); padding: 3px 11px;
+  margin-bottom: 9px; letter-spacing: 0.01em;
+}
+.ultima-accion-guardada {
+  border: 1px dashed var(--line); border-radius: var(--radius); padding: 10px 13px;
+  margin-bottom: 12px; font-size: 12px; line-height: 1.55; color: var(--text-dim);
+  white-space: pre-line; background: rgba(148,163,184,0.06);
+}
+.ultima-accion-guardada b { color: var(--text); }
+#btnGuardarAccion:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── BARRAS DE PROGRESO ── */
 .bar-row   { margin-bottom: 12px; }
@@ -344,6 +356,18 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
 }
 .ai-loading { display: flex; align-items: center; gap: 10px; color: var(--muted); }
 .ai-placeholder { color: var(--muted); font-style: italic; }
+
+.btn-mejorar-ia {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--accent-dim); border: 1px solid var(--accent-glow);
+  color: var(--accent-bright); border-radius: var(--radius-pill);
+  padding: 5px 12px; font-size: 11.5px; font-weight: 700;
+  cursor: pointer; font-family: var(--font); margin-top: 6px;
+  transition: all 0.15s;
+}
+.btn-mejorar-ia:hover  { transform: translateY(-1px); filter: brightness(1.08); }
+.btn-mejorar-ia:disabled { opacity: 0.55; cursor: default; transform: none; }
+.campo-ia-row { display: flex; justify-content: flex-end; }
 
 /* ── TOAST ── */
 .toast {
@@ -559,6 +583,25 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
 .typing-dot:nth-child(2) { animation-delay: 0.2s; }
 .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 @keyframes typing { 0%,80%,100% { transform: scale(0.6); opacity:0.4 } 40% { transform: scale(1); opacity:1 } }
+
+/* ══ RESUMEN IA ══ */
+.resumen-section { margin-bottom:20px; }
+.resumen-section-title {
+  font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--accent-bright); margin-bottom:8px; display:flex; align-items:center; gap:8px;
+}
+.resumen-section-title::after { content:''; flex:1; height:1px; background:var(--line); }
+.resumen-body-text {
+  font-size:13px; line-height:1.75; color:var(--text);
+  background:var(--panel-2); border:1px solid var(--line);
+  border-radius:var(--radius-xs); padding:14px; white-space:pre-wrap; min-height:52px;
+}
+.resumen-ultimo {
+  background:var(--accent-dim); border:1px solid var(--accent-glow);
+  border-radius:var(--radius-xs); padding:12px 14px; margin-bottom:16px;
+}
+.resumen-ultimo-label { font-size:11px; color:var(--accent-bright); font-weight:700; margin-bottom:5px; letter-spacing:.05em; text-transform:uppercase; }
+.resumen-ultimo-text { font-size:12px; color:var(--text); line-height:1.6; white-space:pre-wrap; max-height:120px; overflow-y:auto; }
 </style>
 </head>
 <body>
@@ -785,6 +828,79 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
   </div>
 </div>
 
+<!-- ══ MODAL RESUMEN IA ══ -->
+<div class="modal-overlay" id="resumenModal" onclick="if(event.target===this)cerrarResumenModal()">
+  <div class="modal-box" style="max-width:680px">
+    <div class="modal-head">
+      <span style="font-size:22px">✨</span>
+      <div>
+        <div class="modal-head-title">Resumen completo del cliente</div>
+        <div id="resumenModalSub" style="font-size:11px;color:var(--muted);margin-top:2px">Gestiones · Pasos a seguir · Mensajes</div>
+      </div>
+      <button class="modal-close" onclick="cerrarResumenModal()">✕</button>
+    </div>
+
+    <!-- Acciones -->
+    <div style="padding:14px 22px 0; display:flex; gap:10px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:14px">
+      <button class="btn-primary" id="btnGenerarResumen" onclick="generarResumenIA()">✨ Generar resumen con IA</button>
+      <button class="btn-ghost" id="btnCopiarResumen" onclick="copiarResumen()" style="display:none">📋 Copiar todo</button>
+      <button class="btn-ghost" id="btnGuardarResumen" onclick="guardarResumenComoGestion()" style="display:none;border-color:var(--green);color:var(--green)">💾 Guardar como gestión</button>
+      <span id="resumenGuardadoMsg" style="font-size:12px;color:var(--green);align-self:center;display:none">✅ Guardado</span>
+    </div>
+
+    <div class="modal-body" id="resumenModalBody">
+
+      <!-- Último resumen guardado -->
+      <div id="ultimoResumenBox" style="display:none" class="resumen-ultimo">
+        <div class="resumen-ultimo-label">📌 Último resumen guardado</div>
+        <div class="resumen-ultimo-text" id="ultimoResumenTexto"></div>
+        <div id="ultimoResumenFecha" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+      </div>
+
+      <!-- Estado inicial -->
+      <div id="resumenEstadoInicial" style="text-align:center;padding:32px 0;color:var(--muted)">
+        <div style="font-size:36px;margin-bottom:12px">✨</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Genera un resumen inteligente</div>
+        <div style="font-size:12px;line-height:1.6">La IA analizará todas tus gestiones, el análisis de la situación,<br>los pasos a seguir y los mensajes redactados para crear un<br>resumen completo y accionable.</div>
+      </div>
+
+      <!-- Resultado del resumen -->
+      <div id="resumenContenido" style="display:none">
+
+        <div class="resumen-section">
+          <div class="resumen-section-title">📋 Resumen de gestiones</div>
+          <div class="resumen-body-text" id="resumenGestiones"></div>
+        </div>
+
+        <div class="resumen-section">
+          <div class="resumen-section-title">📍 Situación actual y diagnóstico</div>
+          <div class="resumen-body-text" id="resumenSituacion"></div>
+        </div>
+
+        <div class="resumen-section">
+          <div class="resumen-section-title">🎯 Próximos pasos recomendados</div>
+          <div class="resumen-body-text" id="resumenPasos"></div>
+        </div>
+
+        <div class="resumen-section">
+          <div class="resumen-section-title">💬 Mensajes listos para enviar</div>
+          <div class="resumen-body-text" id="resumenMensajes"></div>
+        </div>
+
+      </div>
+
+      <!-- Typing indicator -->
+      <div id="resumenTyping" style="display:none;text-align:center;padding:40px 0;color:var(--muted)">
+        <div style="display:flex;justify-content:center;gap:6px;margin-bottom:12px">
+          <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+        </div>
+        <div style="font-size:13px">Analizando toda la información del cliente…</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <div class="wrap">
 
   <!-- ══ SCORE WIDGET ══ -->
@@ -811,11 +927,28 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
   <!-- ══ SIGUIENTE PASO ══ -->
   <div class="next-step">
     <div class="next-step-eyebrow">⚡ Siguiente acción recomendada</div>
+    <div id="ultimaAccionGuardada" class="ultima-accion-guardada" style="display:none"></div>
+    <div class="next-step-fecha" id="nextStepFecha"></div>
     <div class="next-step-text" id="nextStepText">Ingresa los datos del cliente para activar las recomendaciones automáticas.</div>
     <div class="next-step-actions">
-      <button class="btn-sm success" id="btnRealizado">✓ Realizado</button>
-      <button class="btn-sm" id="btnPosponer">⏸ Posponer</button>
+      <button class="btn-sm" id="btnRealizado" onclick="marcarAccion('realizado')">✓ Realizado</button>
+      <button class="btn-sm" id="btnNoRealizado" onclick="marcarAccion('no_realizado')">✗ No realizado</button>
+      <button class="btn-sm" id="btnPosponer" onclick="marcarAccion('posponer')">⏸ Posponer</button>
     </div>
+    <div id="bloqueFechaPosponer" style="display:none; margin-top:10px">
+      <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px">📅 Fecha y hora del próximo seguimiento acordado</label>
+      <input type="date" class="inp" id="fechaProximoSeguimiento" style="max-width:190px; display:inline-block" onchange="onFechaProximoChange()">
+      <input type="time" class="inp" id="horaProximoSeguimiento" style="max-width:120px; display:inline-block; margin-left:6px" onchange="onFechaProximoChange()">
+    </div>
+    <div id="bloqueMotivoNoRealizado" style="display:none; margin-top:10px">
+      <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px">✍️ ¿Por qué no se realizó? (obligatorio)</label>
+      <textarea class="inp" id="motivoNoRealizado" style="min-height:60px" placeholder="Ej. El cliente no contestó, canceló la cita, no había disponibilidad…" oninput="onMotivoNoRealizadoChange()"></textarea>
+      <div class="campo-ia-row">
+        <button type="button" class="btn-mejorar-ia" id="btnMejorarMotivo" onclick="mejorarTextoIA('motivoNoRealizado','btnMejorarMotivo')">✨ Reescribir con IA</button>
+      </div>
+    </div>
+    <div id="estadoAccionInfo" style="font-size:11.5px; margin-top:9px; display:none"></div>
+    <button class="btn-sm" id="btnGuardarAccion" style="margin-top:10px; width:100%" onclick="guardarAccionSeguirSheets()" disabled>💾 Guardar</button>
   </div>
 
   <!-- ══ DATOS DEL CLIENTE ══ -->
@@ -911,6 +1044,9 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
       <div class="campo">
         <label>Reacción del cliente</label>
         <textarea class="inp" id="comentariosPrueba" style="min-height:70px" placeholder="¿Qué le gustó o preocupó?" oninput="onCampoChange()"></textarea>
+        <div class="campo-ia-row">
+          <button type="button" class="btn-mejorar-ia" id="btnMejorarPrueba" onclick="mejorarTextoIA('comentariosPrueba','btnMejorarPrueba')">✨ Reescribir con IA</button>
+        </div>
       </div>
     </div>
 
@@ -1139,6 +1275,9 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
     <div class="campo">
       <label>Comentarios de la primera visita</label>
       <textarea class="inp" id="comentariosPrimeraVisita" placeholder="Describe cómo fue la presentación: qué le gustó, dudas, objeciones, reacción general…"></textarea>
+      <div class="campo-ia-row">
+        <button type="button" class="btn-mejorar-ia" id="btnMejorarPrimeraVisita" onclick="mejorarTextoIA('comentariosPrimeraVisita','btnMejorarPrimeraVisita')">✨ Reescribir con IA</button>
+      </div>
     </div>
     <div class="campo">
       <label>Sentimiento de la primera visita</label>
@@ -1195,6 +1334,9 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
     <div class="campo">
       <label>Notas del contacto</label>
       <textarea class="inp" id="comentariosGestion" placeholder="¿Qué se habló? ¿Acuerdos? ¿Objeciones? ¿Próximos pasos?"></textarea>
+      <div class="campo-ia-row">
+        <button type="button" class="btn-mejorar-ia" id="btnMejorarGestion" onclick="mejorarTextoIA('comentariosGestion','btnMejorarGestion')">✨ Reescribir con IA</button>
+      </div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap">
       <button class="btn-primary full" id="btnGuardar" style="flex:2">💾 Guardar gestión</button>
@@ -1240,7 +1382,10 @@ textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
     <div class="card-header">
       <div class="card-icon">📅</div>
       <div class="card-title">Historial de Gestiones</div>
-      <div style="margin-left:auto">
+      <div style="margin-left:auto; display:flex; gap:8px; align-items:center">
+        <button class="btn-sm" onclick="abrirResumenIA()" style="background:var(--accent-dim);border-color:var(--accent);color:var(--accent-bright);font-weight:700">
+          ✨ Resumen IA
+        </button>
         <span class="badge" id="totalGestiones">0</span>
       </div>
     </div>
@@ -1286,6 +1431,12 @@ function confirmarNuevaFicha() {
   try {
     localStorage.removeItem('crm_cliente');
     localStorage.removeItem('crm_gestiones');
+    localStorage.removeItem('crm_accion_seguir');
+    localStorage.removeItem('crm_postventa_step');
+    if (typeof postventaStep !== 'undefined') postventaStep = 0;
+    if (typeof accionSeguir !== 'undefined') { accionSeguir.texto=''; accionSeguir.estado=null; accionSeguir.fecha=''; accionSeguir.motivo=''; accionSeguir.hora=''; }
+    const ultimaAccionBox = document.getElementById('ultimaAccionGuardada');
+    if (ultimaAccionBox) { ultimaAccionBox.style.display = 'none'; ultimaAccionBox.innerHTML = ''; }
     if (typeof gestiones !== 'undefined') gestiones.length = 0;
     if (typeof clienteData !== 'undefined') { for (const k in clienteData) delete clienteData[k]; }
 
@@ -1354,6 +1505,17 @@ function toggleTheme() {
 /* ─── STATE ─── */
 let gestiones   = JSON.parse(localStorage.getItem('crm_gestiones') || '[]');
 let clienteData = JSON.parse(localStorage.getItem('crm_cliente')   || '{}');
+let accionSeguir = JSON.parse(localStorage.getItem('crm_accion_seguir') || 'null') || { texto:'', estado:null, fecha:'', motivo:'' };
+let postventaStep = parseInt(localStorage.getItem('crm_postventa_step') || '0', 10) || 0;
+let accionPlazoActual = '';
+
+/* Pasos escalonados de postventa una vez que la operación está CERRADA.
+   Avanza cuando el usuario guarda la acción como "Realizado" estando en estado cerrada. */
+const PASOS_POSTVENTA = [
+  { texto: n => `Llamar a ${n} para verificar satisfacción con la unidad y el servicio recibido. Enviar encuesta de satisfacción.`, plazo: 'en los próximos 3 días' },
+  { texto: n => `Solicitar a ${n} referidos de familiares o conocidos interesados en adquirir un vehículo. Ofrecer incentivo por referido.`, plazo: 'en la próxima semana' },
+  { texto: n => `Activar estrategia de recompra con ${n}: presentar plan de renovación de su unidad y/o propuesta de compra para algún familiar.`, plazo: 'en los próximos 60-90 días' }
+];
 
 /* ─── INIT ─── */
 (function init() {
@@ -1513,19 +1675,214 @@ function recalcScore() {
   desc.textContent  = descTxt;
 }
 
-/* ─── SIGUIENTE PASO ─── */
+/* Fecha completa en español, ej: "04 de julio de 2026" */
+function fechaCompletaEs(d) {
+  d = d || new Date();
+  return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+/* ─── SIGUIENTE PASO / ACCIÓN A SEGUIR ─── */
 function actualizarPasoSiguiente() {
   const estado = document.getElementById('estadoOperacion').value;
   const prueba = document.getElementById('pruebaManejo').value;
   const tipoOp = document.getElementById('tipoOperacion').value;
   const nombre = document.getElementById('nombre').value.trim() || 'el cliente';
-  let texto = '';
-  if (estado === 'cerrada')      texto = `Llamar a ${nombre} en 3 días para verificar satisfacción. En el primer servicio pedir referidos y enviar encuesta.`;
-  else if (estado === 'perdida') texto = `Registrar motivo de pérdida. Agendar contacto de reactivación en 30 días. Analizar objeciones para mejorar el proceso.`;
-  else if (!prueba)              texto = `Coordinar prueba de manejo con ${nombre}. Prepara la unidad y presenta los diferenciadores clave del modelo.`;
-  else if (!tipoOp)              texto = `Presentar a ${nombre} las opciones de financiamiento y pago de contado. Preparar cotización formal.`;
-  else                           texto = `Dar seguimiento a la decisión de ${nombre}. Resolver objeciones pendientes y proponer fecha de cierre.`;
+  let texto = '', plazo = '';
+
+  if (estado === 'cerrada') {
+    const paso = PASOS_POSTVENTA[Math.min(postventaStep, PASOS_POSTVENTA.length - 1)];
+    texto = paso.texto(nombre);
+    plazo = paso.plazo;
+  }
+  else if (estado === 'perdida') { texto = `Registrar motivo de pérdida y analizar objeciones para mejorar el proceso. Agendar contacto de reactivación.`; plazo = 'en 30 días'; }
+  else if (!prueba)              { texto = `Coordinar prueba de manejo con ${nombre}. Prepara la unidad y presenta los diferenciadores clave del modelo.`; plazo = 'en las próximas 24-48 horas'; }
+  else if (!tipoOp)              { texto = `Presentar a ${nombre} las opciones de financiamiento y pago de contado. Preparar cotización formal.`; plazo = 'en los próximos 2-3 días'; }
+  else                           { texto = `Dar seguimiento a la decisión de ${nombre}. Resolver objeciones pendientes y proponer fecha de cierre.`; plazo = 'en las próximas 48-72 horas'; }
+
+  accionPlazoActual = plazo;
+  texto += ` Recomendado: hacerlo ${plazo}.`;
+
+  document.getElementById('nextStepFecha').textContent = `📅 Fecha de gestión: ${fechaCompletaEs()}`;
   document.getElementById('nextStepText').textContent = texto;
+
+  // Si la acción recomendada cambió (por nuevos datos, gestiones, o avance de postventa), es una acción NUEVA:
+  // se reinicia el estado para que el usuario vuelva a decidir manualmente.
+  if (accionSeguir.texto !== texto) {
+    accionSeguir = { texto, estado: null, fecha: '', motivo: '' };
+    localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
+  }
+  renderEstadoAccion();
+}
+
+/* Formatea una fecha ISO (yyyy-mm-dd) [+ hora opcional HH:MM] a texto legible es-MX */
+function formatearFechaCorta(iso, hora) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}` + (hora ? ` ${hora}` : '');
+}
+
+function marcarAccion(estado) {
+  accionSeguir.estado = estado;
+  if (estado === 'realizado') {
+    accionSeguir.fecha = ''; accionSeguir.motivo = ''; accionSeguir.hora = '';
+  } else if (estado === 'no_realizado') {
+    accionSeguir.fecha = ''; accionSeguir.hora = '';
+  } else if (estado === 'posponer') {
+    accionSeguir.motivo = '';
+    if (!accionSeguir.fecha) {
+      // Sugerir por defecto 3 días a partir de hoy
+      const sugerida = new Date();
+      sugerida.setDate(sugerida.getDate() + 3);
+      accionSeguir.fecha = sugerida.toISOString().slice(0,10);
+    }
+  }
+  localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
+  renderEstadoAccion();
+}
+
+function onFechaProximoChange() {
+  accionSeguir.fecha = document.getElementById('fechaProximoSeguimiento').value;
+  accionSeguir.hora  = document.getElementById('horaProximoSeguimiento').value;
+  localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
+  renderEstadoAccion();
+}
+
+function onMotivoNoRealizadoChange() {
+  const val = document.getElementById('motivoNoRealizado').value;
+  accionSeguir.motivo = val;
+  localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
+  renderEstadoAccion();
+}
+
+function renderEstadoAccion() {
+  const btnR = document.getElementById('btnRealizado');
+  const btnN = document.getElementById('btnNoRealizado');
+  const btnP = document.getElementById('btnPosponer');
+  const bloqueFecha = document.getElementById('bloqueFechaPosponer');
+  const inputFecha = document.getElementById('fechaProximoSeguimiento');
+  const inputHora = document.getElementById('horaProximoSeguimiento');
+  const bloqueMotivo = document.getElementById('bloqueMotivoNoRealizado');
+  const inputMotivo = document.getElementById('motivoNoRealizado');
+  const info = document.getElementById('estadoAccionInfo');
+  const btnGuardar = document.getElementById('btnGuardarAccion');
+
+  btnR.classList.toggle('success', accionSeguir.estado === 'realizado');
+  btnN.classList.toggle('danger',  accionSeguir.estado === 'no_realizado');
+  btnP.classList.toggle('warning', accionSeguir.estado === 'posponer');
+
+  bloqueFecha.style.display  = accionSeguir.estado === 'posponer'    ? 'block' : 'none';
+  bloqueMotivo.style.display = accionSeguir.estado === 'no_realizado' ? 'block' : 'none';
+  if (accionSeguir.estado === 'posponer') {
+    inputFecha.value = accionSeguir.fecha || '';
+    inputHora.value  = accionSeguir.hora  || '';
+  }
+  if (accionSeguir.estado === 'no_realizado') inputMotivo.value = accionSeguir.motivo || '';
+
+  // El botón GUARDAR permanece siempre visible; solo se habilita cuando el registro es válido.
+  btnGuardar.textContent = '💾 Guardar';
+  btnGuardar.disabled = true;
+
+  if (!accionSeguir.estado) {
+    info.style.display = 'none';
+  } else if (accionSeguir.estado === 'realizado') {
+    info.style.display = 'block';
+    info.style.color = 'var(--green)';
+    info.textContent = '✅ Marcada como realizada. Presiona Guardar para reflejarlo en el expediente.';
+    btnGuardar.disabled = false;
+  } else if (accionSeguir.estado === 'no_realizado') {
+    info.style.display = 'block';
+    info.style.color = 'var(--red)';
+    if (accionSeguir.motivo && accionSeguir.motivo.trim()) {
+      info.textContent = '✗ Marcada como no realizada. Presiona Guardar para reflejarlo en el expediente.';
+      btnGuardar.disabled = false;
+    } else {
+      info.textContent = '✗ Escribe el motivo por el que no se realizó para poder guardar.';
+    }
+  } else { // posponer
+    info.style.display = 'block';
+    if (accionSeguir.fecha) {
+      info.style.color = 'var(--orange)';
+      info.textContent = `⏸ Pospuesta — próximo seguimiento: ${formatearFechaCorta(accionSeguir.fecha, accionSeguir.hora)}`;
+      btnGuardar.disabled = false;
+    } else {
+      info.style.color = 'var(--orange)';
+      info.textContent = '⏸ Selecciona la fecha del próximo seguimiento para poder guardar.';
+    }
+  }
+}
+
+async function guardarAccionSeguirSheets() {
+  const nombre = document.getElementById('nombre').value.trim();
+  if (!nombre) { mostrarToast('⚠️ Ingresa el nombre del cliente'); return; }
+  if (!accionSeguir.estado) { mostrarToast('⚠️ Selecciona Realizado, No realizado o Posponer primero'); return; }
+  if (accionSeguir.estado === 'posponer' && !accionSeguir.fecha) { mostrarToast('⚠️ Selecciona la fecha del próximo seguimiento'); return; }
+  if (accionSeguir.estado === 'no_realizado' && !(accionSeguir.motivo || '').trim()) { mostrarToast('⚠️ Escribe el motivo por el que no se realizó'); return; }
+  if (!getSheetsUrl()) { mostrarToast('⚠️ Configura la URL de Sheets en ⚙️ Config'); toggleConfigModal(); return; }
+
+  const btn = document.getElementById('btnGuardarAccion');
+  btn.disabled = true; btn.textContent = '⏳ Guardando…';
+
+  const estadoOperacionActual = document.getElementById('estadoOperacion').value;
+  const fechaGestionHoy = new Date().toISOString().slice(0,10);
+
+  const nuevoPostventaStep = (estadoOperacionActual === 'cerrada' && accionSeguir.estado === 'realizado' && postventaStep < PASOS_POSTVENTA.length - 1)
+    ? postventaStep + 1
+    : postventaStep;
+
+  await enviarASheets({
+    tipo: 'accion_seguir',
+    nombreCliente: nombre,
+    fechaGestion: fechaGestionHoy,
+    fechaGestionTexto: fechaCompletaEs(),
+    accionTexto: accionSeguir.texto,
+    plazo: accionPlazoActual,
+    estado: accionSeguir.estado,
+    fecha: accionSeguir.fecha || '',
+    hora: accionSeguir.hora || '',
+    motivo: accionSeguir.motivo || '',
+    postventaStep: estadoOperacionActual === 'cerrada' ? nuevoPostventaStep : ''
+  });
+
+  // Guardar también un registro local del último envío, para mostrarlo al recargar este cliente en la sesión actual.
+  window._ultimaAccionLocal = {
+    fechaGestion: fechaCompletaEs(),
+    accionTexto: accionSeguir.texto,
+    plazo: accionPlazoActual,
+    estado: accionSeguir.estado,
+    fecha: accionSeguir.fecha || '',
+    hora: accionSeguir.hora || '',
+    motivo: accionSeguir.motivo || ''
+  };
+  renderUltimaAccionGuardada(window._ultimaAccionLocal);
+
+  // Flujo automático: si la operación está CERRADA y la acción se marcó como Realizado,
+  // avanza al siguiente paso de postventa (verificación → referidos → recompra).
+  postventaStep = nuevoPostventaStep;
+  localStorage.setItem('crm_postventa_step', String(postventaStep));
+
+  btn.disabled = false; btn.textContent = '💾 Guardar';
+  mostrarToast('☁️ Acción a seguir guardada en Sheets');
+
+  // Recalcular la recomendación (puede haber avanzado de paso de postventa)
+  actualizarPasoSiguiente();
+}
+
+/* Muestra en la tarjeta el último registro de gestión guardado (fecha, acción, plazo, estado, motivo/fecha) */
+function renderUltimaAccionGuardada(reg) {
+  const box = document.getElementById('ultimaAccionGuardada');
+  if (!box || !reg) return;
+
+  let estadoTxt = '';
+  if (reg.estado === 'realizado')    estadoTxt = '✅ Realizado';
+  else if (reg.estado === 'no_realizado') estadoTxt = `❌ No realizado — Motivo: ${reg.motivo || 'sin especificar'}`;
+  else if (reg.estado === 'posponer')     estadoTxt = `⏸ Pospuesto → Próximo seguimiento: ${formatearFechaCorta(reg.fecha, reg.hora)}`;
+
+  box.innerHTML =
+    `<b>Última gestión guardada</b>\n` +
+    `📅 Fecha de gestión: ${reg.fechaGestion}\n` +
+    `📋 Acción: ${reg.accionTexto}${reg.plazo ? ` (${reg.plazo})` : ''}\n` +
+    `${estadoTxt}`;
+  box.style.display = 'block';
 }
 
 /* ─── BUSCAR CLIENTE (placeholder, pendiente de conectar a base de datos) ─── */
@@ -1590,6 +1947,24 @@ function cargarClienteDesdeSheets(idx) {
   const c = window._buscarResultados?.[idx];
   if (!c) return;
 
+  // Nuevo cliente cargado: la acción a seguir anterior ya no aplica, se recalculará desde cero
+  accionSeguir = { texto:'', estado:null, fecha:'', motivo:'', hora:'' };
+  localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
+  postventaStep = parseInt(c.pasoPostventa || '0', 10) || 0;
+  localStorage.setItem('crm_postventa_step', String(postventaStep));
+
+  // Mostrar la última gestión guardada previamente en Sheets (si existe), tal cual quedó registrada
+  const boxUltima = document.getElementById('ultimaAccionGuardada');
+  if (boxUltima) {
+    if (c.accionSeguir && c.accionSeguir.trim()) {
+      boxUltima.innerHTML = `<b>Última gestión guardada</b>\n${c.accionSeguir}`;
+      boxUltima.style.display = 'block';
+    } else {
+      boxUltima.style.display = 'none';
+      boxUltima.innerHTML = '';
+    }
+  }
+
   // Mapa de campos Sheets → IDs del formulario
   const map = {
     nombre:'nombre', telefono:'telefono', correo:'correo', ciudad:'ciudad',
@@ -1627,12 +2002,21 @@ function cargarClienteDesdeSheets(idx) {
   document.getElementById('buscarStatus').style.color = 'var(--green)';
   document.getElementById('buscarClienteInput').value = '';
 
+  // Cargar último resumen si viene de Sheets
+  if (c.ultimoResumen) {
+    localStorage.setItem('nexus_ultimo_resumen', JSON.stringify({
+      texto: c.ultimoResumen,
+      fecha: c.fechaUltimoResumen || 'Fecha no disponible'
+    }));
+    mostrarToast(`✅ "${c.nombre}" cargado · Resumen disponible en ✨`);
+  } else {
+    mostrarToast(`✅ "${c.nombre}" cargado desde Sheets`);
+  }
+
   // Recalcular UI
   onCampoChange();
   if (typeof toggleTipoOperacion === 'function') toggleTipoOperacion();
   if (typeof toggleDisponibilidad === 'function') toggleDisponibilidad();
-
-  mostrarToast(`✅ "${c.nombre}" cargado desde Sheets`);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1656,7 +2040,7 @@ function guardarGestion(tipo, calidad, comentarios, origenMsg) {
   const g = { id: Date.now(), fecha: new Date().toLocaleString('es-MX'), tipo, calidad, comentarios };
   gestiones.unshift(g);
   localStorage.setItem('crm_gestiones', JSON.stringify(gestiones));
-  renderHistorial(); recalcScore();
+  renderHistorial(); recalcScore(); actualizarPasoSiguiente();
   mostrarToast(origenMsg || '✓ Gestión guardada correctamente');
   return true;
 }
@@ -1706,6 +2090,57 @@ function renderHistorial() {
 
 /* ─── ANÁLISIS IA ─── */
 document.getElementById('btnAnalizar').addEventListener('click', analizarConIA);
+/* ─── REESCRIBIR / MEJORAR TEXTO CON IA ───
+   Reutilizable en cualquier campo de texto libre (motivo, comentarios, notas, etc.)
+   Corrige ortografía y gramática, ordena la idea y mejora la redacción,
+   pensado para notas dictadas rápido por voz o escritas desde el celular. */
+async function mejorarTextoIA(textareaId, btnId) {
+  const ta  = document.getElementById(textareaId);
+  const btn = document.getElementById(btnId);
+  if (!ta || !btn) return;
+
+  const texto = (ta.value || '').trim();
+  if (!texto) { mostrarToast('⚠️ Escribe algo primero para poder mejorarlo'); return; }
+
+  const textoBtnOriginal = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '⏳ Mejorando…';
+
+  const prompt = `Actúa como un editor profesional de redacción para un vendedor de autos en México. Vas a recibir una nota tal cual la escribió o dictó por voz el vendedor (muchas veces desde el celular, manejando o de prisa), con errores de ortografía, gramática, puntuación o ideas desordenadas.
+
+Tu tarea:
+- Corrige por completo la ortografía, acentos, puntuación y gramática.
+- Ordena y clarifica las ideas para que se lean de forma profesional y fluida, en el mismo idioma (español).
+- Conserva TODOS los datos originales (nombres, cifras, fechas, acuerdos, objeciones) sin inventar ni agregar información nueva que no esté implícita en el texto.
+- Mantén la voz en primera persona del vendedor y un tono profesional pero natural, como una nota de CRM bien redactada.
+- No agregues encabezados, viñetas, comillas ni explicaciones. Responde ÚNICAMENTE con el texto ya corregido y mejorado, listo para pegarse directamente en el campo.
+
+Texto original del vendedor:
+"""
+${texto}
+"""`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 700, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const mejorado = (data.content?.map(b => b.text || '').join('') || '').trim();
+
+    if (mejorado) {
+      ta.value = mejorado;
+      ta.dispatchEvent(new Event('input', { bubbles: true })); // dispara onCampoChange / onMotivoNoRealizadoChange, etc.
+      mostrarToast('✨ Texto mejorado');
+    } else {
+      mostrarToast('⚠️ No se pudo mejorar el texto, intenta de nuevo');
+    }
+  } catch (e) {
+    mostrarToast('❌ Error al conectar con IA. Verifica tu conexión.');
+  }
+
+  btn.disabled = false; btn.innerHTML = textoBtnOriginal;
+}
+
 async function analizarConIA() {
   const btn = document.getElementById('btnAnalizar');
   const out = document.getElementById('resumenAnalisis');
@@ -1971,8 +2406,7 @@ function mostrarToast(msg = '✓ Listo') {
 }
 
 /* ─── BOTONES PASO ─── */
-document.getElementById('btnRealizado').addEventListener('click', () => mostrarToast('✓ Paso marcado como realizado'));
-document.getElementById('btnPosponer').addEventListener('click', () => mostrarToast('⏸ Pospuesto — retoma pronto'));
+/* (Realizado/Posponer ahora se manejan vía marcarAccion(), ver sección ACCIÓN A SEGUIR) */
 
 /* ══════════════════════════════════════════════════════
    ⚙️ CONFIG MODAL
@@ -2079,14 +2513,14 @@ function eliminarTodasApiKeys() {
   mostrarToast('🔑 Todas las API Keys eliminadas');
 }
 function eliminarHistorialGestiones() {
-  gestiones = []; localStorage.removeItem('nexus_gestiones');
-  renderGestiones(); calcularScore();
+  gestiones = []; localStorage.removeItem('crm_gestiones');
+  renderHistorial(); recalcScore();
   mostrarToast('📋 Historial de gestiones eliminado');
 }
 function eliminarTodo() {
   ['nexus_sheets_url','nexus_ai_provider','nexus_chat_history'].forEach(k => localStorage.removeItem(k));
   ['claude','openai','gemini','grok'].forEach(p => localStorage.removeItem('nexus_apikey_' + p));
-  localStorage.removeItem('nexus_gestiones');
+  localStorage.removeItem('crm_gestiones');
   crearNuevaFicha();
   chatHistory = [];
   const msgs = document.getElementById('chatMessages');
@@ -2291,7 +2725,192 @@ document.getElementById('btnGuardarPrimeraVisita').addEventListener('click', asy
   if (getSheetsUrl() && gestiones.length > 0) await syncGestionSheets(gestiones[0]);
 }, { capture: false });
 
-/* ── INIT ── */
+/* ══════════════════════════════════════════════════════
+   ✨ RESUMEN IA
+══════════════════════════════════════════════════════ */
+let _resumenTextoCompleto = ''; // para copiar y guardar
+
+function abrirResumenIA() {
+  const nombre = document.getElementById('nombre').value.trim();
+  document.getElementById('resumenModalSub').textContent =
+    nombre ? `${nombre} · ${gestiones.length} gestión(es)` : `${gestiones.length} gestión(es)`;
+  // Mostrar último resumen guardado si existe
+  const ultimo = localStorage.getItem('nexus_ultimo_resumen');
+  if (ultimo) {
+    const data = JSON.parse(ultimo);
+    document.getElementById('ultimoResumenBox').style.display = 'block';
+    document.getElementById('ultimoResumenTexto').textContent = data.texto;
+    document.getElementById('ultimoResumenFecha').textContent = 'Guardado el ' + data.fecha;
+  } else {
+    document.getElementById('ultimoResumenBox').style.display = 'none';
+  }
+  document.getElementById('resumenModal').classList.add('open');
+}
+function cerrarResumenModal() {
+  document.getElementById('resumenModal').classList.remove('open');
+}
+
+async function callAIConFallback(prompt, sys, maxTokens) {
+  // 1) Acceso directo: funciona automáticamente dentro de Claude (sin API key).
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: maxTokens, system: sys, messages: [{ role: 'user', content: prompt }] })
+    });
+    if (res.ok) {
+      const data  = await res.json();
+      const texto = data.content?.map(b => b.text || '').join('') || '';
+      if (texto) return texto;
+    }
+  } catch (e) { /* no disponible: seguimos con el modo navegador */ }
+
+  // 2) Modo navegador: usa el proveedor/API key configurados manualmente.
+  const provider = localStorage.getItem('nexus_ai_provider') || '';
+  const apiKey   = provider ? (localStorage.getItem('nexus_apikey_' + provider) || '') : '';
+  if (!provider || !apiKey) throw new Error('CONFIG_REQUIRED');
+
+  const msgs = [{ role: 'user', content: prompt }];
+  if (provider === 'claude')  return await callClaude(apiKey, sys, msgs);
+  if (provider === 'openai')  return await callOpenAI(apiKey, sys, msgs);
+  if (provider === 'gemini')  return await callGemini(apiKey, sys, msgs);
+  if (provider === 'grok')    return await callGrok(apiKey, sys, msgs);
+  throw new Error('CONFIG_REQUIRED');
+}
+
+async function generarResumenIA() {
+  if (gestiones.length === 0) {
+    mostrarToast('⚠️ No hay gestiones registradas aún');
+    return;
+  }
+
+  // UI: loading
+  document.getElementById('resumenEstadoInicial').style.display = 'none';
+  document.getElementById('resumenContenido').style.display     = 'none';
+  document.getElementById('resumenTyping').style.display        = 'block';
+  document.getElementById('btnGenerarResumen').disabled         = true;
+  document.getElementById('btnCopiarResumen').style.display     = 'none';
+  document.getElementById('btnGuardarResumen').style.display    = 'none';
+  document.getElementById('resumenGuardadoMsg').style.display   = 'none';
+
+  // Recolectar contexto completo
+  const g = id => { const el = document.getElementById(id); return el ? el.innerText.trim() || el.textContent.trim() : ''; };
+  const historialTexto = gestiones.map((gest, i) =>
+    `Gestión ${i+1} [${gest.fecha}] Tipo: ${gest.tipo} | Calidad: ${gest.calidad}\nNotas: ${gest.comentarios}`
+  ).join('\n\n');
+  const analisisIA     = g('resumenAnalisis');
+  const pasosRapidos   = g('outputPasosRapidos');
+  const mensajeWA      = g('outputWhatsApp');
+  const mensajeWAPV    = g('outputWhatsAppPrimeraVisita');
+
+  const contextoCliente = getClienteContexto();
+
+  const prompt = `Eres un asistente experto en ventas automotrices. Basándote en TODA la siguiente información de este cliente, genera un resumen ejecutivo estructurado.
+
+${contextoCliente}
+
+═══ HISTORIAL DE GESTIONES (${gestiones.length} registradas) ═══
+${historialTexto || 'Sin gestiones'}
+
+═══ ANÁLISIS IA PREVIO ═══
+${analisisIA || 'No generado'}
+
+═══ PASOS A SEGUIR GENERADOS ═══
+${pasosRapidos || 'No generados'}
+
+═══ MENSAJES REDACTADOS ═══
+${[mensajeWA, mensajeWAPV].filter(Boolean).join('\n---\n') || 'No redactados'}
+
+Responde EXACTAMENTE en este formato JSON (sin markdown, sin explicaciones extra):
+{
+  "gestiones": "Resumen cronológico de todas las gestiones, qué se hizo, cómo respondió el cliente",
+  "situacion": "Diagnóstico actual: nivel de interés, objeciones detectadas, probabilidad de cierre",
+  "pasos": "Lista numerada de próximos pasos concretos y accionables, con tiempos sugeridos",
+  "mensajes": "Mensajes listos para copiar y enviar al cliente (WhatsApp/llamada), adaptados al contexto actual"
+}`;
+
+  try {
+    const sys = 'Responde SOLO con el JSON solicitado, sin texto adicional ni bloques de código.';
+    const raw = await callAIConFallback(prompt, sys, 1500);
+
+    // Parsear JSON
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const data  = JSON.parse(clean);
+
+    document.getElementById('resumenGestiones').textContent = data.gestiones || '';
+    document.getElementById('resumenSituacion').textContent = data.situacion || '';
+    document.getElementById('resumenPasos').textContent     = data.pasos     || '';
+    document.getElementById('resumenMensajes').textContent  = data.mensajes  || '';
+
+    _resumenTextoCompleto = `📋 RESUMEN DE GESTIONES\n${data.gestiones}\n\n📍 SITUACIÓN ACTUAL\n${data.situacion}\n\n🎯 PRÓXIMOS PASOS\n${data.pasos}\n\n💬 MENSAJES\n${data.mensajes}`;
+
+    document.getElementById('resumenTyping').style.display     = 'none';
+    document.getElementById('resumenContenido').style.display  = 'block';
+    document.getElementById('btnCopiarResumen').style.display  = 'inline-flex';
+    document.getElementById('btnGuardarResumen').style.display = 'inline-flex';
+
+  } catch(err) {
+    document.getElementById('resumenTyping').style.display = 'none';
+    if (err.message === 'CONFIG_REQUIRED') {
+      mostrarToast('⚠️ Configura tu IA en ⚙️ Config → 🤖 IA');
+      cerrarResumenModal(); toggleConfigModal(); switchTab('ia');
+    } else {
+      document.getElementById('resumenEstadoInicial').style.display = 'block';
+      document.getElementById('resumenEstadoInicial').innerHTML = `<div style="font-size:32px;margin-bottom:10px">❌</div><div style="font-size:13px;color:var(--red)">${err.message}</div>`;
+      mostrarToast('❌ Error al generar resumen');
+    }
+  }
+  document.getElementById('btnGenerarResumen').disabled = false;
+}
+
+function copiarResumen() {
+  if (!_resumenTextoCompleto) { mostrarToast('Aún no hay resumen para copiar.'); return; }
+  copiarTexto(_resumenTextoCompleto, '📋 Resumen copiado al portapapeles');
+}
+
+async function guardarResumenComoGestion() {
+  if (!_resumenTextoCompleto) return;
+  const btn = document.getElementById('btnGuardarResumen');
+  btn.disabled = true;
+
+  const nombre = document.getElementById('nombre').value.trim() || 'Sin nombre';
+  const fecha  = new Date().toLocaleString('es-MX');
+
+  // 1. Guardar localmente como gestión
+  const gestion = {
+    id: Date.now(), fecha, tipo: 'resumen_ia',
+    calidad: 'positivo', comentarios: _resumenTextoCompleto
+  };
+  gestiones.unshift(gestion);
+  localStorage.setItem('crm_gestiones', JSON.stringify(gestiones));
+  renderHistorial(); recalcScore();
+
+  // 2. Guardar último resumen en localStorage para mostrar en modal
+  localStorage.setItem('nexus_ultimo_resumen', JSON.stringify({ texto: _resumenTextoCompleto, fecha }));
+  document.getElementById('ultimoResumenBox').style.display = 'block';
+  document.getElementById('ultimoResumenTexto').textContent = _resumenTextoCompleto;
+  document.getElementById('ultimoResumenFecha').textContent = 'Guardado el ' + fecha;
+
+  // 3. Enviar a Sheets con tipo especial
+  const url = getSheetsUrl();
+  if (url) {
+    await enviarASheets({
+      tipo: 'resumen_gestion',
+      nombreCliente: nombre,
+      fecha,
+      resumen: _resumenTextoCompleto
+    });
+    mostrarToast('✅ Resumen guardado como gestión y enviado a Sheets');
+  } else {
+    mostrarToast('✅ Resumen guardado como gestión (sin Sheets configurado)');
+  }
+
+  document.getElementById('resumenGuardadoMsg').style.display = 'inline';
+  btn.disabled = false;
+}
+
+/* ══════════════════════════════════════════════════════
+   ── INIT ──
+══════════════════════════════════════════════════════ */
 (function() {
   const url = localStorage.getItem('nexus_sheets_url') || '';
   const el = document.getElementById('sheetsWebAppUrl');
