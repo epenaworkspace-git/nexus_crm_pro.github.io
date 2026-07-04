@@ -1,0 +1,2304 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus CRM — Gestión de Ventas Automotriz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+/* ═══════════════════════════════════════════════════════════════
+   NEXUS DESIGN SYSTEM — tokens completos
+═══════════════════════════════════════════════════════════════ */
+:root {
+  --bg:        #0D1B2E;
+  --panel:     #152238;
+  --panel-2:   #1C2E45;
+  --panel-3:   #243650;
+  --line:      #2A3F5A;
+  --grad:      linear-gradient(135deg, #22D3EE 0%, #3B82F6 100%);
+  --grad-h:    linear-gradient(135deg, #38E4FF 0%, #60A5FA 100%);
+  --grad-glow: rgba(34,211,238,0.38);
+  --accent:       #3B82F6;
+  --accent-bright:#60A5FA;
+  --accent-dim:   rgba(59,130,246,0.14);
+  --accent-glow:  rgba(59,130,246,0.28);
+  --text:     #FFFFFF;
+  --text-dim: rgba(255,255,255,0.70);
+  --muted:    #94A3B8;
+  --green:       #10B981;
+  --green-dim:   rgba(16,185,129,0.14);
+  --red:         #EF4444;
+  --red-dim:     rgba(239,68,68,0.14);
+  --orange:      #F97316;
+  --orange-dim:  rgba(249,115,22,0.14);
+  --purple:      #8B5CF6;
+  --purple-dim:  rgba(139,92,246,0.14);
+  --radius:    16px;
+  --radius-sm: 12px;
+  --radius-xs: 10px;
+  --radius-pill: 999px;
+  --shadow:      0 2px 18px rgba(0,0,0,0.38);
+  --shadow-glow: 0 0 22px rgba(59,130,246,0.22);
+  --transition: all 0.28s cubic-bezier(.4,0,.2,1);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+[data-theme="light"] {
+  --bg:        #FFFFFF;
+  --panel:     #FAFBFC;
+  --panel-2:   #F1F4F8;
+  --panel-3:   #E8EDF5;
+  --line:      #E2E8F0;
+  --grad:      linear-gradient(135deg, #22D3EE 0%, #3B82F6 100%);
+  --grad-glow: rgba(34,211,238,0.25);
+  --accent:       #0369A1;
+  --accent-bright:#0284C7;
+  --accent-dim:   rgba(3,105,161,0.08);
+  --accent-glow:  rgba(3,105,161,0.14);
+  --text:     #0F172A;
+  --text-dim: rgba(15,23,42,0.65);
+  --muted:    #64748B;
+  --green:     #059669;
+  --green-dim: rgba(5,150,105,0.10);
+  --red:       #DC2626;
+  --red-dim:   rgba(220,38,38,0.10);
+  --orange:    #EA580C;
+  --orange-dim:rgba(234,88,12,0.10);
+  --purple:    #7C3AED;
+  --purple-dim:rgba(124,58,237,0.10);
+  --shadow:      0 1px 10px rgba(15,23,42,0.07), 0 4px 18px rgba(15,23,42,0.04);
+  --shadow-glow: 0 0 16px rgba(3,105,161,0.16);
+}
+
+/* ── RESET + BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  min-height: 100vh;
+  padding-bottom: 80px;
+  transition: background 0.35s, color 0.35s;
+}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 99px; }
+
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(34,211,238,0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(59,130,246,0.04) 0%, transparent 70%);
+}
+[data-theme="light"] body::before { display: none; }
+
+/* ── TOPBAR ── */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(13,27,46,0.92);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  backdrop-filter: blur(20px) saturate(1.6);
+}
+[data-theme="light"] .topbar {
+  background: rgba(255,255,255,0.96);
+  box-shadow: 0 1px 12px rgba(15,23,42,0.08);
+}
+.topbar-left  { display: flex; align-items: center; gap: 10px; }
+.topbar-right { display: flex; align-items: center; gap: 7px; }
+
+.app-logo {
+  width: 34px; height: 34px;
+  background: var(--grad);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+  box-shadow: 0 2px 16px var(--grad-glow);
+  transition: var(--transition); cursor: pointer;
+}
+.app-logo:hover { transform: rotate(-8deg) scale(1.08); }
+.app-name { font-size: 16px; color: var(--accent); letter-spacing: 0.06em; font-weight: 600; }
+.app-sub  { font-size: 10px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; line-height: 1; }
+
+.icon-btn {
+  height: 36px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius-pill); color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 0 14px;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition);
+  font-family: var(--font);
+}
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── LAYOUT ── */
+.wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px; position: relative; z-index: 1; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.col-2  { grid-column: span 2; }
+@media(max-width: 560px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .col-2 { grid-column: span 1; }
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+  transition: border-color 0.25s, box-shadow 0.25s;
+  animation: cardIn 0.55s cubic-bezier(.16,1,.3,1) both;
+}
+.card:hover { border-color: rgba(34,211,238,0.18); }
+[data-theme="light"] .card {
+  background: #FFFFFF; border-color: #E2E8F0;
+  box-shadow: 0 1px 8px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.04);
+}
+[data-theme="light"] .card:hover { border-color: #93C5FD; }
+
+.card-inner {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); padding: 16px;
+}
+
+/* Card con borde degradado */
+.card-accent {
+  background: var(--panel); border-radius: var(--radius);
+  padding: 20px; margin-bottom: 14px;
+  position: relative; isolation: isolate;
+  animation: cardIn 0.55s cubic-bezier(.16,1,.3,1) both;
+}
+.card-accent::before {
+  content: ''; position: absolute; inset: 0; border-radius: var(--radius);
+  border: 1.5px solid transparent;
+  background: var(--grad) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out; mask-composite: exclude;
+}
+
+.card-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 18px;
+}
+.card-icon {
+  width: 34px; height: 34px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-glow);
+  border-radius: var(--radius-xs);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.card-title { font-size: 16px; font-weight: 700; color: var(--text); }
+
+/* ── INPUTS ── */
+label {
+  display: block; font-size: 11px; font-weight: 600; color: var(--muted);
+  margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em;
+}
+.inp {
+  width: 100%; background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); padding: 11px 14px;
+  color: var(--text); font-family: var(--font); font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+}
+.inp:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.inp::placeholder { color: var(--muted); }
+[data-theme="light"] .inp { background: #FFFFFF; border-color: #CBD5E1; color: #0F172A; }
+[data-theme="light"] .inp:focus { border-color: #0369A1; box-shadow: 0 0 0 3px rgba(3,105,161,0.10); }
+[data-theme="light"] select.inp option { background: #FFFFFF; color: #0F172A; }
+select.inp option { background: var(--panel-2); }
+textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
+
+/* ── BUTTONS ── */
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  background: var(--grad); color: #FFFFFF; border: none; border-radius: var(--radius-pill);
+  padding: 12px 24px; font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: var(--font);
+  transition: transform 0.15s, box-shadow 0.2s, filter 0.15s;
+}
+.btn-primary:hover  { transform: translateY(-2px); box-shadow: 0 8px 28px var(--grad-glow); filter: brightness(1.06); }
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.5; cursor: default; transform: none; }
+.btn-primary.full { width: 100%; padding: 14px 0; font-size: 15px; }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--panel-2); color: var(--text-dim);
+  border: 1px solid var(--line); border-radius: var(--radius-pill);
+  padding: 11px 22px; font-size: 14px; font-weight: 600;
+  cursor: pointer; font-family: var(--font); transition: var(--transition);
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent-bright); transform: translateY(-2px); }
+
+.btn-sm {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: var(--radius-pill); padding: 8px 16px;
+  font-size: 13px; cursor: pointer; color: var(--text); font-family: var(--font);
+  transition: all 0.2s; font-weight: 600;
+}
+.btn-sm:hover { border-color: var(--accent); color: var(--accent-bright); transform: translateY(-1px); }
+.btn-sm.success { border-color: var(--green); color: var(--green); }
+.btn-sm.danger  { border-color: var(--red);   color: var(--red);   }
+.btn-sm.warning { border-color: var(--orange); color: var(--orange); }
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-size: 11px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase;
+  margin: 20px 0 12px; display: flex; align-items: center; gap: 8px;
+}
+.section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
+
+/* ── SUBSECCIÓN (campos condicionales) ── */
+.sub-section {
+  margin-top: 14px; padding: 16px;
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* ── SCORE WIDGET ── */
+.score-widget {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 22px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 22px;
+  box-shadow: var(--shadow);
+  animation: cardIn 0.4s cubic-bezier(.16,1,.3,1) both;
+}
+[data-theme="light"] .score-widget { background: #FFFFFF; border-color: #E2E8F0; }
+.score-ring-wrap { position: relative; flex-shrink: 0; }
+.score-ring-wrap svg { transform: rotate(-90deg); }
+.score-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.score-number { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.score-label  { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+.score-details { flex: 1; min-width: 0; }
+.score-tag {
+  display: inline-block; padding: 4px 12px; border-radius: var(--radius-pill);
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; margin-bottom: 8px;
+}
+.score-desc { color: var(--text-dim); font-size: 13px; line-height: 1.55; }
+
+/* ── NEXT STEP BANNER ── */
+.next-step {
+  background: var(--accent-dim); border: 1px solid var(--accent-glow);
+  border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px;
+  animation: fadeUp 0.5s ease both;
+}
+.next-step-eyebrow {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--accent-bright); margin-bottom: 6px;
+}
+.next-step-text { font-size: 14px; color: var(--text); line-height: 1.6; }
+.next-step-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+/* ── BARRAS DE PROGRESO ── */
+.bar-row   { margin-bottom: 12px; }
+.bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+.bar-label span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar-bg    { height: 7px; background: var(--line); border-radius: var(--radius-pill); overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: var(--radius-pill); animation: barGrow .9s cubic-bezier(.16,1,.3,1) both; position: relative; overflow: hidden; }
+.bar-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transform: translateX(-100%); animation: barShine 1.4s ease .5s; }
+.bar-fill.grad  { background: var(--grad); }
+.bar-fill.green { background: var(--green); }
+.bar-fill.red   { background: var(--red); }
+
+/* ── PILLS / STATUS ── */
+.pill-status { display: inline-flex; align-items: center; gap: 5px; border-radius: var(--radius-pill); padding: 5px 13px; font-size: 12px; font-weight: 700; }
+.pill-status.pos     { background: var(--green-dim);  color: var(--green); }
+.pill-status.neg     { background: var(--red-dim);    color: var(--red);   }
+.pill-status.neutral { background: rgba(148,163,184,0.14); color: var(--muted); }
+
+/* ── KPI ROW ── */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 14px; text-align: center; }
+.kpi-item { padding: 12px 8px; background: var(--panel-3); border-radius: var(--radius-xs); }
+.kpi-num { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; word-break: break-word; }
+.kpi-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ── SPINNER ── */
+.spinner {
+  width: 20px; height: 20px;
+  border: 2.5px solid var(--line);
+  border-top-color: #22D3EE; border-right-color: #3B82F6;
+  border-radius: 50%; animation: spin 0.8s cubic-bezier(.5,.1,.5,.9) infinite;
+  display: inline-block; flex-shrink: 0;
+}
+
+/* ── AI OUTPUT ── */
+.ai-output {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); padding: 16px;
+  min-height: 100px; color: var(--text);
+  font-size: 14px; line-height: 1.75;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+.ai-loading { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.ai-placeholder { color: var(--muted); font-style: italic; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 92px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--panel-3); border: 1px solid var(--line);
+  color: var(--text); border-radius: var(--radius-sm);
+  padding: 12px 22px; font-size: 14px; font-weight: 600;
+  z-index: 999; opacity: 0; pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  box-shadow: var(--shadow); white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── HISTORIAL ── */
+.historial-list { display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; }
+.gestion-item {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent); border-radius: var(--radius-xs);
+  padding: 12px 14px;
+}
+.gestion-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--muted); margin-bottom: 6px; gap: 8px;
+}
+.gestion-tipo {
+  background: var(--accent-dim); color: var(--accent-bright);
+  padding: 2px 10px; border-radius: 99px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* ── BADGE ── */
+.badge { display: inline-flex; align-items: center; background: var(--grad); color: #000; font-size: 10px; font-weight: 800; padding: 2px 10px; border-radius: 20px; letter-spacing: 0.04em; vertical-align: middle; }
+
+/* ── UTILIDADES ── */
+.text-muted   { color: var(--muted); }
+.text-accent  { color: var(--accent-bright); }
+.text-green   { color: var(--green); }
+.text-red     { color: var(--red); }
+.text-grad    { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hidden       { display: none !important; }
+.campo        { margin-bottom: 14px; }
+
+/* ── ANIMACIONES ── */
+@keyframes cardIn  { from { opacity:0; transform:translateY(16px) scale(0.984); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes fadeUp  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes spin    { to { transform:rotate(360deg); } }
+@keyframes barGrow { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+@keyframes barShine{ to { transform:translateX(100%); } }
+
+/* ══ CONFIG MODAL ══ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 1000;
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  width: 100%; max-width: 640px; max-height: 90vh; overflow: hidden;
+  display: flex; flex-direction: column;
+  transform: translateY(24px); transition: transform 0.25s;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.52);
+}
+.modal-overlay.open .modal-box { transform: translateY(0); }
+.modal-head {
+  display: flex; align-items: center; gap: 12px; padding: 20px 22px 0;
+}
+.modal-head-title { font-size: 17px; font-weight: 700; flex: 1; }
+.modal-close {
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px;
+  width: 32px; height: 32px; cursor: pointer; color: var(--text);
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+  transition: all 0.2s;
+}
+.modal-close:hover { border-color: var(--red); color: var(--red); }
+.modal-tabs {
+  display: flex; gap: 4px; padding: 16px 22px 0; border-bottom: 1px solid var(--line);
+}
+.modal-tab {
+  padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0; color: var(--muted);
+  border: 1px solid transparent; border-bottom: none; background: transparent;
+  font-family: var(--font); transition: all 0.18s; display: flex; gap: 6px; align-items: center;
+}
+.modal-tab:hover { color: var(--text); background: var(--panel-2); }
+.modal-tab.active { background: var(--panel-2); color: var(--accent-bright); border-color: var(--line); border-bottom-color: var(--panel-2); margin-bottom: -1px; }
+.modal-body { padding: 22px; overflow-y: auto; flex: 1; }
+.modal-body::-webkit-scrollbar { width: 4px; }
+.modal-body::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ── API Provider Cards ── */
+.provider-card {
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: 16px; margin-bottom: 12px; transition: border-color 0.2s;
+  background: var(--panel-2);
+}
+.provider-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+.provider-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.provider-logo { font-size: 22px; width: 36px; text-align: center; }
+.provider-name { font-weight: 700; font-size: 14px; }
+.provider-desc { font-size: 11px; color: var(--muted); }
+.provider-radio { margin-left: auto; appearance: none; width: 18px; height: 18px;
+  border: 2px solid var(--line); border-radius: 50%; cursor: pointer;
+  transition: all 0.2s; position: relative; background: var(--panel);
+}
+.provider-radio:checked { border-color: var(--accent); background: var(--accent); }
+.api-key-wrap { display: flex; gap: 8px; align-items: center; }
+.api-key-wrap .inp { font-family: monospace; font-size: 12px; letter-spacing: 0.04em; }
+.btn-icon-sm {
+  flex-shrink: 0; width: 38px; height: 38px; border-radius: var(--radius-xs);
+  border: 1px solid var(--line); background: var(--panel); cursor: pointer;
+  color: var(--muted); font-size: 15px; display: flex; align-items: center;
+  justify-content: center; transition: all 0.18s;
+}
+.btn-icon-sm:hover { border-color: var(--accent); color: var(--accent-bright); }
+.btn-icon-sm.danger:hover { border-color: var(--red); color: var(--red); }
+.key-status { font-size: 11px; margin-top: 5px; }
+.key-ok  { color: var(--green); }
+.key-err { color: var(--red); }
+
+/* Danger zone */
+.danger-zone { border: 1px solid rgba(239,68,68,0.25); border-radius: var(--radius-sm); padding: 16px; }
+.danger-zone-title { font-size: 12px; font-weight: 700; color: var(--red); margin-bottom: 14px; letter-spacing: 0.08em; text-transform: uppercase; }
+.danger-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-radius: var(--radius-xs); border: 1px solid var(--line);
+  background: var(--panel); margin-bottom: 8px; cursor: pointer;
+  transition: all 0.18s; font-family: var(--font);
+}
+.danger-btn:hover { border-color: var(--red); background: var(--red-dim); }
+.danger-btn-label { font-size: 13px; font-weight: 600; color: var(--text); }
+.danger-btn-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.danger-btn-icon { font-size: 18px; }
+
+/* ══ AI CHAT FLOTANTE ══ */
+.ai-fab {
+  position: fixed; bottom: 22px; right: 22px; z-index: 900;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--grad); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 24px;
+  box-shadow: 0 8px 28px var(--accent-glow); transition: all 0.22s;
+}
+.ai-fab:hover { transform: scale(1.1); box-shadow: 0 12px 36px var(--grad-glow); }
+.ai-fab .ai-fab-badge {
+  position: absolute; top: -2px; right: -2px; width: 14px; height: 14px;
+  background: var(--green); border-radius: 50%; border: 2px solid var(--bg);
+  display: none;
+}
+.ai-fab .ai-fab-badge.on { display: block; }
+
+.ai-chat-panel {
+  position: fixed; bottom: 90px; right: 22px; z-index: 901;
+  width: 360px; max-height: 520px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.48);
+  display: flex; flex-direction: column; overflow: hidden;
+  transform: scale(0.9) translateY(20px); opacity: 0;
+  pointer-events: none; transform-origin: bottom right;
+  transition: transform 0.22s cubic-bezier(.4,0,.2,1), opacity 0.22s;
+}
+.ai-chat-panel.open { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
+.ai-chat-head {
+  padding: 14px 16px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 10px;
+}
+.ai-chat-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--grad); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.ai-chat-name { font-weight: 700; font-size: 13px; }
+.ai-chat-model { font-size: 11px; color: var(--muted); }
+.ai-chat-close { margin-left: auto; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px; line-height: 1; }
+.ai-chat-close:hover { color: var(--text); }
+.ai-chat-messages {
+  flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.ai-chat-messages::-webkit-scrollbar { width: 3px; }
+.ai-chat-messages::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+.chat-msg { display: flex; gap: 8px; align-items: flex-start; }
+.chat-msg.user { flex-direction: row-reverse; }
+.chat-bubble {
+  max-width: 82%; padding: 9px 13px; border-radius: 14px;
+  font-size: 13px; line-height: 1.55;
+}
+.chat-msg.ai   .chat-bubble { background: var(--panel-2); border: 1px solid var(--line); border-top-left-radius: 4px; color: var(--text); }
+.chat-msg.user .chat-bubble { background: var(--grad); color: #fff; border-top-right-radius: 4px; }
+.chat-msg .chat-av { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; background: var(--panel-2); }
+.chat-msg.user .chat-av { background: var(--grad); }
+.ai-chat-footer { padding: 10px 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; }
+.ai-chat-input {
+  flex: 1; background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: var(--radius-xs); padding: 9px 12px;
+  color: var(--text); font-size: 13px; font-family: var(--font); outline: none; resize: none;
+  max-height: 80px; transition: border-color 0.2s;
+}
+.ai-chat-input:focus { border-color: var(--accent); }
+.ai-chat-send {
+  width: 38px; height: 38px; background: var(--grad); border: none; border-radius: var(--radius-xs);
+  cursor: pointer; color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; align-self: flex-end; transition: all 0.18s;
+}
+.ai-chat-send:hover { filter: brightness(1.1); transform: scale(1.05); }
+.ai-chat-send:disabled { opacity: 0.4; cursor: default; transform: none; }
+.chat-ctx-btn {
+  font-size: 11px; color: var(--accent-bright); background: var(--accent-dim);
+  border: 1px solid var(--accent-glow); border-radius: var(--radius-pill);
+  padding: 4px 10px; cursor: pointer; font-family: var(--font);
+  white-space: nowrap; transition: all 0.18s;
+}
+.chat-ctx-btn:hover { background: var(--accent); color: #fff; }
+.typing-dot { display: inline-block; width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: typing 1.2s infinite; margin: 0 1px; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing { 0%,80%,100% { transform: scale(0.6); opacity:0.4 } 40% { transform: scale(1); opacity:1 } }
+</style>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="app-logo">🚗</div>
+    <div>
+      <div class="app-name">Nexus CRM</div>
+      <div class="app-sub">Ventas Automotriz</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="icon-btn" onclick="toggleConfigModal()" id="btnConfig" title="Configuración">
+      <span>⚙️</span><span>Config</span>
+    </button>
+    <button class="icon-btn" id="btnTema" onclick="toggleTheme()" title="Cambiar tema">
+      <span id="themeIcon">☀️</span>
+      <span id="themeLabel">Claro</span>
+    </button>
+    <button class="icon-btn" id="btnNuevo" onclick="crearNuevaFicha()">✚ Nueva ficha</button>
+  </div>
+</div>
+
+<!-- ══ MODAL CONFIGURACIÓN ══ -->
+<div class="modal-overlay" id="configModal" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span style="font-size:22px">⚙️</span>
+      <div class="modal-head-title">Configuración</div>
+      <button class="modal-close" onclick="toggleConfigModal()">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('sheets')" id="tab-sheets">📊 Sheets</button>
+      <button class="modal-tab" onclick="switchTab('ia')" id="tab-ia">🤖 IA</button>
+      <button class="modal-tab" onclick="switchTab('datos')" id="tab-datos">🗑️ Datos</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- ── TAB: SHEETS ── -->
+      <div class="tab-pane active" id="pane-sheets">
+        <div class="campo" style="margin-bottom:14px">
+          <label>URL del Web App (Google Apps Script)</label>
+          <input class="inp" type="url" id="sheetsWebAppUrl"
+            placeholder="https://script.google.com/macros/s/XXXXXXXXX/exec"
+            oninput="guardarSheetsUrl()" style="font-size:13px">
+          <p style="font-size:11px;color:var(--muted);margin-top:6px">
+            Obtienes esta URL al desplegar tu Apps Script → Implementar → Nueva implementación → Aplicación web.
+          </p>
+        </div>
+        <div id="sheetsStatus" style="font-size:12px;color:var(--green);margin-bottom:14px"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-primary" onclick="syncCompletoSheets()" id="btnSyncSheets">☁️ Sincronizar expediente completo</button>
+        </div>
+        <div id="sheetsStatusMsg" style="margin-top:10px;font-size:12px;display:none"></div>
+      </div>
+
+      <!-- ── TAB: IA ── -->
+      <div class="tab-pane" id="pane-ia">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:16px">
+          Elige tu proveedor de IA activo e ingresa tu API Key. La clave se guarda solo en este navegador (localStorage). Nunca se comparte con terceros.
+        </p>
+
+        <!-- Claude -->
+        <div class="provider-card" id="card-claude">
+          <div class="provider-header">
+            <div class="provider-logo">🟣</div>
+            <div>
+              <div class="provider-name">Claude — Anthropic</div>
+              <div class="provider-desc">claude-sonnet-4-6 · Análisis profundo y redacción</div>
+            </div>
+            <input type="radio" name="aiProvider" value="claude" class="provider-radio" onchange="setActiveProvider('claude')" id="radio-claude">
+          </div>
+          <div class="api-key-wrap">
+            <input class="inp" type="password" id="key-claude" placeholder="sk-ant-api03-..." oninput="onApiKeyInput('claude')">
+            <button class="btn-icon-sm" onclick="toggleKeyVisibility('claude')" title="Mostrar/ocultar">👁️</button>
+            <button class="btn-icon-sm danger" onclick="eliminarApiKey('claude')" title="Eliminar clave">🗑️</button>
+          </div>
+          <div class="key-status" id="status-claude"></div>
+        </div>
+
+        <!-- ChatGPT -->
+        <div class="provider-card" id="card-openai">
+          <div class="provider-header">
+            <div class="provider-logo">🟢</div>
+            <div>
+              <div class="provider-name">ChatGPT — OpenAI</div>
+              <div class="provider-desc">gpt-4o-mini · Respuestas rápidas y versátiles</div>
+            </div>
+            <input type="radio" name="aiProvider" value="openai" class="provider-radio" onchange="setActiveProvider('openai')" id="radio-openai">
+          </div>
+          <div class="api-key-wrap">
+            <input class="inp" type="password" id="key-openai" placeholder="sk-..." oninput="onApiKeyInput('openai')">
+            <button class="btn-icon-sm" onclick="toggleKeyVisibility('openai')" title="Mostrar/ocultar">👁️</button>
+            <button class="btn-icon-sm danger" onclick="eliminarApiKey('openai')" title="Eliminar clave">🗑️</button>
+          </div>
+          <div class="key-status" id="status-openai"></div>
+        </div>
+
+        <!-- Gemini -->
+        <div class="provider-card" id="card-gemini">
+          <div class="provider-header">
+            <div class="provider-logo">🔵</div>
+            <div>
+              <div class="provider-name">Gemini — Google</div>
+              <div class="provider-desc">gemini-2.0-flash · Velocidad y multimodalidad</div>
+            </div>
+            <input type="radio" name="aiProvider" value="gemini" class="provider-radio" onchange="setActiveProvider('gemini')" id="radio-gemini">
+          </div>
+          <div class="api-key-wrap">
+            <input class="inp" type="password" id="key-gemini" placeholder="AIzaSy..." oninput="onApiKeyInput('gemini')">
+            <button class="btn-icon-sm" onclick="toggleKeyVisibility('gemini')" title="Mostrar/ocultar">👁️</button>
+            <button class="btn-icon-sm danger" onclick="eliminarApiKey('gemini')" title="Eliminar clave">🗑️</button>
+          </div>
+          <div class="key-status" id="status-gemini"></div>
+        </div>
+
+        <!-- Grok -->
+        <div class="provider-card" id="card-grok">
+          <div class="provider-header">
+            <div class="provider-logo">⚫</div>
+            <div>
+              <div class="provider-name">Grok — xAI</div>
+              <div class="provider-desc">grok-3-mini · Directo y sin filtros</div>
+            </div>
+            <input type="radio" name="aiProvider" value="grok" class="provider-radio" onchange="setActiveProvider('grok')" id="radio-grok">
+          </div>
+          <div class="api-key-wrap">
+            <input class="inp" type="password" id="key-grok" placeholder="xai-..." oninput="onApiKeyInput('grok')">
+            <button class="btn-icon-sm" onclick="toggleKeyVisibility('grok')" title="Mostrar/ocultar">👁️</button>
+            <button class="btn-icon-sm danger" onclick="eliminarApiKey('grok')" title="Eliminar clave">🗑️</button>
+          </div>
+          <div class="key-status" id="status-grok"></div>
+        </div>
+      </div>
+
+      <!-- ── TAB: DATOS ── -->
+      <div class="tab-pane" id="pane-datos">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:18px">
+          Estas acciones son permanentes y no se pueden deshacer. Todos los datos se almacenan localmente en tu navegador.
+        </p>
+        <div class="danger-zone">
+          <div class="danger-zone-title">⚠️ Zona de peligro</div>
+
+          <button class="danger-btn" onclick="confirmarAccion('keys', '¿Eliminar todas las API Keys?', 'Se borrarán las claves de Claude, ChatGPT, Gemini y Grok.', eliminarTodasApiKeys)">
+            <div>
+              <div class="danger-btn-label">🔑 Eliminar todas las API Keys</div>
+              <div class="danger-btn-sub">Borra las claves de los 4 proveedores de IA</div>
+            </div>
+            <div class="danger-btn-icon">→</div>
+          </button>
+
+          <button class="danger-btn" onclick="confirmarAccion('gestiones', '¿Eliminar historial de gestiones?', 'Se eliminarán todas las gestiones registradas del cliente actual.', eliminarHistorialGestiones)">
+            <div>
+              <div class="danger-btn-label">📋 Eliminar historial de gestiones</div>
+              <div class="danger-btn-sub">Solo el cliente actual</div>
+            </div>
+            <div class="danger-btn-icon">→</div>
+          </button>
+
+          <button class="danger-btn" onclick="confirmarAccion('todo', '¿Eliminar TODO?', 'Se borrarán el expediente, gestiones, API Keys, Sheets URL y configuración del chat.', eliminarTodo)">
+            <div>
+              <div class="danger-btn-label" style="color:var(--red)">💥 Eliminar todo y resetear app</div>
+              <div class="danger-btn-sub">Expediente + gestiones + API Keys + Sheets URL + chat</div>
+            </div>
+            <div class="danger-btn-icon">→</div>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /modal-body -->
+  </div>
+</div>
+
+<!-- ══ AI CHAT PANEL ══ -->
+<button class="ai-fab" id="aiFab" onclick="toggleAIChat()" title="Asistente IA">
+  🤖<div class="ai-fab-badge" id="aiFabBadge"></div>
+</button>
+<div class="ai-chat-panel" id="aiChatPanel">
+  <div class="ai-chat-head">
+    <div class="ai-chat-avatar" id="chatAvatar">🤖</div>
+    <div>
+      <div class="ai-chat-name" id="chatName">Asistente IA</div>
+      <div class="ai-chat-model" id="chatModel">Sin configurar</div>
+    </div>
+    <button class="ai-chat-close" onclick="toggleAIChat()">✕</button>
+  </div>
+  <div class="ai-chat-messages" id="chatMessages">
+    <div class="chat-msg ai">
+      <div class="chat-av">🤖</div>
+      <div class="chat-bubble">¡Hola! Soy tu asistente de ventas automotriz. Puedo ayudarte con seguimientos, guiones de llamada, manejo de objeciones y estrategias de cierre. ¿En qué te ayudo?<br><br>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+          <button class="chat-ctx-btn" onclick="sendContextMsg('📋 Dame un resumen del cliente actual')">📋 Resumen cliente</button>
+          <button class="chat-ctx-btn" onclick="sendContextMsg('📞 Ayúdame a redactar un mensaje de seguimiento por WhatsApp')">📞 Msg WhatsApp</button>
+          <button class="chat-ctx-btn" onclick="sendContextMsg('🎯 Dame ideas para cerrar esta venta')">🎯 Cierre</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ai-chat-footer">
+    <textarea class="ai-chat-input" id="chatInput" placeholder="Escribe tu pregunta…" rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+    <button class="ai-chat-send" id="chatSendBtn" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<!-- ══ CONFIRM DIALOG ══ -->
+<div class="modal-overlay" id="confirmModal" onclick="closeConfirmOutside(event)">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-head" style="padding-bottom:16px">
+      <span style="font-size:22px">⚠️</span>
+      <div class="modal-head-title" id="confirmTitle">¿Confirmar?</div>
+      <button class="modal-close" onclick="closeConfirm()">✕</button>
+    </div>
+    <div style="padding:0 22px 20px">
+      <p id="confirmMsg" style="color:var(--muted);font-size:13px;margin-bottom:20px;line-height:1.6"></p>
+      <div style="display:flex;gap:10px">
+        <button class="btn-ghost" style="flex:1" onclick="closeConfirm()">Cancelar</button>
+        <button id="confirmOkBtn" class="btn-primary" style="flex:1;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="executeConfirm()">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ══ SCORE WIDGET ══ -->
+  <div class="score-widget">
+    <div class="score-ring-wrap">
+      <svg width="88" height="88" viewBox="0 0 88 88">
+        <circle cx="44" cy="44" r="35" fill="none" stroke="var(--line)" stroke-width="9"/>
+        <circle id="scoreArc" cx="44" cy="44" r="35" fill="none" stroke="#3B82F6"
+          stroke-width="9" stroke-linecap="round"
+          stroke-dasharray="220" stroke-dashoffset="220"
+          style="transition: stroke-dashoffset 0.9s ease, stroke 0.5s"/>
+      </svg>
+      <div class="score-center">
+        <span class="score-number" id="scoreNum">—</span>
+        <span class="score-label">Score</span>
+      </div>
+    </div>
+    <div class="score-details">
+      <div class="score-tag" id="scoreTag">Sin datos</div>
+      <div class="score-desc" id="scoreDesc">Completa los datos del cliente para obtener la probabilidad de cierre.</div>
+    </div>
+  </div>
+
+  <!-- ══ SIGUIENTE PASO ══ -->
+  <div class="next-step">
+    <div class="next-step-eyebrow">⚡ Siguiente acción recomendada</div>
+    <div class="next-step-text" id="nextStepText">Ingresa los datos del cliente para activar las recomendaciones automáticas.</div>
+    <div class="next-step-actions">
+      <button class="btn-sm success" id="btnRealizado">✓ Realizado</button>
+      <button class="btn-sm" id="btnPosponer">⏸ Posponer</button>
+    </div>
+  </div>
+
+  <!-- ══ DATOS DEL CLIENTE ══ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">👤</div>
+      <div class="card-title">Datos del Cliente</div>
+    </div>
+
+    <div class="campo" style="margin-bottom:14px">
+      <label>Buscar cliente registrado en Sheets</label>
+      <div style="display:flex; gap:10px">
+        <input class="inp" type="text" id="buscarClienteInput"
+          placeholder="Nombre, teléfono o correo…" style="flex:1"
+          onkeydown="if(event.key==='Enter') buscarCliente()">
+        <button class="btn-ghost" id="btnBuscarCliente" style="white-space:nowrap" onclick="buscarCliente()">🔍 Buscar</button>
+      </div>
+      <!-- Resultados de búsqueda -->
+      <div id="buscarResultados" style="display:none; margin-top:8px; border:1px solid var(--line); border-radius:var(--radius-xs); overflow:hidden; background:var(--panel-2)"></div>
+      <div id="buscarStatus" style="font-size:12px; margin-top:6px; color:var(--muted)"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="campo">
+        <label>Nombre completo</label>
+        <input class="inp" type="text" id="nombre" placeholder="Ej. Juan García López" oninput="onCampoChange()">
+      </div>
+      <div class="campo">
+        <label>Teléfono / WhatsApp</label>
+        <input class="inp" type="tel" id="telefono" placeholder="+52 55 0000 0000" oninput="onCampoChange()">
+      </div>
+      <div class="campo">
+        <label>Correo electrónico</label>
+        <input class="inp" type="email" id="correo" placeholder="cliente@email.com" oninput="onCampoChange()">
+      </div>
+      <div class="campo">
+        <label>Ciudad / Estado</label>
+        <input class="inp" type="text" id="ciudad" placeholder="Monterrey, N.L." oninput="onCampoChange()">
+      </div>
+      <div class="campo col-2">
+        <label>Vehículo de interés</label>
+        <input class="inp" type="text" id="vehiculo" placeholder="Ej. Mazda CX-5 2024 iSport" oninput="onCampoChange()">
+      </div>
+      <div class="campo">
+        <label>Ocupación del cliente (opcional)</label>
+        <input class="inp" type="text" id="ocupacion" placeholder="Ej. Empresario, médico, enfermera…" oninput="onCampoChange()">
+      </div>
+      <div class="campo">
+        <label>Precio de la unidad ($)</label>
+        <input class="inp" type="number" id="precio" placeholder="0" min="0" oninput="onCampoChange(); calcularFinanciamiento()">
+      </div>
+      <div class="campo">
+        <label>Fuente del lead</label>
+        <select class="inp" id="fuenteLead" onchange="onCampoChange()">
+          <option value="">Seleccionar</option>
+          <option value="showroom">Visita al showroom</option>
+          <option value="web">Página web</option>
+          <option value="referido">Referido</option>
+          <option value="redes">Redes sociales</option>
+          <option value="llamada">Llamada entrante</option>
+          <option value="evento">Evento / expo</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PROCESO DE VENTA ══ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📋</div>
+      <div class="card-title">Proceso de Venta</div>
+    </div>
+
+    <div class="campo">
+      <label>¿Se realizó la prueba de manejo?</label>
+      <select class="inp" id="pruebaManejo" onchange="togglePrueba(); onCampoChange()">
+        <option value="">Seleccionar</option>
+        <option value="si">✅ Sí se realizó</option>
+        <option value="no">❌ No se realizó</option>
+      </select>
+    </div>
+    <div id="datosPrueba" class="sub-section hidden">
+      <div class="grid-2" style="margin-bottom:12px">
+        <div class="campo">
+          <label>Personas que asistieron</label>
+          <input class="inp" type="number" id="asistieron" min="0" oninput="onCampoChange()">
+        </div>
+        <div class="campo">
+          <label>Personas que manejaron</label>
+          <input class="inp" type="number" id="manejaron" min="0" oninput="onCampoChange()">
+        </div>
+      </div>
+      <div class="campo">
+        <label>Reacción del cliente</label>
+        <textarea class="inp" id="comentariosPrueba" style="min-height:70px" placeholder="¿Qué le gustó o preocupó?" oninput="onCampoChange()"></textarea>
+      </div>
+    </div>
+
+    <div class="campo" style="margin-top:14px">
+      <label>Tipo de operación</label>
+      <select class="inp" id="tipoOperacion" onchange="toggleOperacion(); onCampoChange()">
+        <option value="">Seleccionar</option>
+        <option value="contado">💵 De contado</option>
+        <option value="financiado">🏦 Financiado</option>
+      </select>
+    </div>
+    <div id="datosContado" class="sub-section hidden">
+      <div class="campo">
+        <label>¿Adquirió el seguro con nosotros?</label>
+        <select class="inp" id="seguro" onchange="onCampoChange()">
+          <option value="">Seleccionar</option>
+          <option value="si">✅ Sí</option>
+          <option value="no">❌ No</option>
+        </select>
+      </div>
+    </div>
+    <div id="datosFinanciado" class="sub-section hidden">
+      <div class="grid-2" style="margin-bottom:12px">
+        <div class="campo">
+          <label>Enganche</label>
+          <div style="display:flex;gap:8px">
+            <input class="inp" type="number" id="enganche" min="0" max="100" placeholder="0" oninput="calcularFinanciamiento()" style="flex:2">
+            <select class="inp" id="engancheModo" onchange="cambiarModoEnganche()" style="flex:1">
+              <option value="pct">%</option>
+              <option value="monto">$</option>
+            </select>
+          </div>
+        </div>
+        <div class="campo">
+          <label>Plazo (meses)</label>
+          <select class="inp" id="plazo" onchange="calcularFinanciamiento()">
+            <option value="">Seleccionar</option>
+            <option value="12">12 meses</option>
+            <option value="24">24 meses</option>
+            <option value="36">36 meses</option>
+            <option value="48">48 meses</option>
+            <option value="60">60 meses</option>
+            <option value="72">72 meses</option>
+          </select>
+        </div>
+      </div>
+      <div class="campo">
+        <label>Tasa de interés anual (%) — opcional</label>
+        <input class="inp" type="number" id="tasaInteres" min="0" step="0.1" placeholder="Ej. 14.5" oninput="calcularFinanciamiento()">
+      </div>
+
+      <div class="card-inner" id="resultadoFinanciamiento" style="margin-top:18px; padding:20px; display:none">
+        <div class="kpi-row">
+          <div class="kpi-item">
+            <div class="kpi-num text-accent" id="kpiEnganche">$0</div>
+            <div class="kpi-lbl">Enganche</div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-num" id="kpiMontoFinanciar">$0</div>
+            <div class="kpi-lbl">A financiar</div>
+          </div>
+          <div class="kpi-item">
+            <div class="kpi-num text-green" id="kpiMensualidad">$0</div>
+            <div class="kpi-lbl">Mensualidad est.</div>
+          </div>
+        </div>
+        <p class="text-muted" style="font-size:11px;margin-top:10px;text-align:center">
+          *Cálculo estimado (incluye IVA 16% sobre intereses). No incluye seguro, comisiones u otros cargos de la cotización formal.
+        </p>
+      </div>
+    </div>
+
+    <div class="campo" style="margin-top:14px">
+      <label>Estado actual</label>
+      <select class="inp" id="estadoOperacion" onchange="onCampoChange()">
+        <option value="proceso">🔄 En proceso</option>
+        <option value="cerrada">✅ Cerrada y vendida</option>
+        <option value="perdida">❌ Perdida / No cerró</option>
+      </select>
+    </div>
+
+    <!-- BOTÓN GUARDAR CLIENTE EN SHEETS -->
+    <div style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn-primary full" id="btnGuardarCliente" onclick="guardarClienteSheets()">
+        ☁️ Guardar cliente en Google Sheets
+      </button>
+    </div>
+    <div id="msgGuardarCliente" style="display:none;margin-top:8px;font-size:12px;text-align:center"></div>
+  </div>
+
+  <!-- ══ INFORMACIÓN ADICIONAL ══ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🎁</div>
+      <div class="card-title">Información Adicional</div>
+    </div>
+
+    <!-- Disponibilidad del vehículo -->
+    <div class="section-title">Disponibilidad</div>
+    <div class="grid-2">
+      <div class="campo">
+        <label>¿El vehículo está disponible?</label>
+        <select class="inp" id="disponibilidad" onchange="toggleDisponibilidad(); onCampoChange()">
+          <option value="">Seleccionar</option>
+          <option value="si">✅ Sí, en existencia</option>
+          <option value="no">🚚 No, hay que pedirlo</option>
+        </select>
+      </div>
+      <div class="campo" id="campoTiempoLlegada" style="display:none">
+        <label>Tiempo estimado de llegada</label>
+        <input class="inp" type="text" id="tiempoLlegada" placeholder="Ej. 2 semanas, 30 días…" oninput="onCampoChange()">
+      </div>
+    </div>
+
+    <!-- Descuento -->
+    <div class="section-title">Descuento o regalo</div>
+    <div class="grid-2">
+      <div class="campo">
+        <label>¿Se le dio descuento?</label>
+        <select class="inp" id="descuento" onchange="toggleDescuento(); onCampoChange()">
+          <option value="">Seleccionar</option>
+          <option value="si">✅ Sí</option>
+          <option value="no">❌ No</option>
+        </select>
+      </div>
+      <div class="campo" id="campoMontoDescuento" style="display:none">
+        <label>Monto del descuento ($)</label>
+        <input class="inp" type="number" id="montoDescuento" placeholder="0" min="0" oninput="onCampoChange()">
+      </div>
+    </div>
+
+    <div class="campo">
+      <label>¿Se le regaló algún accesorio / beneficio?</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px" id="regaloCheckboxes">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px">
+          <input type="checkbox" id="rTapetes" onchange="onCampoChange()"> 🛏 Tapetes
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px">
+          <input type="checkbox" id="rVidrios" onchange="onCampoChange()"> 🪟 Vidrios de seguridad
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px">
+          <input type="checkbox" id="rPelicula" onchange="onCampoChange()"> 🛡 Película antiasalto
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px">
+          <input type="checkbox" id="rKitSeguridad" onchange="onCampoChange()"> 🔒 Kit de seguridad completo
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px">
+          <input type="checkbox" id="rPlacas" onchange="onCampoChange()"> 🪪 Placas y tenencia
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px">
+          <input type="checkbox" id="rOtro" onchange="toggleOtroRegalo(); onCampoChange()"> ➕ Otro
+        </label>
+      </div>
+      <div id="campoOtroRegalo" style="display:none;margin-top:10px">
+        <input class="inp" type="text" id="otroRegaloDesc" placeholder="Describe qué se le regaló o agregó…" oninput="onCampoChange()">
+      </div>
+    </div>
+
+    <!-- Documentación y compromiso -->
+    <div class="section-title">Documentación y compromiso</div>
+    <div class="grid-2">
+      <div class="campo">
+        <label>¿Dejó anticipo o firmó pedido?</label>
+        <select class="inp" id="anticipo" onchange="onCampoChange()">
+          <option value="">Seleccionar</option>
+          <option value="anticipo">💰 Dejó anticipo</option>
+          <option value="pedido">📝 Firmó pedido</option>
+          <option value="ambos">✅ Anticipo + pedido</option>
+          <option value="no">❌ Ninguno aún</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label>¿Dejó documentación?</label>
+        <select class="inp" id="documentacion" onchange="toggleCredito(); onCampoChange()">
+          <option value="">Seleccionar</option>
+          <option value="si">✅ Sí, entregó documentos</option>
+          <option value="no">❌ No ha entregado</option>
+          <option value="parcial">📄 Parcialmente</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Estatus crédito (solo si operación = financiado) -->
+    <div id="bloqueCredito" class="sub-section hidden">
+      <div class="campo">
+        <label>Estatus del crédito</label>
+        <select class="inp" id="estatusCredito" onchange="onCampoChange()">
+          <option value="">Seleccionar</option>
+          <option value="pendiente">⏳ Pendiente de revisar</option>
+          <option value="proceso">🔄 En proceso de autorización</option>
+          <option value="aprobado">✅ Aprobado</option>
+          <option value="negado">❌ Negado</option>
+          <option value="contrapropuesta">🔁 Contrapropuesta del banco</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Decisión de compra -->
+    <div class="section-title">Perfil de decisión</div>
+    <div class="grid-2">
+      <div class="campo">
+        <label>¿Quién toma la decisión de compra?</label>
+        <select class="inp" id="decision" onchange="onCampoChange()">
+          <option value="">Seleccionar</option>
+          <option value="propio">👤 El cliente mismo</option>
+          <option value="pareja">👫 Junto con su pareja</option>
+          <option value="familia">👨‍👩‍👧 Familia / tercero</option>
+          <option value="empresa">🏢 Decisión empresarial</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label>¿Para cuándo quiere el vehículo?</label>
+        <select class="inp" id="urgencia" onchange="onCampoChange()">
+          <option value="">Seleccionar / No mencionó</option>
+          <option value="inmediato">🔥 De inmediato / ya</option>
+          <option value="semana">📅 Esta semana</option>
+          <option value="quincena">📅 Esta quincena</option>
+          <option value="mes">🗓 Este mes</option>
+          <option value="sinprisa">😌 Sin prisa definida</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Primera visita / presentación del producto -->
+    <div class="section-title">Primera visita / presentación</div>
+    <div class="campo">
+      <label>Comentarios de la primera visita</label>
+      <textarea class="inp" id="comentariosPrimeraVisita" placeholder="Describe cómo fue la presentación: qué le gustó, dudas, objeciones, reacción general…"></textarea>
+    </div>
+    <div class="campo">
+      <label>Sentimiento de la primera visita</label>
+      <select class="inp" id="calidadPrimeraVisita">
+        <option value="positivo">🟢 Positivo</option>
+        <option value="neutral">🟡 Neutral</option>
+        <option value="negativo">🔴 Negativo</option>
+      </select>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px">
+      <button class="btn-ghost" id="btnPasosRapidos" style="flex:1">⚡ Siguientes pasos</button>
+      <button class="btn-ghost" id="btnWhatsAppPrimeraVisita" style="flex:1">💬 Mensaje IA</button>
+    </div>
+    <div id="outputPasosRapidos" class="ai-output hidden" style="margin-bottom:14px"></div>
+    <div id="cardWhatsAppPrimeraVisita" class="hidden" style="margin-bottom:14px">
+      <div id="outputWhatsAppPrimeraVisita" class="ai-output" style="margin-bottom:10px"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-sm success" id="btnCopiarMensajePrimeraVisita">📋 Copiar mensaje</button>
+        <button class="btn-sm" onclick="generarMensajeWAPrimeraVisita()">🔄 Regenerar</button>
+      </div>
+    </div>
+    <button class="btn-primary full" id="btnGuardarPrimeraVisita">💾 Guardar como gestión</button>
+
+  </div>
+
+  <!-- ══ REGISTRAR CONTACTO ══ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">💬</div>
+      <div class="card-title">Registrar Contacto</div>
+    </div>
+    <div class="grid-2" style="margin-bottom:14px">
+      <div class="campo">
+        <label>Tipo de contacto</label>
+        <select class="inp" id="tipoContacto">
+          <option value="sincontacto">⏳ Aún no ha habido contacto</option>
+          <option value="llamada">📞 Llamada</option>
+          <option value="whatsapp">💬 WhatsApp</option>
+          <option value="cita">🤝 Cita presencial</option>
+          <option value="seguimiento">📋 Seguimiento</option>
+          <option value="posventa">⭐ Posventa</option>
+          <option value="email">📧 Correo</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label>Calificación del contacto</label>
+        <select class="inp" id="calidadContacto">
+          <option value="positivo">🟢 Positivo — avanza</option>
+          <option value="neutral">🟡 Neutral — sin cambios</option>
+          <option value="negativo">🔴 Negativo — retrocede</option>
+        </select>
+      </div>
+    </div>
+    <div class="campo">
+      <label>Notas del contacto</label>
+      <textarea class="inp" id="comentariosGestion" placeholder="¿Qué se habló? ¿Acuerdos? ¿Objeciones? ¿Próximos pasos?"></textarea>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap">
+      <button class="btn-primary full" id="btnGuardar" style="flex:2">💾 Guardar gestión</button>
+      <button class="btn-ghost" id="btnWhatsApp" style="flex:1">💬 Mensaje IA</button>
+    </div>
+  </div>
+
+  <!-- ══ ANÁLISIS IA ══ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🧠</div>
+      <div class="card-title">Análisis Inteligente</div>
+      <div style="margin-left:auto">
+        <button class="btn-primary" id="btnAnalizar">⚡ Analizar con IA</button>
+      </div>
+    </div>
+    <div id="resumenAnalisis" class="ai-output">
+      <span class="ai-placeholder">Registra una gestión y presiona "Analizar con IA" para obtener diagnóstico completo del cliente, señales de compra, objeciones y estrategia de cierre.</span>
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn-sm" id="btnCopiarAnalisis">📋 Copiar análisis</button>
+    </div>
+  </div>
+
+  <!-- ══ MENSAJE WHATSAPP IA ══ -->
+  <div class="card hidden" id="cardWhatsApp">
+    <div class="card-header">
+      <div class="card-icon">💬</div>
+      <div class="card-title">Mensaje de Seguimiento</div>
+      <div style="margin-left:auto">
+        <button class="btn-sm" onclick="document.getElementById('cardWhatsApp').classList.add('hidden')">✕ Cerrar</button>
+      </div>
+    </div>
+    <div id="outputWhatsApp" class="ai-output" style="margin-bottom:14px"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-sm success" id="btnCopiarMensaje">📋 Copiar mensaje</button>
+      <button class="btn-sm" onclick="generarMensajeWA()">🔄 Regenerar</button>
+    </div>
+  </div>
+
+  <!-- ══ HISTORIAL ══ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📅</div>
+      <div class="card-title">Historial de Gestiones</div>
+      <div style="margin-left:auto">
+        <span class="badge" id="totalGestiones">0</span>
+      </div>
+    </div>
+    <div class="historial-list" id="listaGestiones">
+      <p class="text-muted" style="text-align:center;padding:20px 0">Sin gestiones registradas aún.</p>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<div class="toast" id="toast"></div>
+
+<!-- ══ MODAL CONFIRMACIÓN NUEVA FICHA ══ -->
+<div id="modalNuevaFicha" class="hidden" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px)">
+  <div class="card" style="max-width:380px;width:100%;margin:0;animation:cardIn 0.25s ease both">
+    <div class="card-header">
+      <div class="card-icon">⚠️</div>
+      <div class="card-title">Crear nueva ficha</div>
+    </div>
+    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:20px">
+      Se borrará toda la información del cliente actual: datos, gestiones, historial y análisis. Esta acción no se puede deshacer.
+    </p>
+    <div style="display:flex;gap:10px">
+      <button class="btn-ghost" style="flex:1" onclick="cancelarNuevaFicha()">Cancelar</button>
+      <button class="btn-primary" style="flex:1" onclick="confirmarNuevaFicha()">Sí, limpiar todo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── NUEVA FICHA (sin diálogos nativos del navegador, que pueden estar bloqueados en sandbox) ─── */
+function crearNuevaFicha() {
+  const modal = document.getElementById('modalNuevaFicha');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function cancelarNuevaFicha() {
+  const modal = document.getElementById('modalNuevaFicha');
+  if (modal) modal.classList.add('hidden');
+}
+
+function confirmarNuevaFicha() {
+  try {
+    localStorage.removeItem('crm_cliente');
+    localStorage.removeItem('crm_gestiones');
+    if (typeof gestiones !== 'undefined') gestiones.length = 0;
+    if (typeof clienteData !== 'undefined') { for (const k in clienteData) delete clienteData[k]; }
+
+    const camposTexto = ['nombre','telefono','correo','ciudad','vehiculo','ocupacion','precio',
+      'asistieron','manejaron','comentariosPrueba','tiempoLlegada','montoDescuento','otroRegaloDesc',
+      'enganche','tasaInteres','comentariosGestion','comentariosPrimeraVisita'];
+    camposTexto.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
+    const camposSelect = ['fuenteLead','pruebaManejo','tipoOperacion','seguro','estadoOperacion',
+      'disponibilidad','descuento','anticipo','documentacion','estatusCredito','decision','urgencia',
+      'engancheModo','plazo','tipoContacto','calidadContacto','calidadPrimeraVisita'];
+    camposSelect.forEach(id => { const el = document.getElementById(id); if (el) el.selectedIndex = 0; });
+
+    const checks = ['rTapetes','rVidrios','rPelicula','rKitSeguridad','rPlacas','rOtro'];
+    checks.forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+
+    try { if (typeof togglePrueba === 'function') togglePrueba(); } catch(e){}
+    try { if (typeof toggleOperacion === 'function') toggleOperacion(); } catch(e){}
+    try { if (typeof toggleDisponibilidad === 'function') toggleDisponibilidad(); } catch(e){}
+    try { if (typeof toggleDescuento === 'function') toggleDescuento(); } catch(e){}
+    try { if (typeof toggleOtroRegalo === 'function') toggleOtroRegalo(); } catch(e){}
+    try { if (typeof toggleCredito === 'function') toggleCredito(); } catch(e){}
+
+    const resFin = document.getElementById('resultadoFinanciamiento');
+    if (resFin) resFin.style.display = 'none';
+    const cardWA = document.getElementById('cardWhatsApp');
+    if (cardWA) cardWA.classList.add('hidden');
+    const resumen = document.getElementById('resumenAnalisis');
+    if (resumen) resumen.innerHTML = '<span class="ai-placeholder">Registra una gestión y presiona "Analizar con IA" para obtener diagnóstico completo del cliente, señales de compra, objeciones y estrategia de cierre.</span>';
+
+    try { if (typeof renderHistorial === 'function') renderHistorial(); } catch(e){}
+    try { if (typeof recalcScore === 'function') recalcScore(); } catch(e){}
+    try { if (typeof actualizarPasoSiguiente === 'function') actualizarPasoSiguiente(); } catch(e){}
+    try { if (typeof mostrarToast === 'function') mostrarToast('✓ Ficha nueva — todo limpio'); } catch(e){}
+
+    cancelarNuevaFicha();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch(err) {
+    console.error('Error en confirmarNuevaFicha:', err);
+    cancelarNuevaFicha();
+    try { if (typeof mostrarToast === 'function') mostrarToast('Hubo un problema al limpiar. Intenta de nuevo.'); } catch(e){}
+  }
+}
+
+/* ─── THEME ─── */
+(function() {
+  const saved = localStorage.getItem('nexus-theme') || 'dark';
+  document.documentElement.dataset.theme = saved;
+  const icon  = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  if (icon && label) {
+    icon.textContent  = saved === 'dark' ? '☀️' : '🌙';
+    label.textContent = saved === 'dark' ? 'Claro' : 'Oscuro';
+  }
+})();
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+  html.dataset.theme = next;
+  localStorage.setItem('nexus-theme', next);
+  document.getElementById('themeIcon').textContent  = next === 'dark' ? '☀️' : '🌙';
+  document.getElementById('themeLabel').textContent = next === 'dark' ? 'Claro' : 'Oscuro';
+}
+
+/* ─── STATE ─── */
+let gestiones   = JSON.parse(localStorage.getItem('crm_gestiones') || '[]');
+let clienteData = JSON.parse(localStorage.getItem('crm_cliente')   || '{}');
+
+/* ─── INIT ─── */
+(function init() {
+  const campos = ['nombre','telefono','correo','ciudad','vehiculo','ocupacion','precio','fuenteLead',
+                  'pruebaManejo','tipoOperacion','estadoOperacion','seguro',
+                  'enganche','engancheModo','plazo','tasaInteres','asistieron','manejaron','comentariosPrueba',
+                  'disponibilidad','tiempoLlegada','descuento','montoDescuento','otroRegaloDesc',
+                  'anticipo','documentacion','estatusCredito','decision','urgencia'];
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && clienteData[id] !== undefined) el.value = clienteData[id];
+  });
+  const checks = ['rTapetes','rVidrios','rPelicula','rKitSeguridad','rPlacas','rOtro'];
+  checks.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && clienteData[id] !== undefined) el.checked = clienteData[id];
+  });
+  togglePrueba(); toggleOperacion(); toggleDisponibilidad(); toggleDescuento(); toggleOtroRegalo();
+  renderHistorial(); recalcScore(); actualizarPasoSiguiente(); calcularFinanciamiento();
+})();
+
+/* ─── TOGGLES ─── */
+function togglePrueba() {
+  document.getElementById('datosPrueba').classList.toggle('hidden', document.getElementById('pruebaManejo').value !== 'si');
+}
+function toggleOperacion() {
+  const v = document.getElementById('tipoOperacion').value;
+  document.getElementById('datosContado').classList.toggle('hidden', v !== 'contado');
+  document.getElementById('datosFinanciado').classList.toggle('hidden', v !== 'financiado');
+  toggleCredito();
+}
+function toggleDisponibilidad() {
+  document.getElementById('campoTiempoLlegada').style.display = document.getElementById('disponibilidad').value === 'no' ? 'block' : 'none';
+}
+function toggleDescuento() {
+  document.getElementById('campoMontoDescuento').style.display = document.getElementById('descuento').value === 'si' ? 'block' : 'none';
+}
+function toggleOtroRegalo() {
+  document.getElementById('campoOtroRegalo').style.display = document.getElementById('rOtro').checked ? 'block' : 'none';
+}
+function toggleCredito() {
+  const esFinanciado = document.getElementById('tipoOperacion').value === 'financiado';
+  document.getElementById('bloqueCredito').classList.toggle('hidden', !esFinanciado);
+}
+
+/* ─── CALCULADOR DE FINANCIAMIENTO ─── */
+function cambiarModoEnganche() {
+  // Al cambiar de modo, el valor anterior ya no es válido en la nueva unidad: se limpia para evitar confusión.
+  const inp = document.getElementById('enganche');
+  inp.value = '';
+  ajustarLimitesEnganche();
+  calcularFinanciamiento();
+  mostrarToast('Ingresa el enganche en la nueva unidad seleccionada.');
+}
+
+function ajustarLimitesEnganche() {
+  const precio = parseFloat(document.getElementById('precio').value) || 0;
+  const modo   = document.getElementById('engancheModo').value;
+  const inp    = document.getElementById('enganche');
+  if (modo === 'pct') {
+    inp.max = 100;
+    inp.placeholder = 'Ej. 20';
+  } else {
+    inp.max = precio || '';
+    inp.placeholder = precio ? `máx. $${precio.toLocaleString('es-MX')}` : '0';
+  }
+}
+
+function calcularFinanciamiento() {
+  const precio   = parseFloat(document.getElementById('precio').value) || 0;
+  const modo     = document.getElementById('engancheModo').value;
+  const inp      = document.getElementById('enganche');
+  ajustarLimitesEnganche();
+
+  let engVal = parseFloat(inp.value) || 0;
+
+  // Validación dura: % nunca > 100, $ nunca > precio del vehículo.
+  if (modo === 'pct' && engVal > 100) {
+    engVal = 100; inp.value = 100;
+    mostrarToast('El enganche en porcentaje no puede ser mayor a 100%.');
+  }
+  if (modo === 'monto' && precio && engVal > precio) {
+    engVal = precio; inp.value = precio;
+    mostrarToast('El enganche no puede ser mayor al precio del vehículo.');
+  }
+
+  const plazo    = parseInt(document.getElementById('plazo').value) || 0;
+  const tasaAnual= parseFloat(document.getElementById('tasaInteres').value) || 0;
+  const resBox   = document.getElementById('resultadoFinanciamiento');
+
+  if (!precio || !engVal) { resBox.style.display = 'none'; onCampoChange(); return; }
+
+  const engancheMonto = modo === 'pct' ? precio * (engVal / 100) : engVal;
+  const montoFinanciar = Math.max(precio - engancheMonto, 0);
+
+  let mensualidad = plazo ? montoFinanciar / plazo : 0;
+  if (plazo && tasaAnual > 0) {
+    const tasaMensual = (tasaAnual / 100) / 12;
+    const factor = Math.pow(1 + tasaMensual, plazo);
+    mensualidad = montoFinanciar * (tasaMensual * factor) / (factor - 1);
+    mensualidad = mensualidad * 1.16; // IVA 16% sobre el componente financiero estimado
+  }
+
+  document.getElementById('kpiEnganche').textContent = '$' + Math.round(engancheMonto).toLocaleString('es-MX');
+  document.getElementById('kpiMontoFinanciar').textContent = '$' + Math.round(montoFinanciar).toLocaleString('es-MX');
+  document.getElementById('kpiMensualidad').textContent = plazo ? '$' + Math.round(mensualidad).toLocaleString('es-MX') : '—';
+  resBox.style.display = 'block';
+
+  onCampoChange();
+}
+
+/* ─── SCORE ─── */
+function recalcScore() {
+  let pts = 0;
+  const nombre   = document.getElementById('nombre').value.trim();
+  const telefono = document.getElementById('telefono').value.trim();
+  const vehiculo = document.getElementById('vehiculo').value.trim();
+  const precio   = document.getElementById('precio').value;
+  const prueba   = document.getElementById('pruebaManejo').value;
+  const tipoOp   = document.getElementById('tipoOperacion').value;
+  const estado   = document.getElementById('estadoOperacion').value;
+  const fuente   = document.getElementById('fuenteLead').value;
+  const gCount   = gestiones.length;
+
+  if (nombre)          pts += 10;
+  if (telefono)        pts += 10;
+  if (vehiculo)        pts += 10;
+  if (precio)          pts += 5;
+  if (fuente)          pts += 5;
+  if (prueba === 'si') pts += 20;
+  if (tipoOp)          pts += 15;
+  if (estado === 'cerrada')  { pts = 100; }
+  else if (estado === 'perdida') { pts = Math.min(pts, 15); }
+  pts += Math.min(gCount * 5, 25);
+  pts = Math.min(100, pts);
+
+  const arc    = document.getElementById('scoreArc');
+  const num    = document.getElementById('scoreNum');
+  const tag    = document.getElementById('scoreTag');
+  const desc   = document.getElementById('scoreDesc');
+  const circum = 220;
+  arc.style.strokeDashoffset = circum - (circum * pts / 100);
+  num.textContent = pts === 0 ? '—' : pts;
+
+  let color, tagTxt, descTxt;
+  if (estado === 'cerrada')      { color='#10B981'; tagTxt='✅ Cerrado';          descTxt='¡Venta cerrada! Activa el protocolo de posventa y solicita referidos.'; }
+  else if (estado === 'perdida') { color='#EF4444'; tagTxt='❌ Perdido';          descTxt='Documenta las razones y agenda reactivación en 30 días.'; }
+  else if (pts >= 75)            { color='#10B981'; tagTxt='🔥 Alta probabilidad';descTxt='Cliente muy calificado. Enfoca el esfuerzo en el cierre definitivo.'; }
+  else if (pts >= 50)            { color='#F97316'; tagTxt='⚡ Interés medio-alto';descTxt='Avanza correctamente. Sigue generando confianza y resuelve objeciones.'; }
+  else if (pts >= 20)            { color='#8B5CF6'; tagTxt='🌱 En desarrollo';    descTxt='Aún hay información por capturar. Califica mejor al cliente.'; }
+  else                           { color='#94A3B8'; tagTxt='Sin datos';           descTxt='Completa los datos del cliente para activar el análisis.'; }
+
+  arc.style.stroke  = color;
+  num.style.color   = color;
+  tag.textContent   = tagTxt;
+  tag.style.cssText = `background:${color}22;color:${color};display:inline-block;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px`;
+  desc.textContent  = descTxt;
+}
+
+/* ─── SIGUIENTE PASO ─── */
+function actualizarPasoSiguiente() {
+  const estado = document.getElementById('estadoOperacion').value;
+  const prueba = document.getElementById('pruebaManejo').value;
+  const tipoOp = document.getElementById('tipoOperacion').value;
+  const nombre = document.getElementById('nombre').value.trim() || 'el cliente';
+  let texto = '';
+  if (estado === 'cerrada')      texto = `Llamar a ${nombre} en 3 días para verificar satisfacción. En el primer servicio pedir referidos y enviar encuesta.`;
+  else if (estado === 'perdida') texto = `Registrar motivo de pérdida. Agendar contacto de reactivación en 30 días. Analizar objeciones para mejorar el proceso.`;
+  else if (!prueba)              texto = `Coordinar prueba de manejo con ${nombre}. Prepara la unidad y presenta los diferenciadores clave del modelo.`;
+  else if (!tipoOp)              texto = `Presentar a ${nombre} las opciones de financiamiento y pago de contado. Preparar cotización formal.`;
+  else                           texto = `Dar seguimiento a la decisión de ${nombre}. Resolver objeciones pendientes y proponer fecha de cierre.`;
+  document.getElementById('nextStepText').textContent = texto;
+}
+
+/* ─── BUSCAR CLIENTE (placeholder, pendiente de conectar a base de datos) ─── */
+async function buscarCliente() {
+  const q = document.getElementById('buscarClienteInput').value.trim();
+  const resultados = document.getElementById('buscarResultados');
+  const status = document.getElementById('buscarStatus');
+  const btn = document.getElementById('btnBuscarCliente');
+
+  if (!q) { mostrarToast('⚠️ Escribe un nombre, teléfono o correo para buscar'); return; }
+
+  const url = getSheetsUrl();
+  if (!url) {
+    mostrarToast('⚠️ Configura la URL de Sheets en ⚙️ Config');
+    toggleConfigModal();
+    return;
+  }
+
+  // UI: buscando
+  btn.disabled = true; btn.textContent = '⏳';
+  status.textContent = 'Buscando en Google Sheets…';
+  resultados.style.display = 'none'; resultados.innerHTML = '';
+
+  try {
+    const res = await fetch(`${url}?action=buscar&q=${encodeURIComponent(q)}`, {
+      method: 'GET', cache: 'no-cache'
+    });
+    const data = await res.json();
+
+    btn.disabled = false; btn.textContent = '🔍 Buscar';
+
+    if (!data.success || !data.clientes || data.clientes.length === 0) {
+      status.textContent = '❌ No se encontró ningún cliente con ese dato.';
+      status.style.color = 'var(--red)';
+      return;
+    }
+
+    status.textContent = `${data.clientes.length} resultado(s) encontrado(s). Selecciona uno:`;
+    status.style.color = 'var(--green)';
+    resultados.style.display = 'block';
+
+    resultados.innerHTML = data.clientes.map((c, i) => `
+      <div onclick="cargarClienteDesdeSheets(${i})" data-idx="${i}"
+        style="padding:11px 14px; cursor:pointer; border-bottom:1px solid var(--line); transition:background 0.15s"
+        onmouseover="this.style.background='var(--accent-dim)'" onmouseout="this.style.background=''">
+        <div style="font-weight:700; font-size:13px">${c.nombre}</div>
+        <div style="font-size:11px; color:var(--muted); margin-top:2px">${c.telefono || ''} ${c.correo ? '· ' + c.correo : ''} · <span style="color:var(--accent-bright)">${c.vehiculo || 'Sin vehículo'}</span></div>
+      </div>
+    `).join('');
+
+    // Guardar resultados globalmente para usarlos en cargarClienteDesdeSheets
+    window._buscarResultados = data.clientes;
+
+  } catch(err) {
+    btn.disabled = false; btn.textContent = '🔍 Buscar';
+    status.textContent = '❌ Error de conexión: ' + err.message;
+    status.style.color = 'var(--red)';
+  }
+}
+
+function cargarClienteDesdeSheets(idx) {
+  const c = window._buscarResultados?.[idx];
+  if (!c) return;
+
+  // Mapa de campos Sheets → IDs del formulario
+  const map = {
+    nombre:'nombre', telefono:'telefono', correo:'correo', ciudad:'ciudad',
+    ocupacion:'ocupacion', fuenteLead:'fuenteLead', vehiculo:'vehiculo',
+    precio:'precio', pruebaManejo:'pruebaManejo', tipoOperacion:'tipoOperacion',
+    plazo:'plazo', tasaInteres:'tasaInteres', estadoOperacion:'estadoOperacion',
+    disponibilidad:'disponibilidad', tiempoLlegada:'tiempoLlegada',
+    descuento:'descuento', montoDescuento:'montoDescuento',
+    anticipo:'anticipo', documentacion:'documentacion',
+    estatusCredito:'estatusCredito', decision:'decision', urgencia:'urgencia'
+  };
+
+  Object.entries(map).forEach(([campo, id]) => {
+    const el = document.getElementById(id);
+    if (el && c[campo] !== undefined && c[campo] !== '') el.value = c[campo];
+  });
+
+  // Regalos (texto → checkboxes)
+  if (c.regalos) {
+    const regalos = c.regalos.toLowerCase();
+    const checarRegalo = (id, palabra) => {
+      const el = document.getElementById(id);
+      if (el) el.checked = regalos.includes(palabra);
+    };
+    checarRegalo('rTapetes',      'tapetes');
+    checarRegalo('rVidrios',      'vidrios');
+    checarRegalo('rPelicula',     'película');
+    checarRegalo('rKitSeguridad', 'kit');
+    checarRegalo('rPlacas',       'placas');
+  }
+
+  // Ocultar resultados
+  document.getElementById('buscarResultados').style.display = 'none';
+  document.getElementById('buscarStatus').textContent = `✅ Cliente "${c.nombre}" cargado correctamente.`;
+  document.getElementById('buscarStatus').style.color = 'var(--green)';
+  document.getElementById('buscarClienteInput').value = '';
+
+  // Recalcular UI
+  onCampoChange();
+  if (typeof toggleTipoOperacion === 'function') toggleTipoOperacion();
+  if (typeof toggleDisponibilidad === 'function') toggleDisponibilidad();
+
+  mostrarToast(`✅ "${c.nombre}" cargado desde Sheets`);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ─── AUTO-SAVE CAMPOS ─── */
+function onCampoChange() {
+  const campos = ['nombre','telefono','correo','ciudad','vehiculo','ocupacion','precio','fuenteLead',
+                  'pruebaManejo','tipoOperacion','estadoOperacion','seguro',
+                  'enganche','engancheModo','plazo','tasaInteres','asistieron','manejaron','comentariosPrueba',
+                  'disponibilidad','tiempoLlegada','descuento','montoDescuento','otroRegaloDesc',
+                  'anticipo','documentacion','estatusCredito','decision','urgencia'];
+  campos.forEach(id => { const el = document.getElementById(id); if (el) clienteData[id] = el.value; });
+  const checks = ['rTapetes','rVidrios','rPelicula','rKitSeguridad','rPlacas','rOtro'];
+  checks.forEach(id => { const el = document.getElementById(id); if (el) clienteData[id] = el.checked; });
+  localStorage.setItem('crm_cliente', JSON.stringify(clienteData));
+  recalcScore(); actualizarPasoSiguiente();
+}
+
+/* ─── GUARDAR GESTIÓN ─── */
+function guardarGestion(tipo, calidad, comentarios, origenMsg) {
+  if (!comentarios) { mostrarToast('Escribe los comentarios antes de guardar.'); return false; }
+  const g = { id: Date.now(), fecha: new Date().toLocaleString('es-MX'), tipo, calidad, comentarios };
+  gestiones.unshift(g);
+  localStorage.setItem('crm_gestiones', JSON.stringify(gestiones));
+  renderHistorial(); recalcScore();
+  mostrarToast(origenMsg || '✓ Gestión guardada correctamente');
+  return true;
+}
+
+document.getElementById('btnGuardar').addEventListener('click', () => {
+  const comentarios = document.getElementById('comentariosGestion').value.trim();
+  const ok = guardarGestion(
+    document.getElementById('tipoContacto').value,
+    document.getElementById('calidadContacto').value,
+    comentarios
+  );
+  if (ok) document.getElementById('comentariosGestion').value = '';
+});
+
+document.getElementById('btnGuardarPrimeraVisita').addEventListener('click', () => {
+  const comentarios = document.getElementById('comentariosPrimeraVisita').value.trim();
+  const ok = guardarGestion(
+    'primeravisita',
+    document.getElementById('calidadPrimeraVisita').value,
+    comentarios,
+    '✓ Primera visita guardada como gestión'
+  );
+  if (ok) document.getElementById('comentariosPrimeraVisita').value = '';
+});
+
+/* ─── HISTORIAL ─── */
+function renderHistorial() {
+  const lista = document.getElementById('listaGestiones');
+  const total = document.getElementById('totalGestiones');
+  total.textContent = gestiones.length;
+  if (gestiones.length === 0) {
+    lista.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px 0">Sin gestiones registradas aún.</p>';
+    return;
+  }
+  const tipoMap = { sincontacto:'⏳ Sin contacto aún', primeravisita:'🚗 Primera visita', llamada:'📞 Llamada', whatsapp:'💬 WhatsApp', cita:'🤝 Cita', seguimiento:'📋 Seguimiento', posventa:'⭐ Posventa', email:'📧 Correo' };
+  const colorMap = { positivo:'#10B981', neutral:'#F97316', negativo:'#EF4444' };
+  lista.innerHTML = gestiones.map(g => `
+    <div class="gestion-item" style="border-left-color:${colorMap[g.calidad]||'var(--accent)'}">
+      <div class="gestion-meta">
+        <span class="gestion-tipo">${tipoMap[g.tipo]||g.tipo}</span>
+        <span>${g.fecha}</span>
+      </div>
+      <p style="font-size:13px;line-height:1.5;color:var(--text)">${g.comentarios}</p>
+    </div>
+  `).join('');
+}
+
+/* ─── ANÁLISIS IA ─── */
+document.getElementById('btnAnalizar').addEventListener('click', analizarConIA);
+async function analizarConIA() {
+  const btn = document.getElementById('btnAnalizar');
+  const out = document.getElementById('resumenAnalisis');
+  btn.disabled = true; btn.textContent = '⏳ Analizando…';
+  out.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Generando análisis con IA…</div>';
+
+  const prompt = `Eres un experto coach de ventas automotriz y neuroventas en México. Analiza el siguiente expediente de cliente a fondo, con el mismo nivel de detalle y profundidad que usaría un consultor senior en un reporte real para el vendedor. Responde EXACTAMENTE con esta estructura de encabezados en texto plano, SIN emojis ni símbolos antes del texto (cada encabezado en su propia línea, seguido de dos puntos y luego el desarrollo). Dentro de cada bloque puedes usar sub-puntos con guion y texto en **negritas** para resaltar ideas clave, como lo haría un análisis profesional bien estructurado:
+
+Etapa detectada: Identifica con precisión en qué etapa del proceso está el cliente (prospección, calificación, presentación, manejo de objeciones, negociación o cierre). Explica por qué, citando evidencia concreta del expediente (visitas, pruebas de manejo, gestiones, montos, documentación).
+
+Diagnóstico y estado emocional: Desarrolla el perfil del cliente con profundidad. Incluye: un perfil narrativo breve (quién es como comprador), una lista de señales positivas (compromiso, comportamiento de compra real), una lista de señales de alerta (riesgos de enfriamiento, datos faltantes, inconsistencias en el seguimiento), y su estado emocional/actitud actual.
+
+Probabilidad de cierre: Da un rango estimado en % (ej. 68-72%) con una justificación sólida de 3-4 líneas explicando qué la sostiene y qué la haría bajar si no se actúa.
+
+Objeciones detectadas: Identifica la objeción principal (y si aplica, una secundaria latente). Para cada una explica qué hay realmente detrás de la objeción (no tomarla literal) y cómo manejarla con un guion de venta sugerido entre comillas, listo para usar con el cliente.
+
+Técnica y estrategia de cierre: Recomienda la técnica de venta más adecuada para este momento específico y explica por qué. Después desglosa 2-3 acciones concretas y numeradas (Acción 1, Acción 2...) con un título corto y una explicación práctica de cómo ejecutarlas.
+
+Voz activa: Si hay frases del cliente o del vendedor en las notas, sugiere 2-4 correcciones de frases débiles o pasivas a frases en voz activa y persuasiva, formato 'original' → 'mejorada'. Si no hay frases suficientes en las notas, omite este bloque por completo.
+
+Neuroventas aplicadas: Lista 3-4 principios de neuroventas aplicables a este caso específico (anclaje emocional, urgencia, prueba social, lenguaje de propiedad anticipada, micro-compromisos progresivos, etc.), explicando en cada uno cómo aplicarlo concretamente con este cliente y por qué funciona en su situación particular.
+
+Congruencia a verificar: Solo si hay una posible incongruencia entre la ocupación del cliente y el vehículo/monto de la operación, señálala con tacto, sin asumir mala fe. Si no aplica o no hay ocupación registrada, omite este bloque por completo.
+
+Qué decirle hoy: Da un script específico y listo para usar (cita textual entre comillas) para la próxima llamada o mensaje. Usa cierre de alternativa cuando sea pertinente (ofrecer dos opciones concretas en vez de una pregunta abierta).
+
+Expediente del cliente:
+${buildContexto()}
+
+Sé específico, profesional y bien desarrollado en cada sección — tienes espacio de sobra, así que no te quedes corto: profundiza como lo haría un consultor experto, usando los datos reales del expediente como evidencia en cada afirmación. Usa el nombre del cliente. Si falta información para alguna sección, indícalo brevemente en vez de inventar datos. IMPORTANTE: no agregues ningún emoji ni símbolo decorativo en ningún encabezado, solo el texto seguido de dos puntos.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 6000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    out.innerHTML = formatMD(data.content?.map(b => b.text||'').join('')||'Sin respuesta.');
+  } catch(e) {
+    out.innerHTML = '<span style="color:var(--red)">Error al conectar con IA. Verifica tu conexión.</span>';
+  }
+  btn.disabled = false; btn.textContent = '⚡ Analizar con IA';
+}
+
+/* ─── SIGUIENTES PASOS RÁPIDOS (primera visita) ─── */
+document.getElementById('btnPasosRapidos').addEventListener('click', generarPasosRapidos);
+async function generarPasosRapidos() {
+  const btn = document.getElementById('btnPasosRapidos');
+  const out = document.getElementById('outputPasosRapidos');
+  out.classList.remove('hidden');
+  btn.disabled = true;
+  out.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Generando siguientes pasos…</div>';
+  out.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  const nombre = document.getElementById('nombre').value || 'el cliente';
+  const comentarios = document.getElementById('comentariosPrimeraVisita').value || 'Sin comentarios registrados aún.';
+  const sentimiento = document.getElementById('calidadPrimeraVisita').value;
+
+  const prompt = `Eres un coach de ventas automotriz experto en México. Un vendedor acaba de tener la primera visita/presentación con un cliente y necesita una recomendación RÁPIDA y PRÁCTICA de siguientes pasos, sin un análisis profundo.
+
+Cliente: ${nombre}
+Vehículo de interés: ${document.getElementById('vehiculo').value||'No especificado'}
+Sentimiento de la visita: ${sentimiento}
+Comentarios de la primera visita: ${comentarios}
+
+Responde en formato de lista breve (máximo 4 puntos), directo y accionable, indicando qué hacer ahora mismo para avanzar con este cliente. Sin introducción ni cierre, solo los puntos con un guion. Cada punto de 1-2 líneas máximo.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 400, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    const texto = data.content?.map(b => b.text||'').join('')||'Sin respuesta.';
+    out.innerHTML = texto.replace(/^[-•]\s+(.+)$/gm, '<div style="margin:6px 0;padding-left:10px;border-left:2px solid var(--line)">$1</div>').replace(/\n/g,'');
+  } catch(e) {
+    out.innerHTML = '<span style="color:var(--red)">Error al generar siguientes pasos.</span>';
+  }
+  btn.disabled = false;
+}
+
+/* ─── MENSAJE IA (primera visita) ─── */
+document.getElementById('btnWhatsAppPrimeraVisita').addEventListener('click', generarMensajeWAPrimeraVisita);
+async function generarMensajeWAPrimeraVisita() {
+  const card = document.getElementById('cardWhatsAppPrimeraVisita');
+  const out  = document.getElementById('outputWhatsAppPrimeraVisita');
+  card.classList.remove('hidden');
+  out.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Generando mensaje…</div>';
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  const nombre = document.getElementById('nombre').value || 'el cliente';
+  const comentarios = document.getElementById('comentariosPrimeraVisita').value || 'Sin comentarios registrados aún.';
+
+  const prompt = `Eres un vendedor de autos experto en comunicación por WhatsApp en México.
+
+Redacta UN mensaje de seguimiento para WhatsApp tras la primera visita/presentación con este cliente:
+Nombre: ${nombre}
+Vehículo de interés: ${document.getElementById('vehiculo').value||'No especificado'}
+Sentimiento de la visita: ${document.getElementById('calidadPrimeraVisita').value}
+Comentarios de la visita: ${comentarios}
+
+El mensaje debe:
+- Ser natural, cálido y profesional (no robótico)
+- Máximo 4-5 líneas
+- Incluir el nombre del cliente
+- Tener un call-to-action claro
+- Usar 1-2 emojis máximo
+- Estar listo para copiar y pegar
+
+Responde SOLO con el mensaje, sin comillas ni explicaciones.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    out.textContent = data.content?.map(b => b.text||'').join('')||'Sin respuesta.';
+  } catch(e) {
+    out.innerHTML = '<span style="color:var(--red)">Error al generar mensaje.</span>';
+  }
+}
+
+document.getElementById('btnCopiarMensajePrimeraVisita').addEventListener('click', () => {
+  const texto = document.getElementById('outputWhatsAppPrimeraVisita').innerText.trim();
+  if (!texto) { mostrarToast('Aún no hay mensaje para copiar.'); return; }
+  copiarTexto(texto, '✓ Mensaje copiado al portapapeles');
+});
+
+/* ─── MENSAJE WA IA ─── */
+document.getElementById('btnWhatsApp').addEventListener('click', generarMensajeWA);
+async function generarMensajeWA() {
+  const card = document.getElementById('cardWhatsApp');
+  const out  = document.getElementById('outputWhatsApp');
+  card.classList.remove('hidden');
+  out.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Generando mensaje…</div>';
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  const prompt = `Eres un vendedor de autos experto en comunicación por WhatsApp en México.
+
+Redacta UN mensaje de seguimiento para WhatsApp basado en este expediente:
+${buildContexto()}
+
+El mensaje debe:
+- Ser natural, cálido y profesional (no robótico)
+- Máximo 4-5 líneas
+- Incluir el nombre del cliente
+- Tener un call-to-action claro
+- Usar 1-2 emojis máximo
+- Estar listo para copiar y pegar
+
+Responde SOLO con el mensaje, sin comillas ni explicaciones.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    out.textContent = data.content?.map(b => b.text||'').join('')||'Sin respuesta.';
+  } catch(e) {
+    out.innerHTML = '<span style="color:var(--red)">Error al generar mensaje.</span>';
+  }
+}
+
+document.getElementById('btnCopiarMensaje').addEventListener('click', () => {
+  const texto = document.getElementById('outputWhatsApp').innerText.trim();
+  if (!texto) { mostrarToast('Aún no hay mensaje para copiar.'); return; }
+  copiarTexto(texto, '✓ Mensaje copiado al portapapeles');
+});
+
+document.getElementById('btnCopiarAnalisis').addEventListener('click', () => {
+  const texto = document.getElementById('resumenAnalisis').innerText.trim();
+  if (!texto || texto.includes('Registra una gestión')) { mostrarToast('Aún no hay análisis para copiar.'); return; }
+  copiarTexto(texto, '✓ Análisis copiado al portapapeles');
+});
+
+/* ─── COPIAR (con fallback robusto) ─── */
+function copiarTexto(texto, mensajeOk) {
+  function fallback() {
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); mostrarToast(mensajeOk); }
+    catch(e) { mostrarToast('No se pudo copiar. Selecciona el texto manualmente.'); }
+    document.body.removeChild(ta);
+  }
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(texto).then(() => mostrarToast(mensajeOk)).catch(fallback);
+  } else {
+    fallback();
+  }
+}
+function buildContexto() {
+  const g = gestiones.slice(0,5).map(x=>`[${x.fecha}] ${x.tipo} (${x.calidad}): ${x.comentarios}`).join('\n');
+  const regalos = [];
+  if (document.getElementById('rTapetes').checked)      regalos.push('Tapetes');
+  if (document.getElementById('rVidrios').checked)       regalos.push('Vidrios de seguridad');
+  if (document.getElementById('rPelicula').checked)      regalos.push('Película antiasalto');
+  if (document.getElementById('rKitSeguridad').checked)  regalos.push('Kit de seguridad completo');
+  if (document.getElementById('rPlacas').checked)        regalos.push('Placas y tenencia');
+  if (document.getElementById('rOtro').checked)          regalos.push(document.getElementById('otroRegaloDesc').value || 'Otro (sin especificar)');
+
+  return `Nombre: ${document.getElementById('nombre').value||'—'}
+Teléfono: ${document.getElementById('telefono').value||'—'}
+Ciudad: ${document.getElementById('ciudad').value||'—'}
+Ocupación del cliente: ${document.getElementById('ocupacion').value||'No registrada'}
+Vehículo: ${document.getElementById('vehiculo').value||'—'}
+Precio: $${document.getElementById('precio').value||'—'} MXN
+Fuente: ${document.getElementById('fuenteLead').value||'—'}
+Prueba de manejo: ${document.getElementById('pruebaManejo').value||'No realizada'}
+Operación: ${document.getElementById('tipoOperacion').value||'—'}
+${document.getElementById('tipoOperacion').value === 'financiado' ? `Mensualidad estimada: ${document.getElementById('kpiMensualidad').textContent} a ${document.getElementById('plazo').value||'—'} meses` : ''}
+Estado: ${document.getElementById('estadoOperacion').value}
+
+— Información adicional —
+Disponibilidad del vehículo: ${document.getElementById('disponibilidad').value === 'si' ? 'En existencia' : document.getElementById('disponibilidad').value === 'no' ? `No disponible, llega en ${document.getElementById('tiempoLlegada').value||'tiempo no especificado'}` : '—'}
+Descuento otorgado: ${document.getElementById('descuento').value === 'si' ? `Sí, $${document.getElementById('montoDescuento').value||'—'} MXN` : document.getElementById('descuento').value === 'no' ? 'No' : '—'}
+Regalos/beneficios entregados: ${regalos.length ? regalos.join(', ') : 'Ninguno'}
+Anticipo o pedido: ${document.getElementById('anticipo').value||'—'}
+Documentación entregada: ${document.getElementById('documentacion').value||'—'}
+Estatus del crédito: ${document.getElementById('estatusCredito').value||'No aplica / no financiado'}
+Quién decide la compra: ${document.getElementById('decision').value||'—'}
+Urgencia / cuándo lo quiere: ${document.getElementById('urgencia').value||'No mencionó'}
+
+Gestiones totales: ${gestiones.length}
+Últimas gestiones:\n${g||'Ninguna'}`;
+}
+
+function formatMD(txt) {
+  // El modelo entrega encabezados en texto plano (sin emoji); nosotros inyectamos
+  // siempre el mismo emoji fijo y consistente para cada sección.
+  const encabezados = [
+    [/^\s*Etapa detectada\s*:/gmi,                        '📍 Etapa detectada:'],
+    [/^\s*Diagn[oó]stico y estado emocional\s*:/gmi,      '🧠 Diagnóstico y estado emocional:'],
+    [/^\s*Probabilidad de cierre\s*:/gmi,                 '📊 Probabilidad de cierre:'],
+    [/^\s*Objeciones detectadas\s*:/gmi,                  '🚧 Objeciones detectadas:'],
+    [/^\s*T[eé]cnica y estrategia de cierre\s*:/gmi,      '🎯 Técnica y estrategia de cierre:'],
+    [/^\s*Voz activa\s*:/gmi,                             '⚡ Voz activa:'],
+    [/^\s*Neuroventas aplicadas\s*:/gmi,                  '🧲 Neuroventas aplicadas:'],
+    [/^\s*Congruencia a verificar\s*:/gmi,                '⚠️ Congruencia a verificar:'],
+    [/^\s*Qu[eé] decirle hoy\s*:/gmi,                      '🔜 Qué decirle hoy:'],
+  ];
+  let out = txt;
+  encabezados.forEach(([regex, limpio]) => { out = out.replace(regex, limpio); });
+
+  return out
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text)">$1</strong>')
+    .replace(/^(📍|🧠|📊|🚧|🎯|⚡|🧲|⚠️|🔜)\s*(.+?):/gm, '<div style="font-weight:700;color:var(--accent-bright);margin:16px 0 6px;font-size:14.5px"><span style="font-family:\'Apple Color Emoji\',\'Segoe UI Emoji\',\'Noto Color Emoji\',\'Twemoji Mozilla\',sans-serif">$1</span> $2:</div>')
+    .replace(/^[-•]\s+(.+)$/gm, '<div style="margin:4px 0 4px 14px;padding-left:10px;border-left:2px solid var(--line)">$1</div>')
+    .replace(/^(Acción \d+[—\-–]?\s*.*)$/gm, '<div style="font-weight:700;color:var(--text);margin:10px 0 2px">$1</div>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+function mostrarToast(msg = '✓ Listo') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* ─── BOTONES PASO ─── */
+document.getElementById('btnRealizado').addEventListener('click', () => mostrarToast('✓ Paso marcado como realizado'));
+document.getElementById('btnPosponer').addEventListener('click', () => mostrarToast('⏸ Pospuesto — retoma pronto'));
+
+/* ══════════════════════════════════════════════════════
+   ⚙️ CONFIG MODAL
+══════════════════════════════════════════════════════ */
+function toggleConfigModal() {
+  const m = document.getElementById('configModal');
+  m.classList.toggle('open');
+  if (m.classList.contains('open')) cargarConfigUI();
+}
+function closeModalOutside(e) { if (e.target === document.getElementById('configModal')) toggleConfigModal(); }
+function switchTab(tab) {
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('pane-' + tab).classList.add('active');
+}
+function cargarConfigUI() {
+  const url = localStorage.getItem('nexus_sheets_url') || '';
+  const el = document.getElementById('sheetsWebAppUrl');
+  if (el) el.value = url;
+  const st = document.getElementById('sheetsStatus');
+  if (st && url) st.textContent = '✓ URL configurada';
+  ['claude','openai','gemini','grok'].forEach(p => {
+    const k = localStorage.getItem('nexus_apikey_' + p) || '';
+    const inp = document.getElementById('key-' + p);
+    if (inp) inp.value = k;
+    actualizarStatusKey(p, !!k);
+    document.getElementById('card-' + p).style.opacity = k ? '1' : '0.65';
+  });
+  const active = localStorage.getItem('nexus_ai_provider') || '';
+  if (active) {
+    const r = document.getElementById('radio-' + active);
+    if (r) r.checked = true;
+    document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
+    const card = document.getElementById('card-' + active);
+    if (card) card.classList.add('selected');
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   🔑 API KEYS
+══════════════════════════════════════════════════════ */
+function onApiKeyInput(provider) {
+  const val = document.getElementById('key-' + provider).value.trim();
+  localStorage.setItem('nexus_apikey_' + provider, val);
+  actualizarStatusKey(provider, !!val);
+  document.getElementById('card-' + provider).style.opacity = val ? '1' : '0.65';
+  if (val) actualizarChatHeader();
+}
+function actualizarStatusKey(provider, tieneKey) {
+  const el = document.getElementById('status-' + provider);
+  if (!el) return;
+  el.innerHTML = tieneKey
+    ? '<span class="key-ok">✓ API Key guardada en este navegador</span>'
+    : '<span style="color:var(--muted)">Sin clave configurada</span>';
+}
+function toggleKeyVisibility(provider) {
+  const inp = document.getElementById('key-' + provider);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+function eliminarApiKey(provider) {
+  localStorage.removeItem('nexus_apikey_' + provider);
+  document.getElementById('key-' + provider).value = '';
+  actualizarStatusKey(provider, false);
+  document.getElementById('card-' + provider).style.opacity = '0.65';
+  mostrarToast('🔑 API Key de ' + providerLabel(provider) + ' eliminada');
+  actualizarChatHeader();
+}
+function setActiveProvider(provider) {
+  localStorage.setItem('nexus_ai_provider', provider);
+  document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('card-' + provider).classList.add('selected');
+  actualizarChatHeader();
+  mostrarToast('🤖 IA activa: ' + providerLabel(provider));
+}
+function providerLabel(p) { return { claude:'Claude', openai:'ChatGPT', gemini:'Gemini', grok:'Grok' }[p] || p; }
+function providerAvatar(p) { return { claude:'🟣', openai:'🟢', gemini:'🔵', grok:'⚫' }[p] || '🤖'; }
+function providerModel(p) { return { claude:'claude-sonnet-4-6', openai:'gpt-4o-mini', gemini:'gemini-2.0-flash', grok:'grok-3-mini' }[p] || ''; }
+
+/* ══════════════════════════════════════════════════════
+   🗑️ ELIMINAR / RESET
+══════════════════════════════════════════════════════ */
+let _confirmCallback = null;
+function confirmarAccion(tipo, titulo, msg, callback) {
+  _confirmCallback = callback;
+  document.getElementById('confirmTitle').textContent = titulo;
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirmModal').classList.remove('open'); _confirmCallback = null; }
+function closeConfirmOutside(e) { if (e.target === document.getElementById('confirmModal')) closeConfirm(); }
+function executeConfirm() { if (_confirmCallback) _confirmCallback(); closeConfirm(); }
+function eliminarTodasApiKeys() {
+  ['claude','openai','gemini','grok'].forEach(p => {
+    localStorage.removeItem('nexus_apikey_' + p);
+    const inp = document.getElementById('key-' + p); if (inp) inp.value = '';
+    actualizarStatusKey(p, false);
+    document.getElementById('card-' + p).style.opacity = '0.65';
+  });
+  localStorage.removeItem('nexus_ai_provider');
+  document.querySelectorAll('.provider-radio').forEach(r => r.checked = false);
+  document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
+  actualizarChatHeader();
+  mostrarToast('🔑 Todas las API Keys eliminadas');
+}
+function eliminarHistorialGestiones() {
+  gestiones = []; localStorage.removeItem('nexus_gestiones');
+  renderGestiones(); calcularScore();
+  mostrarToast('📋 Historial de gestiones eliminado');
+}
+function eliminarTodo() {
+  ['nexus_sheets_url','nexus_ai_provider','nexus_chat_history'].forEach(k => localStorage.removeItem(k));
+  ['claude','openai','gemini','grok'].forEach(p => localStorage.removeItem('nexus_apikey_' + p));
+  localStorage.removeItem('nexus_gestiones');
+  crearNuevaFicha();
+  chatHistory = [];
+  const msgs = document.getElementById('chatMessages');
+  if (msgs) msgs.innerHTML = `<div class="chat-msg ai"><div class="chat-av">🤖</div><div class="chat-bubble">App reseteada. Configura tu API Key para comenzar. 🚀</div></div>`;
+  cargarConfigUI(); actualizarChatHeader();
+  mostrarToast('💥 App reseteada completamente');
+}
+
+/* ══════════════════════════════════════════════════════
+   🤖 AI CHAT
+══════════════════════════════════════════════════════ */
+let chatHistory = JSON.parse(localStorage.getItem('nexus_chat_history') || '[]');
+function toggleAIChat() {
+  document.getElementById('aiChatPanel').classList.toggle('open');
+  if (document.getElementById('aiChatPanel').classList.contains('open')) {
+    actualizarChatHeader(); document.getElementById('chatInput').focus();
+  }
+}
+function actualizarChatHeader() {
+  const provider = localStorage.getItem('nexus_ai_provider') || '';
+  const key = provider ? (localStorage.getItem('nexus_apikey_' + provider) || '') : '';
+  const badge = document.getElementById('aiFabBadge');
+  if (provider && key) {
+    badge.classList.add('on');
+    document.getElementById('chatAvatar').textContent = providerAvatar(provider);
+    document.getElementById('chatName').textContent   = providerLabel(provider);
+    document.getElementById('chatModel').textContent  = providerModel(provider) + ' · Listo';
+  } else {
+    badge.classList.remove('on');
+    document.getElementById('chatAvatar').textContent = '🤖';
+    document.getElementById('chatName').textContent   = 'Sin configurar';
+    document.getElementById('chatModel').textContent  = 'Ve a ⚙️ Config → 🤖 IA';
+  }
+}
+function getClienteContexto() {
+  const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  return `CLIENTE EN CRM:\n- Nombre: ${g('nombre')||'Sin datos'}\n- Teléfono: ${g('telefono')}\n- Vehículo: ${g('vehiculo')}\n- Precio: $${g('precio')}\n- Operación: ${g('tipoOperacion')}, plazo: ${g('plazo')} meses\n- Estado: ${g('estadoOperacion')}\n- Decisión: ${g('decision')}\n- Urgencia: ${g('urgencia')}\n- Score: ${document.getElementById('scoreNum')?.textContent||'—'}\n- Gestiones: ${gestiones.length}`;
+}
+function sendContextMsg(msg) { document.getElementById('chatInput').value = msg; sendChat(); }
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const text  = input.value.trim();
+  if (!text) return;
+  const provider = localStorage.getItem('nexus_ai_provider') || '';
+  const apiKey   = provider ? (localStorage.getItem('nexus_apikey_' + provider) || '') : '';
+  if (!provider || !apiKey) {
+    mostrarToast('⚠️ Configura tu IA en ⚙️ Config → 🤖 IA');
+    toggleConfigModal(); switchTab('ia'); return;
+  }
+  appendChatMsg('user', text);
+  input.value = ''; input.style.height = 'auto';
+  chatHistory.push({ role: 'user', content: text });
+  const typingId = appendTyping();
+  document.getElementById('chatSendBtn').disabled = true;
+  const sys = `Eres un asistente experto en ventas de automóviles. Ayudas a vendedores mexicanos con estrategias de cierre, seguimiento, manejo de objeciones y redacción de mensajes. Responde en español mexicano, de forma concisa y práctica. Usa emojis con moderación.\n\n${getClienteContexto()}`;
+  try {
+    let respuesta = '';
+    if (provider === 'claude')  respuesta = await callClaude(apiKey, sys, chatHistory);
+    if (provider === 'openai')  respuesta = await callOpenAI(apiKey, sys, chatHistory);
+    if (provider === 'gemini')  respuesta = await callGemini(apiKey, sys, chatHistory);
+    if (provider === 'grok')    respuesta = await callGrok(apiKey, sys, chatHistory);
+    removeTyping(typingId);
+    chatHistory.push({ role: 'assistant', content: respuesta });
+    appendChatMsg('ai', respuesta);
+    if (chatHistory.length > 40) chatHistory = chatHistory.slice(-40);
+    localStorage.setItem('nexus_chat_history', JSON.stringify(chatHistory));
+  } catch(err) {
+    removeTyping(typingId);
+    appendChatMsg('ai', '❌ Error: ' + err.message + '\n\nVerifica tu API Key y conexión.');
+  }
+  document.getElementById('chatSendBtn').disabled = false;
+}
+function appendChatMsg(role, text) {
+  const msgs = document.getElementById('chatMessages');
+  const av = role === 'ai' ? (providerAvatar(localStorage.getItem('nexus_ai_provider')||'')||'🤖') : '👤';
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  div.innerHTML = `<div class="chat-av">${av}</div><div class="chat-bubble">${text.replace(/\n/g,'<br>')}</div>`;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+}
+function appendTyping() {
+  const msgs = document.getElementById('chatMessages');
+  const id = 'typing_' + Date.now();
+  const av = providerAvatar(localStorage.getItem('nexus_ai_provider')||'')||'🤖';
+  const div = document.createElement('div');
+  div.className = 'chat-msg ai'; div.id = id;
+  div.innerHTML = `<div class="chat-av">${av}</div><div class="chat-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight; return id;
+}
+function removeTyping(id) { const el = document.getElementById(id); if (el) el.remove(); }
+
+async function callClaude(apiKey, system, history) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1024, system, messages: history })
+  });
+  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || r.statusText); }
+  return (await r.json()).content[0].text;
+}
+async function callOpenAI(apiKey, system, history) {
+  const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 1024, messages: [{ role:'system', content:system }, ...history] })
+  });
+  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || r.statusText); }
+  return (await r.json()).choices[0].message.content;
+}
+async function callGemini(apiKey, system, history) {
+  const contents = history.map(m => ({ role: m.role==='assistant'?'model':'user', parts:[{text:m.content}] }));
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system_instruction:{ parts:[{text:system}] }, contents })
+  });
+  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || r.statusText); }
+  return (await r.json()).candidates[0].content.parts[0].text;
+}
+async function callGrok(apiKey, system, history) {
+  const r = await fetch('https://api.x.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'grok-3-mini', max_tokens: 1024, messages: [{ role:'system', content:system }, ...history] })
+  });
+  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || r.statusText); }
+  return (await r.json()).choices[0].message.content;
+}
+
+/* ══════════════════════════════════════════════════════
+   ☁️ GOOGLE SHEETS
+══════════════════════════════════════════════════════ */
+function guardarSheetsUrl() {
+  const url = document.getElementById('sheetsWebAppUrl').value.trim();
+  localStorage.setItem('nexus_sheets_url', url);
+  const st = document.getElementById('sheetsStatus');
+  if (st) st.textContent = url ? '✓ URL guardada' : '';
+}
+function getSheetsUrl() { return localStorage.getItem('nexus_sheets_url') || ''; }
+function getRegalosList() {
+  const lista = [];
+  if (document.getElementById('rTapetes')?.checked)      lista.push('Tapetes');
+  if (document.getElementById('rVidrios')?.checked)       lista.push('Vidrios de seguridad');
+  if (document.getElementById('rPelicula')?.checked)      lista.push('Película antiasalto');
+  if (document.getElementById('rKitSeguridad')?.checked)  lista.push('Kit de seguridad');
+  if (document.getElementById('rPlacas')?.checked)        lista.push('Placas y tenencia');
+  if (document.getElementById('rOtro')?.checked) {
+    const desc = document.getElementById('otroRegaloDesc')?.value.trim();
+    lista.push(desc ? `Otro: ${desc}` : 'Otro');
+  }
+  return lista.join(', ') || 'Ninguno';
+}
+function buildClientePayload() {
+  const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  return {
+    tipo:'cliente', nombre:g('nombre'), telefono:g('telefono'), correo:g('correo'),
+    ciudad:g('ciudad'), ocupacion:g('ocupacion'), fuenteLead:g('fuenteLead'),
+    vehiculo:g('vehiculo'), precio:g('precio'), pruebaManejo:g('pruebaManejo'),
+    tipoOperacion:g('tipoOperacion'), enganche:document.getElementById('kpiEnganche')?.textContent||'',
+    plazo:g('plazo'), tasaInteres:g('tasaInteres'), mensualidad:document.getElementById('kpiMensualidad')?.textContent||'',
+    estadoOperacion:g('estadoOperacion'), disponibilidad:g('disponibilidad'), tiempoLlegada:g('tiempoLlegada'),
+    descuento:g('descuento'), montoDescuento:g('montoDescuento'), regalos:getRegalosList(),
+    anticipo:g('anticipo'), documentacion:g('documentacion'), estatusCredito:g('estatusCredito'),
+    decision:g('decision'), urgencia:g('urgencia'), totalGestiones:gestiones.length,
+    score:document.getElementById('scoreNum')?.textContent||'—'
+  };
+}
+async function enviarASheets(payload) {
+  const url = getSheetsUrl();
+  if (!url) { mostrarToast('⚠️ Configura la URL de Sheets en ⚙️ Config'); toggleConfigModal(); return { ok:false }; }
+  try { await fetch(url, { method:'POST', mode:'no-cors', body:JSON.stringify(payload) }); return { ok:true }; }
+  catch(e) { return { ok:false, error:e.message }; }
+}
+async function syncCompletoSheets() {
+  const btn = document.getElementById('btnSyncSheets');
+  const nombre = document.getElementById('nombre').value.trim();
+  if (!nombre) { mostrarToast('⚠️ Ingresa el nombre del cliente'); return; }
+  btn.disabled = true; btn.textContent = '⏳ Enviando…';
+  await enviarASheets({ ...buildClientePayload(), tipo:'sync_completo', gestiones:gestiones.map(g=>({...g,nombreCliente:nombre})) });
+  btn.disabled = false; btn.textContent = '☁️ Sincronizar expediente completo';
+  mostrarToast('☁️ Sincronizado en Sheets');
+}
+async function syncGestionSheets(gestion) {
+  if (!getSheetsUrl()) return;
+  await enviarASheets({ tipo:'gestion', nombreCliente:document.getElementById('nombre').value.trim()||'Sin nombre', ...gestion });
+}
+async function guardarClienteSheets() {
+  const btn = document.getElementById('btnGuardarCliente');
+  const msg = document.getElementById('msgGuardarCliente');
+  const nombre = document.getElementById('nombre').value.trim();
+  if (!nombre) { mostrarToast('⚠️ Ingresa el nombre del cliente'); return; }
+  if (!getSheetsUrl()) { mostrarToast('⚠️ Configura la URL de Sheets en ⚙️ Config'); toggleConfigModal(); return; }
+  btn.disabled = true; btn.textContent = '⏳ Guardando…'; if(msg) msg.style.display = 'none';
+  const result = await enviarASheets(buildClientePayload());
+  btn.disabled = false; btn.textContent = '☁️ Guardar cliente en Google Sheets';
+  if (msg) { msg.style.display='block'; msg.innerHTML = result.ok!==false ? '<span style="color:var(--green)">✅ Cliente guardado en Sheets</span>' : '<span style="color:var(--red)">❌ Error. Verifica la URL del Web App.</span>'; }
+  mostrarToast(result.ok!==false ? '☁️ Cliente guardado' : '❌ Error al guardar');
+}
+document.getElementById('btnGuardar').addEventListener('click', async () => {
+  if (getSheetsUrl() && gestiones.length > 0) await syncGestionSheets(gestiones[0]);
+}, { capture: false });
+document.getElementById('btnGuardarPrimeraVisita').addEventListener('click', async () => {
+  if (getSheetsUrl() && gestiones.length > 0) await syncGestionSheets(gestiones[0]);
+}, { capture: false });
+
+/* ── INIT ── */
+(function() {
+  const url = localStorage.getItem('nexus_sheets_url') || '';
+  const el = document.getElementById('sheetsWebAppUrl');
+  if (el && url) el.value = url;
+  actualizarChatHeader();
+})();
+
+</script>
+</body>
+</html>
