@@ -1826,12 +1826,7 @@ Recomendación base calculada por reglas (referencia, puedes ajustarla, mejorarl
 Responde ÚNICAMENTE con la recomendación final en 1-2 frases, en español, tono profesional y empático. Sé específico y accionable, menciona al cliente por su nombre (${nombre}), y termina indicando el plazo recomendado para hacerlo. No agregues encabezados, comillas ni explicaciones adicionales.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
-    });
-    const data = await res.json();
-    const texto = (data.content?.map(b => b.text || '').join('') || '').trim();
+    const texto = (await callAIConFallback(prompt, '', 300)).trim();
     aplicarAccionRecomendada(texto || base.texto, base.plazo);
   } catch(e) {
     document.getElementById('nextStepText').textContent = prevTexto;
@@ -2266,12 +2261,7 @@ ${texto}
 """`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 700, messages: [{ role: 'user', content: prompt }] })
-    });
-    const data = await res.json();
-    const mejorado = (data.content?.map(b => b.text || '').join('') || '').trim();
+    const mejorado = (await callAIConFallback(prompt, '', 700)).trim();
 
     if (mejorado) {
       ta.value = mejorado;
@@ -2281,7 +2271,8 @@ ${texto}
       mostrarToast('⚠️ No se pudo mejorar el texto, intenta de nuevo');
     }
   } catch (e) {
-    mostrarToast('❌ Error al conectar con IA. Verifica tu conexión.');
+    if (e.message === 'CONFIG_REQUIRED') mostrarToast('⚠️ Configura tu IA en ⚙️ Config → 🤖 IA');
+    else mostrarToast('❌ Error al conectar con IA. Verifica tu conexión.');
   }
 
   btn.disabled = false; btn.innerHTML = textoBtnOriginal;
@@ -2319,16 +2310,13 @@ ${buildContexto()}
 Sé específico, profesional y bien desarrollado en cada sección — tienes espacio de sobra, así que no te quedes corto: profundiza como lo haría un consultor experto, usando los datos reales del expediente como evidencia en cada afirmación. Usa el nombre del cliente. Si falta información para alguna sección, indícalo brevemente en vez de inventar datos. IMPORTANTE: no agregues ningún emoji ni símbolo decorativo en ningún encabezado, solo el texto seguido de dos puntos.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 6000, messages: [{ role: 'user', content: prompt }] })
-    });
-    const data = await res.json();
-    out.innerHTML = formatMD(data.content?.map(b => b.text||'').join('')||'Sin respuesta.');
+    const texto = await callAIConFallback(prompt, '', 6000);
+    out.innerHTML = formatMD(texto || 'Sin respuesta.');
     // Con un análisis nuevo disponible, la acción recomendada se recalcula en coordinación con él.
     generarAccionRecomendadaIA();
   } catch(e) {
-    out.innerHTML = '<span style="color:var(--red)">Error al conectar con IA. Verifica tu conexión.</span>';
+    if (e.message === 'CONFIG_REQUIRED') out.innerHTML = '<span style="color:var(--red)">Configura tu IA en ⚙️ Config → 🤖 IA.</span>';
+    else out.innerHTML = '<span style="color:var(--red)">Error al conectar con IA. Verifica tu conexión.</span>';
   }
   btn.disabled = false; btn.textContent = '⚡ Analizar con IA';
 }
@@ -2357,15 +2345,11 @@ Comentarios de la primera visita: ${comentarios}
 Responde en formato de lista breve (máximo 4 puntos), directo y accionable, indicando qué hacer ahora mismo para avanzar con este cliente. Sin introducción ni cierre, solo los puntos con un guion. Cada punto de 1-2 líneas máximo.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 400, messages: [{ role: 'user', content: prompt }] })
-    });
-    const data = await res.json();
-    const texto = data.content?.map(b => b.text||'').join('')||'Sin respuesta.';
+    const texto = (await callAIConFallback(prompt, '', 400)) || 'Sin respuesta.';
     out.innerHTML = texto.replace(/^[-•]\s+(.+)$/gm, '<div style="margin:6px 0;padding-left:10px;border-left:2px solid var(--line)">$1</div>').replace(/\n/g,'');
   } catch(e) {
-    out.innerHTML = '<span style="color:var(--red)">Error al generar siguientes pasos.</span>';
+    if (e.message === 'CONFIG_REQUIRED') out.innerHTML = '<span style="color:var(--red)">Configura tu IA en ⚙️ Config → 🤖 IA.</span>';
+    else out.innerHTML = '<span style="color:var(--red)">Error al generar siguientes pasos.</span>';
   }
   btn.disabled = false;
 }
@@ -2401,14 +2385,10 @@ El mensaje debe:
 Responde SOLO con el mensaje, sin comillas ni explicaciones.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
-    });
-    const data = await res.json();
-    out.textContent = data.content?.map(b => b.text||'').join('')||'Sin respuesta.';
+    out.textContent = (await callAIConFallback(prompt, '', 300)) || 'Sin respuesta.';
   } catch(e) {
-    out.innerHTML = '<span style="color:var(--red)">Error al generar mensaje.</span>';
+    if (e.message === 'CONFIG_REQUIRED') out.innerHTML = '<span style="color:var(--red)">Configura tu IA en ⚙️ Config → 🤖 IA.</span>';
+    else out.innerHTML = '<span style="color:var(--red)">Error al generar mensaje.</span>';
   }
 }
 
@@ -2443,14 +2423,10 @@ El mensaje debe:
 Responde SOLO con el mensaje, sin comillas ni explicaciones.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
-    });
-    const data = await res.json();
-    out.textContent = data.content?.map(b => b.text||'').join('')||'Sin respuesta.';
+    out.textContent = (await callAIConFallback(prompt, '', 300)) || 'Sin respuesta.';
   } catch(e) {
-    out.innerHTML = '<span style="color:var(--red)">Error al generar mensaje.</span>';
+    if (e.message === 'CONFIG_REQUIRED') out.innerHTML = '<span style="color:var(--red)">Configura tu IA en ⚙️ Config → 🤖 IA.</span>';
+    else out.innerHTML = '<span style="color:var(--red)">Error al generar mensaje.</span>';
   }
 }
 
@@ -2810,9 +2786,11 @@ function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
 
 // Realiza una única llamada a un modelo Gemini concreto.
 async function callGeminiModel(apiKey, model, system, contents) {
+  const body = { contents };
+  if (system && system.trim()) body.system_instruction = { parts: [{ text: system }] };
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ system_instruction:{ parts:[{text:system}] }, contents })
+    body: JSON.stringify(body)
   });
 
   if (!r.ok) {
@@ -3044,7 +3022,21 @@ function cerrarResumenModal() {
 }
 
 async function callAIConFallback(prompt, sys, maxTokens) {
-  // 1) Acceso directo: funciona automáticamente dentro de Claude (sin API key).
+  // 1) Si el usuario ya configuró su propio proveedor (ej. Gemini gratuito de Google AI Studio),
+  //    SIEMPRE se usa ese — así se garantiza que nunca se dependa del acceso gratuito de Claude
+  //    (que puede saturarse con "high demand") ni se generen costos inesperados.
+  const provider = localStorage.getItem('nexus_ai_provider') || '';
+  const apiKey   = provider ? (localStorage.getItem('nexus_apikey_' + provider) || '') : '';
+  if (provider && apiKey) {
+    const msgs = [{ role: 'user', content: prompt }];
+    if (provider === 'claude')  return await callClaude(apiKey, sys, msgs);
+    if (provider === 'openai')  return await callOpenAI(apiKey, sys, msgs);
+    if (provider === 'gemini')  return await callGemini(apiKey, sys, msgs);
+    if (provider === 'grok')    return await callGrok(apiKey, sys, msgs);
+  }
+
+  // 2) Sin proveedor configurado: intenta el acceso directo gratuito de Claude
+  //    (solo disponible dentro del entorno de Claude.ai/artefactos).
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -3055,18 +3047,8 @@ async function callAIConFallback(prompt, sys, maxTokens) {
       const texto = data.content?.map(b => b.text || '').join('') || '';
       if (texto) return texto;
     }
-  } catch (e) { /* no disponible: seguimos con el modo navegador */ }
+  } catch (e) { /* no disponible */ }
 
-  // 2) Modo navegador: usa el proveedor/API key configurados manualmente.
-  const provider = localStorage.getItem('nexus_ai_provider') || '';
-  const apiKey   = provider ? (localStorage.getItem('nexus_apikey_' + provider) || '') : '';
-  if (!provider || !apiKey) throw new Error('CONFIG_REQUIRED');
-
-  const msgs = [{ role: 'user', content: prompt }];
-  if (provider === 'claude')  return await callClaude(apiKey, sys, msgs);
-  if (provider === 'openai')  return await callOpenAI(apiKey, sys, msgs);
-  if (provider === 'gemini')  return await callGemini(apiKey, sys, msgs);
-  if (provider === 'grok')    return await callGrok(apiKey, sys, msgs);
   throw new Error('CONFIG_REQUIRED');
 }
 
