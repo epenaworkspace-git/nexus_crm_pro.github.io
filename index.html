@@ -1,438 +1,2224 @@
-/**
- * ═══════════════════════════════════════════════════════════════════
- *  NEXUS CRM PRO — Google Apps Script
- *  Sincronización de clientes, gestiones y acciones desde Nexus CRM
- *
- *  INSTRUCCIONES DE INSTALACIÓN:
- *  1. Abre tu Google Spreadsheet
- *  2. Extensiones → Apps Script
- *  3. Borra el código de ejemplo y pega TODO este archivo
- *  4. Clic en el ícono 💾 Guardar
- *  5. Clic en "Implementar" → "Nueva implementación"
- *     - Tipo: Aplicación web
- *     - Ejecutar como: Yo (tu cuenta de Google)
- *     - Quién tiene acceso: Cualquier persona
- *  6. Clic en "Implementar" y autoriza los permisos solicitados
- *  7. Copia la URL del Web App que aparece
- *  8. En Nexus CRM → Configuración → pega la URL y guárdala
- *
- *  HOJAS QUE SE CREAN AUTOMÁTICAMENTE:
- *  · Clientes  — Una fila por cliente, se actualiza en cada sync
- *  · Gestiones — Una fila por gestión (registro permanente, sin sobrescribir)
- * ═══════════════════════════════════════════════════════════════════
- */
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus CRM — Gestión de Ventas Automotriz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0D1B2E;--panel:#152238;--panel-2:#1C2E45;--panel-3:#243650;--line:#2A3F5A;
+  --grad:linear-gradient(135deg,#22D3EE 0%,#3B82F6 100%);
+  --grad-h:linear-gradient(135deg,#38E4FF 0%,#60A5FA 100%);
+  --grad-glow:rgba(34,211,238,0.38);
+  --accent:#3B82F6;--accent-bright:#60A5FA;
+  --accent-dim:rgba(59,130,246,0.14);--accent-glow:rgba(59,130,246,0.28);
+  --text:#FFFFFF;--text-dim:rgba(255,255,255,0.70);--muted:#94A3B8;
+  --green:#10B981;--green-dim:rgba(16,185,129,0.14);
+  --red:#EF4444;--red-dim:rgba(239,68,68,0.14);
+  --orange:#F97316;--orange-dim:rgba(249,115,22,0.14);
+  --purple:#8B5CF6;--purple-dim:rgba(139,92,246,0.14);
+  --elec-green:#00E676;--elec-green-dim:rgba(0,230,118,0.16);--elec-green-glow:rgba(0,230,118,0.35);
+  --elec-red:#FF1744;--elec-red-dim:rgba(255,23,68,0.16);--elec-red-glow:rgba(255,23,68,0.35);
+  --elec-amber:#FFC400;--elec-amber-dim:rgba(255,196,0,0.16);--elec-amber-glow:rgba(255,196,0,0.35);
+  --radius:16px;--radius-sm:12px;--radius-xs:10px;--radius-pill:999px;
+  --shadow:0 2px 18px rgba(0,0,0,0.38);--shadow-glow:0 0 22px rgba(59,130,246,0.22);
+  --transition:all 0.28s cubic-bezier(.4,0,.2,1);
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif,'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji';
+}
+[data-theme="light"]{
+  --bg:#FFFFFF;--panel:#FAFBFC;--panel-2:#F1F4F8;--panel-3:#E8EDF5;--line:#E2E8F0;
+  --grad-glow:rgba(34,211,238,0.25);
+  --accent:#0369A1;--accent-bright:#0284C7;
+  --accent-dim:rgba(3,105,161,0.08);--accent-glow:rgba(3,105,161,0.14);
+  --text:#0F172A;--text-dim:rgba(15,23,42,0.65);--muted:#64748B;
+  --green:#059669;--green-dim:rgba(5,150,105,0.10);
+  --red:#DC2626;--red-dim:rgba(220,38,38,0.10);
+  --orange:#EA580C;--orange-dim:rgba(234,88,12,0.10);
+  --purple:#7C3AED;--purple-dim:rgba(124,58,237,0.10);
+  --shadow:0 1px 10px rgba(15,23,42,0.07),0 4px 18px rgba(15,23,42,0.04);
+  --shadow-glow:0 0 16px rgba(3,105,161,0.16);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;min-height:100vh;padding-bottom:80px;transition:background 0.35s,color 0.35s;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(34,211,238,0.05) 0%,transparent 70%),
+             radial-gradient(ellipse 60% 40% at 80% 100%,rgba(59,130,246,0.04) 0%,transparent 70%);}
+[data-theme="light"] body::before{display:none;}
 
-// ── RECIBIR POST DESDE NEXUS CRM ──────────────────────────────────
-function doPost(e) {
-  try {
-    const raw  = e.postData ? e.postData.contents : '{}';
-    const data = JSON.parse(raw);
-    const ss   = SpreadsheetApp.getActiveSpreadsheet();
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(13,27,46,0.92);border-bottom:1px solid var(--line);
+  padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  backdrop-filter:blur(20px) saturate(1.6);}
+[data-theme="light"] .topbar{background:rgba(255,255,255,0.96);box-shadow:0 1px 12px rgba(15,23,42,0.08);}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.topbar-right{display:flex;align-items:center;gap:7px;}
+.app-logo{width:34px;height:34px;background:var(--grad);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;box-shadow:0 2px 16px var(--grad-glow);transition:var(--transition);cursor:pointer;}
+.app-logo:hover{transform:rotate(-8deg) scale(1.08);}
+.app-name{font-size:16px;color:var(--accent);letter-spacing:0.06em;font-weight:600;}
+.app-sub{font-size:10px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;line-height:1;}
+.icon-btn{height:36px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-pill);color:var(--muted);
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;
+  font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);font-family:var(--font);}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent);}
 
-    switch (data.tipo) {
+/* ── LAYOUT ── */
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px;position:relative;z-index:1;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.col-2{grid-column:span 2;}
+@media(max-width:560px){.grid-2,.grid-3{grid-template-columns:1fr;}.col-2{grid-column:span 1;}}
 
-      case 'sync_completo':
-        // Guarda/actualiza el cliente y sincroniza todas sus gestiones
-        upsertCliente(ss, data);
-        if (Array.isArray(data.gestiones) && data.gestiones.length > 0) {
-          limpiarGestionesCliente(ss, data.nombre);
-          data.gestiones.forEach(g => guardarGestion(ss, {
-            ...g,
-            nombreCliente: data.nombre || 'Sin nombre'
-          }));
-        }
-        break;
+/* ── CARDS ── */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:14px;
+  box-shadow:var(--shadow);transition:border-color 0.25s,box-shadow 0.25s;animation:cardIn 0.55s cubic-bezier(.16,1,.3,1) both;}
+.card:hover{border-color:rgba(34,211,238,0.18);}
+[data-theme="light"] .card{background:#FFFFFF;border-color:#E2E8F0;box-shadow:0 1px 8px rgba(15,23,42,0.06),0 4px 16px rgba(15,23,42,0.04);}
+[data-theme="light"] .card:hover{border-color:#93C5FD;}
+.card-inner{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px;}
+.card-accent{background:var(--panel);border-radius:var(--radius);padding:20px;margin-bottom:14px;position:relative;isolation:isolate;animation:cardIn 0.55s cubic-bezier(.16,1,.3,1) both;}
+.card-accent::before{content:'';position:absolute;inset:0;border-radius:var(--radius);border:1.5px solid transparent;
+  background:var(--grad) border-box;-webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:destination-out;mask-composite:exclude;}
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.card-icon{width:34px;height:34px;background:var(--accent-dim);border:1px solid var(--accent-glow);border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.card-title{font-size:16px;font-weight:700;color:var(--text);}
 
-      case 'cliente':
-        upsertCliente(ss, data);
-        break;
+/* ── INPUTS ── */
+label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;}
+.inp{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 14px;
+  color:var(--text);font-family:var(--font);font-size:14px;transition:border-color 0.2s,box-shadow 0.2s;outline:none;}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+.inp::placeholder{color:var(--muted);}
+.inp:disabled{opacity:0.45;cursor:not-allowed;}
+[data-theme="light"] .inp{background:#FFFFFF;border-color:#CBD5E1;color:#0F172A;}
+[data-theme="light"] .inp:focus{border-color:#0369A1;box-shadow:0 0 0 3px rgba(3,105,161,0.10);}
+select.inp option{background:var(--panel-2);}
+[data-theme="light"] select.inp option{background:#FFFFFF;color:#0F172A;}
+textarea.inp{resize:vertical;min-height:90px;line-height:1.6;}
 
-      case 'gestion':
-        guardarGestion(ss, data);
-        break;
+/* ── BUTTONS ── */
+.btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--grad);color:#FFFFFF;
+  border:none;border-radius:var(--radius-pill);padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;
+  font-family:var(--font);transition:transform 0.15s,box-shadow 0.2s,filter 0.15s;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px var(--grad-glow);filter:brightness(1.06);}
+.btn-primary:active{transform:scale(0.97);}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none;filter:none;}
+.btn-primary.full{width:100%;padding:14px 0;font-size:15px;}
+.btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--panel-2);color:var(--text-dim);
+  border:1px solid var(--line);border-radius:var(--radius-pill);padding:11px 22px;font-size:14px;font-weight:600;
+  cursor:pointer;font-family:var(--font);transition:var(--transition);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent-bright);transform:translateY(-2px);}
+.btn-ghost:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.btn-sm{display:inline-flex;align-items:center;gap:5px;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:var(--radius-pill);padding:8px 16px;font-size:13px;cursor:pointer;color:var(--text);
+  font-family:var(--font);transition:all 0.2s;font-weight:600;}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent-bright);transform:translateY(-1px);}
+.btn-sm:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.btn-sm.success{border-color:var(--green);color:var(--green);}
+.btn-sm.danger{border-color:var(--red);color:var(--red);}
+.btn-sm.warning{border-color:var(--orange);color:var(--orange);}
+.agenda-tab{justify-content:center;}
+.agenda-tab.active{background:var(--grad);border-color:transparent;color:#fff;}
 
-      case 'accion_seguir':
-        // Actualiza el campo "Acción a Seguir" en la fila del cliente (siempre sobreescribe)
-        guardarAccionSeguir(ss, data);
-        break;
+/* ── SECTION TITLE ── */
+.section-title{font-size:11px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;
+  margin:20px 0 12px;display:flex;align-items:center;gap:8px;}
+.section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent);}
 
-      case 'eliminar_cliente':
-        eliminarClienteCompleto(ss, data.nombreCliente);
-        break;
-    }
+/* ── SUB-SECTION ── */
+.sub-section{margin-top:14px;padding:16px;background:var(--panel-2);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;}
 
-    return respuesta({ success: true, mensaje: 'Datos recibidos correctamente.' });
+/* ── SCORE WIDGET ── */
+.score-widget{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:14px;
+  display:flex;align-items:center;gap:22px;box-shadow:var(--shadow);animation:cardIn 0.4s cubic-bezier(.16,1,.3,1) both;}
+[data-theme="light"] .score-widget{background:#FFFFFF;border-color:#E2E8F0;}
+.score-ring-wrap{position:relative;flex-shrink:0;}
+.score-ring-wrap svg{transform:rotate(-90deg);}
+.score-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.score-number{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;}
+.score-label{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;}
+.score-details{flex:1;min-width:0;}
+.score-tag{display:inline-block;padding:4px 12px;border-radius:var(--radius-pill);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;}
+.score-desc{color:var(--text-dim);font-size:13px;line-height:1.55;}
 
-  } catch (err) {
-    return respuesta({ success: false, error: err.toString() });
-  }
+/* ── SIGUIENTE PASO — integrado en Registrar Contacto ── */
+.paso-integrado{background:var(--accent-dim);border:1px solid var(--accent-glow);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:14px;}
+.paso-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--accent-bright);margin-bottom:5px;}
+.paso-texto{font-size:13px;color:var(--text);line-height:1.55;}
+.paso-acciones{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+
+/* ── KPI ROW ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;text-align:center;}
+.kpi-item{padding:12px 8px;background:var(--panel-3);border-radius:var(--radius-xs);}
+.kpi-num{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;word-break:break-word;}
+.kpi-lbl{font-size:11px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:0.05em;}
+
+/* ── SPINNER ── */
+.spinner{width:20px;height:20px;border:2.5px solid var(--line);border-top-color:#22D3EE;border-right-color:#3B82F6;
+  border-radius:50%;animation:spin 0.8s cubic-bezier(.5,.1,.5,.9) infinite;display:inline-block;flex-shrink:0;}
+
+/* ── AI OUTPUT ── */
+.ai-output{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px;
+  min-height:100px;color:var(--text);font-size:14px;line-height:1.75;
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;}
+.ai-loading{display:flex;align-items:center;gap:10px;color:var(--muted);}
+.ai-placeholder{color:var(--muted);font-style:italic;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--panel-3);border:1px solid var(--line);color:var(--text);border-radius:var(--radius-sm);
+  padding:12px 22px;font-size:14px;font-weight:600;z-index:999;opacity:0;pointer-events:none;
+  transition:opacity 0.25s,transform 0.25s;box-shadow:var(--shadow);white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── HISTORIAL ── */
+.historial-list{display:flex;flex-direction:column;gap:10px;max-height:360px;overflow-y:auto;}
+.gestion-item{background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius-xs);padding:14px;}
+.gestion-meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);margin-bottom:6px;gap:8px;flex-wrap:wrap;}
+.gestion-tipo{background:var(--accent-dim);color:var(--accent-bright);padding:2px 10px;border-radius:99px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;}
+.gestion-msg{margin-top:8px;padding:10px 12px;background:var(--panel-3);border-radius:var(--radius-xs);border-left:2px solid var(--green);font-size:12px;color:var(--text-dim);line-height:1.55;}
+.gestion-msg-label{font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;}
+
+/* ── MENÚ ITEMS ── */
+.menu-item{width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:none;border:none;border-bottom:1px solid var(--line);font-family:var(--font);cursor:pointer;transition:background 0.15s;text-align:left;}
+.menu-item:active{background:var(--accent-dim);}
+.menu-label{font-size:14px;font-weight:600;color:var(--text);}
+.menu-sub{font-size:11px;font-weight:400;color:var(--muted);margin-top:1px;}
+.menu-icon{font-size:20px;flex-shrink:0;}
+.menu-item-danger .menu-label{color:var(--red);}
+.menu-item-danger:active{background:var(--red-dim);}
+@media(hover:hover){
+  .menu-item:hover{background:var(--panel-2);}
+  .menu-item-danger:hover{background:var(--red-dim);}
+}
+.badge{display:inline-flex;align-items:center;background:var(--grad);color:#000;font-size:10px;font-weight:800;padding:2px 10px;border-radius:20px;letter-spacing:0.04em;vertical-align:middle;}
+
+/* ── BLOQUE BLOQUEADO ── */
+.bloque-bloqueado{position:relative;}
+.bloque-bloqueado .bloque-overlay{display:none;position:absolute;inset:0;border-radius:var(--radius);background:rgba(13,27,46,0.7);z-index:5;backdrop-filter:blur(2px);align-items:center;justify-content:center;flex-direction:column;gap:8px;text-align:center;padding:20px;}
+.bloque-bloqueado.bloqueado .bloque-overlay{display:flex;}
+[data-theme="light"] .bloque-bloqueado .bloque-overlay{background:rgba(255,255,255,0.8);}
+.overlay-icon{font-size:28px;}
+.overlay-texto{font-size:13px;color:var(--text-dim);max-width:260px;line-height:1.5;}
+
+/* ── BADGE REQUISITO ── */
+.req-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.req-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:var(--radius-pill);font-size:12px;font-weight:600;background:var(--panel-3);border:1px solid var(--line);color:var(--muted);}
+.req-badge.done{background:var(--green-dim);border-color:var(--green);color:var(--green);}
+
+/* ── BOTONES IA — mismo gradiente de marca ── */
+.btn-ia{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--grad);color:#FFFFFF;
+  border:none;border-radius:var(--radius-pill);padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;
+  font-family:var(--font);transition:transform 0.15s,box-shadow 0.2s,filter 0.15s;box-shadow:0 2px 14px var(--grad-glow);}
+.btn-ia:hover{transform:translateY(-2px);box-shadow:0 8px 24px var(--grad-glow);filter:brightness(1.07);}
+.btn-ia:active{transform:scale(0.97);}
+.btn-ia:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none;filter:none;}
+.btn-ia.sm{padding:7px 16px;font-size:12px;}
+
+/* ── SIGUIENTE ACCIÓN RECOMENDADA ── */
+.accion-recomendada-card{background:var(--accent-dim);border:1px solid var(--accent-glow);border-radius:var(--radius-sm);padding:16px;margin-bottom:14px;}
+.accion-meta-row{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);font-weight:600;margin-bottom:2px;}
+.accion-status-row{display:flex;gap:8px;flex-wrap:wrap;}
+.accion-btn{flex:1;min-width:110px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--panel-2);border:1px solid var(--line);color:var(--text-dim);border-radius:var(--radius-pill);
+  padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:var(--transition);}
+.accion-btn:hover{transform:translateY(-1px);}
+.accion-btn.realizado.active{background:var(--elec-green-dim);border-color:var(--elec-green);color:var(--elec-green);box-shadow:0 0 16px var(--elec-green-glow);}
+.accion-btn.norealizado.active{background:var(--elec-red-dim);border-color:var(--elec-red);color:var(--elec-red);box-shadow:0 0 16px var(--elec-red-glow);}
+.accion-btn.posponer.active{background:var(--elec-amber-dim);border-color:var(--elec-amber);color:var(--elec-amber);box-shadow:0 0 16px var(--elec-amber-glow);}
+
+/* ── UTILS ── */
+.text-muted{color:var(--muted);}
+.text-accent{color:var(--accent-bright);}
+.text-green{color:var(--green);}
+.text-red{color:var(--red);}
+.hidden{display:none!important;}
+.campo{margin-bottom:14px;}
+
+/* ── ANIMACIONES ── */
+@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(0.984);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes barGrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+</style>
+</head>
+<body>
+
+<!-- ══ NUEVA FICHA ══ -->
+<script>
+function crearNuevaFicha(){
+  const modal=document.getElementById('modalNuevaFicha');
+  if(modal) modal.classList.remove('hidden');
+}
+function cancelarNuevaFicha(){
+  document.getElementById('modalNuevaFicha').classList.add('hidden');
+}
+function confirmarNuevaFicha(){
+  try{
+    localStorage.removeItem('crm_cliente');
+    localStorage.removeItem('crm_gestiones');
+    localStorage.removeItem('crm_pv_guardada');
+    localStorage.removeItem('crm_pv_msg');
+  }catch(e){}
+  cancelarNuevaFicha();
+  location.reload();
+}
+</script>
+
+<!-- ══ TOPBAR CON MENÚ FLOTANTE ══ -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="app-logo">🚗</div>
+    <div>
+      <div class="app-name">Nexus CRM</div>
+      <div class="app-sub">Ventas Automotriz</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="icon-btn" onclick="toggleTheme()">
+      <span id="themeIcon">☀️</span>
+      <span id="themeLabel">Claro</span>
+    </button>
+    <!-- Botón menú principal -->
+    <button class="icon-btn" id="btnMenuPrincipal" onclick="toggleMenuPrincipal()" style="background:var(--grad);border-color:transparent;color:#fff;gap:8px">
+      <span id="menuIcono">☰</span>
+      <span>Menú</span>
+    </button>
+  </div>
+</div>
+
+<!-- Panel menú — fixed en body, fuera de cualquier stacking context -->
+<div id="menuPrincipal" class="hidden" style="position:fixed;top:60px;right:12px;min-width:220px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 12px 40px rgba(0,0,0,0.55);z-index:1100;overflow:hidden">
+  <button onclick="guardarFichaCompleta()" class="menu-item">
+    <span class="menu-icon">☁️</span>
+    <div><div class="menu-label">Guardar ficha</div><div class="menu-sub">Sincronizar con Google Sheets</div></div>
+  </button>
+  <button onclick="cerrarMenu();crearNuevaFicha()" class="menu-item">
+    <span class="menu-icon">✚</span>
+    <div><div class="menu-label">Nueva ficha</div><div class="menu-sub">Limpiar y empezar nuevo cliente</div></div>
+  </button>
+  <button onclick="cerrarMenu();eliminarClienteSheets()" class="menu-item menu-item-danger">
+    <span class="menu-icon">🗑</span>
+    <div><div class="menu-label">Eliminar cliente</div><div class="menu-sub">Borra ficha local y en Sheets</div></div>
+  </button>
+  <button onclick="cerrarMenu();abrirAgenda()" class="menu-item">
+    <span class="menu-icon">🗓️</span>
+    <div><div class="menu-label">Agenda</div><div class="menu-sub">Próximas acciones de todos los clientes</div></div>
+  </button>
+  <button onclick="cerrarMenu();irAConfiguracion()" class="menu-item" style="border-bottom:none">
+    <span class="menu-icon">⚙️</span>
+    <div><div class="menu-label">Configuración</div><div class="menu-sub">API Key, Sheets, tema</div></div>
+  </button>
+</div>
+<!-- Overlay para cerrar menú al tocar fuera -->
+<div id="menuOverlay" class="hidden" onclick="cerrarMenu()" style="position:fixed;inset:0;z-index:1099"></div>
+
+<div class="wrap">
+
+  <!-- ══ SCORE ══ -->
+  <div class="score-widget">
+    <div class="score-ring-wrap">
+      <svg width="88" height="88" viewBox="0 0 88 88">
+        <circle cx="44" cy="44" r="35" fill="none" stroke="var(--line)" stroke-width="9"/>
+        <circle id="scoreArc" cx="44" cy="44" r="35" fill="none" stroke="#3B82F6"
+          stroke-width="9" stroke-linecap="round" stroke-dasharray="220" stroke-dashoffset="220"
+          style="transition:stroke-dashoffset 0.9s ease,stroke 0.5s"/>
+      </svg>
+      <div class="score-center">
+        <span class="score-number" id="scoreNum">—</span>
+        <span class="score-label">Score</span>
+      </div>
+    </div>
+    <div class="score-details">
+      <div class="score-tag" id="scoreTag">Sin datos</div>
+      <div class="score-desc" id="scoreDesc">Completa los datos del cliente para obtener la probabilidad de cierre.</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn-ia sm" type="button" id="btnEvaluarScoreIA" onclick="evaluarScoreIA(true)">🤖 Evaluar con IA</button>
+        <span id="scoreFuente" style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em">Sin datos aún</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SIGUIENTE ACCIÓN RECOMENDADA — bloque independiente, SIEMPRE visible, arriba de Datos del Cliente ══ -->
+  <div class="card" id="cardAccionRecomendada">
+    <div class="card-header"><div class="card-icon">🎯</div><div class="card-title">Siguiente Acción Recomendada</div></div>
+    <div id="accionRecomendadaContainer">
+      <p class="text-muted" style="text-align:center;padding:10px 0">Aún no hay una acción recomendada. Se genera automáticamente al guardar tu primera gestión con el cliente (más abajo).</p>
+    </div>
+  </div>
+
+  <!-- ══ DATOS DEL CLIENTE ══ -->
+  <div class="card">
+    <div class="card-header"><div class="card-icon">👤</div><div class="card-title">Datos del Cliente</div></div>
+    <div class="grid-2">
+      <div class="campo"><label>Nombre completo</label><input class="inp" type="text" id="nombre" placeholder="Ej. Juan García López" oninput="onCampoChange()"></div>
+      <div class="campo"><label>Teléfono / WhatsApp</label><input class="inp" type="tel" id="telefono" placeholder="+52 55 0000 0000" oninput="onCampoChange()"></div>
+      <div class="campo"><label>Correo electrónico</label><input class="inp" type="email" id="correo" placeholder="cliente@email.com" oninput="onCampoChange()"></div>
+      <div class="campo"><label>Ciudad / Estado</label><input class="inp" type="text" id="ciudad" placeholder="Monterrey, N.L." oninput="onCampoChange()"></div>
+      <div class="campo col-2"><label>Vehículo de interés</label><input class="inp" type="text" id="vehiculo" placeholder="Ej. Mazda CX-5 2024 iSport" oninput="onCampoChange()"></div>
+      <div class="campo"><label>Ocupación del cliente (opcional)</label><input class="inp" type="text" id="ocupacion" placeholder="Ej. Empresario, médico…" oninput="onCampoChange()"></div>
+      <div class="campo"><label>Precio de la unidad ($)</label><input class="inp" type="number" id="precio" placeholder="0" min="0" oninput="onCampoChange();calcularFinanciamiento()"></div>
+      <div class="campo"><label>Fuente del lead</label>
+        <select class="inp" id="fuenteLead" onchange="onCampoChange()">
+          <option value="">Seleccionar</option>
+          <option value="showroom">Visita al showroom</option>
+          <option value="web">Página web</option>
+          <option value="referido">Referido</option>
+          <option value="redes">Redes sociales</option>
+          <option value="llamada">Llamada entrante</option>
+          <option value="evento">Evento / expo</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PROCESO DE VENTA ══ -->
+  <div class="card">
+    <div class="card-header"><div class="card-icon">📋</div><div class="card-title">Proceso de Venta</div></div>
+    <div class="campo"><label>¿Se realizó la prueba de manejo?</label>
+      <select class="inp" id="pruebaManejo" onchange="togglePrueba();onCampoChange()">
+        <option value="">Seleccionar</option><option value="si">✅ Sí se realizó</option><option value="no">❌ No se realizó</option>
+      </select>
+    </div>
+    <div id="datosPrueba" class="sub-section hidden">
+      <div class="grid-2" style="margin-bottom:12px">
+        <div class="campo"><label>Personas que asistieron</label><input class="inp" type="number" id="asistieron" min="0" oninput="onCampoChange()"></div>
+        <div class="campo"><label>Personas que manejaron</label><input class="inp" type="number" id="manejaron" min="0" oninput="onCampoChange()"></div>
+      </div>
+      <div class="campo"><label>Reacción del cliente</label><textarea class="inp" id="comentariosPrueba" style="min-height:70px" placeholder="¿Qué le gustó o preocupó?" oninput="onCampoChange()"></textarea></div>
+    </div>
+    <div class="campo" style="margin-top:14px"><label>Tipo de operación</label>
+      <select class="inp" id="tipoOperacion" onchange="toggleOperacion();onCampoChange()">
+        <option value="">Seleccionar</option><option value="contado">💵 De contado</option><option value="financiado">🏦 Financiado</option>
+      </select>
+    </div>
+    <div id="datosContado" class="sub-section hidden">
+      <div class="campo"><label>¿Adquirió el seguro con nosotros?</label>
+        <select class="inp" id="seguro" onchange="onCampoChange()">
+          <option value="">Seleccionar</option><option value="si">✅ Sí</option><option value="no">❌ No</option>
+        </select>
+      </div>
+    </div>
+    <div id="datosFinanciado" class="sub-section hidden">
+      <div class="grid-2" style="margin-bottom:12px">
+        <div class="campo"><label>Enganche</label>
+          <div style="display:flex;gap:8px">
+            <input class="inp" type="number" id="enganche" min="0" max="100" placeholder="0" oninput="calcularFinanciamiento()" style="flex:2">
+            <select class="inp" id="engancheModo" onchange="cambiarModoEnganche()" style="flex:1"><option value="pct">%</option><option value="monto">$</option></select>
+          </div>
+        </div>
+        <div class="campo"><label>Plazo (meses)</label>
+          <select class="inp" id="plazo" onchange="calcularFinanciamiento()">
+            <option value="">Seleccionar</option><option value="12">12 meses</option><option value="24">24 meses</option>
+            <option value="36">36 meses</option><option value="48">48 meses</option><option value="60">60 meses</option><option value="72">72 meses</option>
+          </select>
+        </div>
+      </div>
+      <div class="campo"><label>Tasa de interés anual (%) — opcional</label><input class="inp" type="number" id="tasaInteres" min="0" step="0.1" placeholder="Ej. 14.5" oninput="calcularFinanciamiento()"></div>
+      <div class="card-inner" id="resultadoFinanciamiento" style="margin-top:18px;padding:20px;display:none">
+        <div class="kpi-row">
+          <div class="kpi-item"><div class="kpi-num text-accent" id="kpiEnganche">$0</div><div class="kpi-lbl">Enganche</div></div>
+          <div class="kpi-item"><div class="kpi-num" id="kpiMontoFinanciar">$0</div><div class="kpi-lbl">A financiar</div></div>
+          <div class="kpi-item"><div class="kpi-num text-green" id="kpiMensualidad">$0</div><div class="kpi-lbl">Mensualidad est.</div></div>
+        </div>
+        <p class="text-muted" style="font-size:11px;margin-top:10px;text-align:center">*Estimado. Incluye IVA 16% sobre intereses. No incluye seguro, comisiones u otros cargos.</p>
+      </div>
+    </div>
+    <div class="campo" style="margin-top:14px"><label>Estado actual</label>
+      <select class="inp" id="estadoOperacion" onchange="onCampoChange()">
+        <option value="proceso">🔄 En proceso</option><option value="cerrada">✅ Cerrada y vendida</option><option value="perdida">❌ Perdida / No cerró</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ══ INFORMACIÓN ADICIONAL ══ -->
+  <div class="card">
+    <div class="card-header"><div class="card-icon">🎁</div><div class="card-title">Información Adicional</div></div>
+    <div class="section-title">Disponibilidad</div>
+    <div class="grid-2">
+      <div class="campo"><label>¿El vehículo está disponible?</label>
+        <select class="inp" id="disponibilidad" onchange="toggleDisponibilidad();onCampoChange()">
+          <option value="">Seleccionar</option><option value="si">✅ Sí, en existencia</option><option value="no">🚚 No, hay que pedirlo</option>
+        </select>
+      </div>
+      <div class="campo" id="campoTiempoLlegada" style="display:none">
+        <label>Tiempo estimado de llegada</label>
+        <input class="inp" type="text" id="tiempoLlegada" placeholder="Ej. 2 semanas, 30 días…" oninput="onCampoChange()">
+        <div style="display:flex;justify-content:flex-end;margin-top:6px">
+          <button class="btn-ia sm" type="button" onclick="reescribirTexto('tiempoLlegada', this)">🪄 Reescribir</button>
+        </div>
+      </div>
+    </div>
+    <div class="section-title">Descuento o regalo</div>
+    <div class="grid-2">
+      <div class="campo"><label>¿Se le dio descuento?</label>
+        <select class="inp" id="descuento" onchange="toggleDescuento();onCampoChange()">
+          <option value="">Seleccionar</option><option value="si">✅ Sí</option><option value="no">❌ No</option>
+        </select>
+      </div>
+      <div class="campo" id="campoMontoDescuento" style="display:none"><label>Monto del descuento ($)</label><input class="inp" type="number" id="montoDescuento" placeholder="0" min="0" oninput="onCampoChange()"></div>
+    </div>
+    <div class="campo">
+      <label>¿Se le regaló algún accesorio / beneficio?</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px" id="regaloCheckboxes">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px"><input type="checkbox" id="rTapetes" onchange="onCampoChange()"> 🛏 Tapetes</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px"><input type="checkbox" id="rVidrios" onchange="onCampoChange()"> 🪟 Vidrios de seguridad</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px"><input type="checkbox" id="rPelicula" onchange="onCampoChange()"> 🛡 Película antiasalto</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px"><input type="checkbox" id="rKitSeguridad" onchange="onCampoChange()"> 🔒 Kit de seguridad completo</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px"><input type="checkbox" id="rPlacas" onchange="onCampoChange()"> 🪪 Placas y tenencia</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px"><input type="checkbox" id="rOtro" onchange="toggleOtroRegalo();onCampoChange()"> ➕ Otro</label>
+      </div>
+      <div id="campoOtroRegalo" style="display:none;margin-top:10px">
+        <input class="inp" type="text" id="otroRegaloDesc" placeholder="Describe qué se le regaló o agregó…" oninput="onCampoChange()">
+        <div style="display:flex;justify-content:flex-end;margin-top:6px">
+          <button class="btn-ia sm" type="button" onclick="reescribirTexto('otroRegaloDesc', this)">🪄 Reescribir</button>
+        </div>
+      </div>
+    </div>
+    <div class="section-title">Documentación y compromiso</div>
+    <div class="grid-2">
+      <div class="campo"><label>¿Dejó anticipo o firmó pedido?</label>
+        <select class="inp" id="anticipo" onchange="onCampoChange()">
+          <option value="">Seleccionar</option><option value="anticipo">💰 Dejó anticipo</option><option value="pedido">📝 Firmó pedido</option><option value="ambos">✅ Anticipo + pedido</option><option value="no">❌ Ninguno aún</option>
+        </select>
+      </div>
+      <div class="campo"><label>¿Dejó documentación?</label>
+        <select class="inp" id="documentacion" onchange="toggleCredito();onCampoChange()">
+          <option value="">Seleccionar</option><option value="si">✅ Sí, entregó documentos</option><option value="no">❌ No ha entregado</option><option value="parcial">📄 Parcialmente</option>
+        </select>
+      </div>
+    </div>
+    <div id="bloqueCredito" class="sub-section hidden">
+      <div class="campo"><label>Estatus del crédito</label>
+        <select class="inp" id="estatusCredito" onchange="onCampoChange()">
+          <option value="">Seleccionar</option><option value="pendiente">⏳ Pendiente de revisar</option><option value="proceso">🔄 En proceso de autorización</option><option value="aprobado">✅ Aprobado</option><option value="negado">❌ Negado</option><option value="contrapropuesta">🔁 Contrapropuesta del banco</option>
+        </select>
+      </div>
+    </div>
+    <div class="section-title">Perfil de decisión</div>
+    <div class="grid-2">
+      <div class="campo"><label>¿Quién toma la decisión de compra?</label>
+        <select class="inp" id="decision" onchange="onCampoChange()">
+          <option value="">Seleccionar</option><option value="propio">👤 El cliente mismo</option><option value="pareja">👫 Junto con su pareja</option><option value="familia">👨‍👩‍👧 Familia / tercero</option><option value="empresa">🏢 Decisión empresarial</option>
+        </select>
+      </div>
+      <div class="campo"><label>¿Para cuándo quiere el vehículo?</label>
+        <select class="inp" id="urgencia" onchange="onCampoChange()">
+          <option value="">Seleccionar / No mencionó</option><option value="inmediato">🔥 De inmediato / ya</option><option value="semana">📅 Esta semana</option><option value="quincena">📅 Esta quincena</option><option value="mes">🗓 Este mes</option><option value="sinprisa">😌 Sin prisa definida</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PRIMERA VISITA — SECCIÓN INDEPENDIENTE ══ -->
+  <div class="card" id="cardPrimeraVisita" style="position:relative">
+    <div class="card-header"><div class="card-icon">🚗</div><div class="card-title">Primera Visita / Presentación del Producto</div></div>
+
+    <!-- Indicadores de requisitos -->
+    <div class="req-row">
+      <span class="req-badge" id="reqPvPasos">⬜ Siguientes pasos generados</span>
+      <span class="req-badge" id="reqPvMensaje">⬜ Mensaje IA generado</span>
+    </div>
+
+    <div id="pvFormulario">
+      <div class="campo">
+        <label>Comentarios de la primera visita</label>
+        <textarea class="inp" id="comentariosPrimeraVisita" placeholder="Describe cómo fue la presentación: qué le gustó, dudas, objeciones, reacción general del cliente…" oninput="onCampoChange()"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:6px">
+          <button class="btn-ia sm" type="button" onclick="reescribirTexto('comentariosPrimeraVisita', this)">🪄 Reescribir</button>
+        </div>
+      </div>
+      <div class="campo" style="margin-bottom:14px">
+        <label>Sentimiento de la visita</label>
+        <select class="inp" id="calidadPrimeraVisita" onchange="onCampoChange()">
+          <option value="positivo">🟢 Positivo</option><option value="neutral">🟡 Neutral</option><option value="negativo">🔴 Negativo</option>
+        </select>
+      </div>
+
+      <!-- Siguientes pasos PV — plan detallado, DISTINTO de la Acción Recomendada de arriba -->
+      <div id="pvPasosBox" class="paso-integrado hidden">
+        <div class="paso-eyebrow">🗺️ Siguientes pasos (plan completo)</div>
+        <div class="paso-texto" id="pvPasosTexto"></div>
+      </div>
+
+      <!-- Mensaje IA PV -->
+      <div id="pvMensajeBox" class="hidden" style="margin-top:12px">
+        <div style="background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px">
+          <p class="text-muted" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Mensaje generado</p>
+          <div id="pvMensajeTexto" class="ai-output" style="min-height:60px"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-sm success" onclick="copiarTexto(document.getElementById('pvMensajeTexto').innerText,'✓ Mensaje copiado')">📋 Copiar</button>
+          <button class="btn-ia sm" onclick="generarMensajePV()">🔄 Regenerar</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn-ia" id="btnPvPasos" onclick="generarPasosPV()" style="flex:1">⚡ Siguientes pasos</button>
+        <button class="btn-ia" id="btnPvMensaje" onclick="generarMensajePV()" style="flex:1">💬 Mensaje IA</button>
+      </div>
+      <div style="margin-top:10px">
+        <button class="btn-primary full" id="btnGuardarPrimeraVisita" disabled>💾 Guardar gestión</button>
+      </div>
+    </div>
+
+    <!-- Vista bloqueada post-guardado -->
+    <div id="pvGuardada" class="hidden">
+      <div style="background:var(--green-dim);border:1px solid var(--green);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px">
+        <p style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:4px">✅ Primera visita guardada</p>
+        <p id="pvResumenGuardado" style="font-size:13px;color:var(--text-dim);line-height:1.5"></p>
+      </div>
+      <div id="pvMensajeGuardado" class="hidden" style="margin-bottom:14px">
+        <div class="gestion-msg"><div class="gestion-msg-label">El mensaje correspondiente a esta gestión es el siguiente:</div><div id="pvMensajeGuardadoTexto"></div></div>
+      </div>
+      <div id="pvAccionesGuardado" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm warning" onclick="replantearPV()">✏️ Replantear gestión</button>
+        <button class="btn-sm danger" onclick="eliminarPV()">🗑 Eliminar gestión</button>
+      </div>
+      <div id="pvBloqueadaMsg" class="hidden" style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;line-height:1.5">
+        🔒 Ya avanzaste con la Siguiente Acción Recomendada, así que esta gestión quedó bloqueada para mantener el historial íntegro.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ REGISTRAR CONTACTO — bloqueado hasta completar la Siguiente Acción Recomendada de PV ══ -->
+  <div class="card bloque-bloqueado" id="cardRegistrarContacto">
+    <div class="bloque-overlay">
+      <div class="overlay-icon">🔒</div>
+      <p class="overlay-texto">Guarda tu <strong>Primera Visita</strong> y registra su <strong>Siguiente Acción Recomendada</strong> (arriba) para habilitar esta sección.</p>
+    </div>
+    <div class="card-header"><div class="card-icon">💬</div><div class="card-title">Registrar Contacto</div></div>
+
+    <!-- Sugerencia general (previa a registrar el contacto) -->
+    <div class="paso-integrado" id="pasoSiguienteRC">
+      <div class="paso-eyebrow">💡 Sugerencia mientras registras</div>
+      <div class="paso-texto" id="nextStepText">Ingresa los datos del cliente para activar las recomendaciones.</div>
+    </div>
+
+    <div id="rcFormulario">
+      <!-- Indicadores de requisitos -->
+      <div class="req-row" style="margin-top:14px">
+        <span class="req-badge" id="reqRcPasos">⬜ Siguientes pasos generados</span>
+        <span class="req-badge" id="reqRcMensaje">⬜ Mensaje IA generado</span>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:14px">
+        <div class="campo"><label>Tipo de contacto</label>
+          <select class="inp" id="tipoContacto">
+            <option value="sincontacto">⏳ Aún no ha habido contacto</option>
+            <option value="llamada">📞 Llamada</option><option value="whatsapp">💬 WhatsApp</option>
+            <option value="cita">🤝 Cita presencial</option><option value="seguimiento">📋 Seguimiento</option>
+            <option value="posventa">⭐ Posventa</option><option value="email">📧 Correo</option>
+          </select>
+        </div>
+        <div class="campo"><label>Calificación del contacto</label>
+          <select class="inp" id="calidadContacto">
+            <option value="positivo">🟢 Positivo — avanza</option>
+            <option value="neutral">🟡 Neutral — sin cambios</option>
+            <option value="negativo">🔴 Negativo — retrocede</option>
+          </select>
+        </div>
+      </div>
+      <div class="campo">
+        <label>Notas del contacto</label>
+        <textarea class="inp" id="comentariosGestion" placeholder="¿Qué se habló? ¿Acuerdos? ¿Objeciones? ¿Próximos pasos?"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:6px">
+          <button class="btn-ia sm" type="button" onclick="reescribirTexto('comentariosGestion', this)">🪄 Reescribir</button>
+        </div>
+      </div>
+
+      <!-- Siguientes pasos RC — plan detallado, DISTINTO de la Acción Recomendada de arriba -->
+      <div id="rcPasosBox" class="paso-integrado hidden" style="margin-bottom:12px">
+        <div class="paso-eyebrow">🗺️ Siguientes pasos (plan completo)</div>
+        <div class="paso-texto" id="rcPasosTexto"></div>
+      </div>
+
+      <!-- Mensaje IA RC -->
+      <div id="rcMensajeBox" class="hidden" style="margin-bottom:14px">
+        <div style="background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px">
+          <p class="text-muted" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Mensaje generado</p>
+          <div id="rcMensajeTexto" class="ai-output" style="min-height:60px"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-sm success" onclick="copiarTexto(document.getElementById('rcMensajeTexto').innerText,'✓ Mensaje copiado')">📋 Copiar</button>
+          <button class="btn-ia sm" onclick="generarMensajeRC()">🔄 Regenerar</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+        <button class="btn-ia" id="btnRcPasos" onclick="generarPasosRC()" style="flex:1">⚡ Siguientes pasos</button>
+        <button class="btn-ia" id="btnWhatsApp" onclick="generarMensajeRC()" style="flex:1">💬 Mensaje IA</button>
+      </div>
+      <div style="margin-top:10px">
+        <button class="btn-primary full" id="btnGuardar" disabled>💾 Guardar gestión</button>
+      </div>
+    </div>
+
+    <!-- Vista tras guardar -->
+    <div id="rcGuardado" class="hidden">
+      <div style="background:var(--green-dim);border:1px solid var(--green);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px">
+        <p style="font-size:12px;font-weight:700;color:var(--green)">✅ Contacto guardado</p>
+        <p style="font-size:12px;color:var(--text-dim);margin-top:4px">Revisa el bloque "🎯 Siguiente Acción Recomendada" arriba para confirmarla.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ANÁLISIS IA — en su lugar original ══ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🧠</div>
+      <div class="card-title">Análisis Inteligente</div>
+      <div style="margin-left:auto"><button class="btn-primary" id="btnAnalizar">⚡ Analizar con IA</button></div>
+    </div>
+    <div id="resumenAnalisis" class="ai-output">
+      <span class="ai-placeholder">Registra gestiones y presiona "Analizar con IA" para obtener diagnóstico completo del cliente, señales de compra, objeciones y estrategia de cierre.</span>
+    </div>
+    <div style="margin-top:12px"><button class="btn-sm" id="btnCopiarAnalisis">📋 Copiar análisis</button></div>
+  </div>
+
+  <!-- ══ HISTORIAL ══ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📅</div><div class="card-title">Historial de Gestiones</div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+        <button class="btn-ia sm" onclick="generarResumenGestiones()">📋 Resumen IA</button>
+        <span class="badge" id="totalGestiones">0</span>
+      </div>
+    </div>
+    <div class="historial-list" id="listaGestiones">
+      <p class="text-muted" style="text-align:center;padding:20px 0">Sin gestiones registradas aún.</p>
+    </div>
+    <!-- Resumen de gestiones — aparece debajo del historial al generarse -->
+    <div id="resumenGestionesBox" class="hidden" style="margin-top:14px">
+      <div style="background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px">
+        <p style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">📋 Resumen de gestiones</p>
+        <div id="resumenGestionesTexto" class="ai-output" style="min-height:60px;background:transparent;border:none;padding:0"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm success" onclick="copiarTexto(document.getElementById('resumenGestionesTexto').innerText,'✓ Resumen copiado')">📋 Copiar</button>
+        <button class="btn-ia sm" onclick="generarResumenGestiones()">🔄 Regenerar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CONFIGURACIÓN — ya no es card inline, es modal ══ -->
+
+
+</div><!-- /wrap -->
+
+<div class="toast" id="toast"></div>
+
+<!-- ══ MODAL API KEY ══ -->
+<div id="modalApiKey" class="hidden" style="position:fixed;inset:0;z-index:1001;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)">
+  <div class="card" style="max-width:400px;width:100%;margin:0;animation:cardIn 0.25s ease both">
+    <div class="card-header"><div class="card-icon">🔑</div><div class="card-title">API Key de Anthropic</div></div>
+    <p style="color:var(--text-dim);font-size:13px;line-height:1.6;margin-bottom:14px">Para usar la IA en el navegador necesitas una API key de Anthropic. Se guardará localmente en este dispositivo.</p>
+    <div class="campo"><label>Tu API Key</label><input class="inp" type="password" id="inputApiKey" placeholder="sk-ant-..."></div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn-ghost" style="flex:1" onclick="cancelarApiKey()">Cancelar</button>
+      <button class="btn-primary" style="flex:1" onclick="guardarApiKey()">Guardar y continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL CONFIGURACIÓN (pantalla completa) ══ -->
+<div id="modalConfiguracion" class="hidden" style="position:fixed;inset:0;z-index:1050;background:var(--bg);overflow-y:auto;animation:fadeUp 0.25s ease both">
+  <div style="max-width:600px;margin:0 auto;padding:20px 16px 80px">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--line)">
+      <button onclick="cerrarModalConfig()" style="width:36px;height:36px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0">←</button>
+      <div>
+        <div style="font-size:17px;font-weight:700;color:var(--text)">⚙️ Configuración</div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em">Nexus CRM</div>
+      </div>
+    </div>
+
+    <!-- Google Sheets -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-header"><div class="card-icon">📊</div><div class="card-title">Google Sheets</div></div>
+      <div class="campo">
+        <label>URL del Web App (Apps Script)</label>
+        <input class="inp" type="url" id="sheetsUrl" placeholder="https://script.google.com/macros/s/…/exec" oninput="guardarConfigSheets()">
+        <p class="text-muted" style="font-size:12px;margin-top:6px;line-height:1.5">Pega aquí la URL de tu implementación de Google Apps Script para sincronizar clientes y gestiones automáticamente.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="btn-ghost" onclick="probarConexionSheets()">🔌 Probar conexión</button>
+        <button class="btn-primary" onclick="sincronizarSheets()">☁️ Sincronizar ahora</button>
+      </div>
+      <div id="sheetsEstado" style="font-size:13px;color:var(--muted);min-height:18px"></div>
+    </div>
+
+    <!-- API Key -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-header"><div class="card-icon">🔑</div><div class="card-title">API Key de Anthropic</div></div>
+      <div class="campo">
+        <label>API Key</label>
+        <input class="inp" type="password" id="apiKeyConfig" placeholder="sk-ant-...">
+        <p class="text-muted" style="font-size:12px;margin-top:6px;line-height:1.5">Solo necesaria al usar la app en navegador externo. Dentro de Claude.ai la IA funciona automáticamente sin API key.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-ghost" onclick="guardarApiKeyConfig()">💾 Guardar API key</button>
+        <button class="btn-sm danger" onclick="borrarApiKey()">🗑 Eliminar</button>
+      </div>
+    </div>
+
+    <!-- Tema -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-header"><div class="card-icon">🎨</div><div class="card-title">Apariencia</div></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-ghost" onclick="document.documentElement.dataset.theme='dark';localStorage.setItem('nexus-theme','dark');document.getElementById('themeIcon').textContent='☀️';document.getElementById('themeLabel').textContent='Claro'" style="flex:1">🌙 Modo oscuro</button>
+        <button class="btn-ghost" onclick="document.documentElement.dataset.theme='light';localStorage.setItem('nexus-theme','light');document.getElementById('themeIcon').textContent='🌙';document.getElementById('themeLabel').textContent='Oscuro'" style="flex:1">☀️ Modo claro</button>
+      </div>
+    </div>
+
+    <!-- Zona de peligro -->
+    <div class="card" style="border-color:var(--red)">
+      <div class="card-header"><div class="card-icon" style="background:var(--red-dim);border-color:var(--red)">⚠️</div><div class="card-title" style="color:var(--red)">Zona de peligro</div></div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;line-height:1.5">Estas acciones son permanentes e irreversibles.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-sm danger" onclick="cerrarModalConfig();crearNuevaFicha()">✚ Nueva ficha</button>
+        <button class="btn-sm danger" onclick="cerrarModalConfig();eliminarClienteSheets()">🗑 Eliminar cliente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL AGENDA (pantalla completa) ══ -->
+<div id="modalAgenda" class="hidden" style="position:fixed;inset:0;z-index:1050;background:var(--bg);overflow-y:auto;animation:fadeUp 0.25s ease both">
+  <div style="max-width:600px;margin:0 auto;padding:20px 16px 80px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--line)">
+      <button onclick="cerrarAgenda()" style="width:36px;height:36px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0">←</button>
+      <div style="flex:1">
+        <div style="font-size:17px;font-weight:700;color:var(--text)">🗓️ Agenda</div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em">Próximas acciones — todos los clientes</div>
+      </div>
+      <button class="icon-btn" onclick="cargarAgenda()" title="Actualizar">🔄</button>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="btn-sm agenda-tab active" id="tabAgendaHoy" onclick="cambiarVistaAgenda('hoy')" style="flex:1">Hoy</button>
+      <button class="btn-sm agenda-tab" id="tabAgendaMes" onclick="cambiarVistaAgenda('mes')" style="flex:1">Este mes</button>
+      <button class="btn-sm agenda-tab" id="tabAgendaTodas" onclick="cambiarVistaAgenda('todas')" style="flex:1">Todas</button>
+    </div>
+
+    <div id="agendaContenido">
+      <p class="text-muted" style="text-align:center;padding:30px 0">Abre la agenda para cargar tus pendientes…</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL ELIMINAR CLIENTE ══ -->
+<div id="modalEliminarCliente" class="hidden" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)">
+  <div class="card" style="max-width:380px;width:100%;margin:0;animation:cardIn 0.25s ease both;border-color:var(--red)">
+    <div class="card-header"><div class="card-icon" style="background:var(--red-dim);border-color:var(--red)">🗑</div><div class="card-title" style="color:var(--red)">Eliminar cliente</div></div>
+    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:6px">Se eliminará <strong id="nombreEliminar" style="color:var(--text)"></strong> de forma permanente:</p>
+    <ul style="color:var(--text-dim);font-size:13px;line-height:1.8;margin-bottom:20px;padding-left:16px">
+      <li>Todos los datos de la ficha local</li>
+      <li>Historial completo de gestiones</li>
+      <li>El registro en Google Sheets (si está configurado)</li>
+    </ul>
+    <div style="display:flex;gap:10px">
+      <button class="btn-ghost" style="flex:1" onclick="cancelarEliminarCliente()">Cancelar</button>
+      <button style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--red);color:#fff;border:none;border-radius:var(--radius-pill);padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)" onclick="confirmarEliminarCliente()">🗑 Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL NUEVA FICHA ══ -->
+<div id="modalNuevaFicha" class="hidden" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px)">
+  <div class="card" style="max-width:380px;width:100%;margin:0;animation:cardIn 0.25s ease both">
+    <div class="card-header"><div class="card-icon">⚠️</div><div class="card-title">Crear nueva ficha</div></div>
+    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:20px">Se borrará toda la información del cliente actual: datos, gestiones, historial y análisis. Esta acción no se puede deshacer.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn-ghost" style="flex:1" onclick="cancelarNuevaFicha()">Cancelar</button>
+      <button class="btn-primary" style="flex:1" onclick="confirmarNuevaFicha()">Sí, limpiar todo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════
+   NEXUS CRM — JAVASCRIPT COMPLETO
+════════════════════════════════════════════ */
+
+/* ─── THEME ─── */
+(function(){
+  const saved = localStorage.getItem('nexus-theme') || 'dark';
+  document.documentElement.dataset.theme = saved;
+  const icon = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  if(icon) icon.textContent  = saved === 'dark' ? '☀️' : '🌙';
+  if(label) label.textContent = saved === 'dark' ? 'Claro' : 'Oscuro';
+})();
+
+function toggleTheme(){
+  const html = document.documentElement;
+  const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+  html.dataset.theme = next;
+  localStorage.setItem('nexus-theme', next);
+  document.getElementById('themeIcon').textContent  = next === 'dark' ? '☀️' : '🌙';
+  document.getElementById('themeLabel').textContent = next === 'dark' ? 'Claro' : 'Oscuro';
 }
 
-// ── GET: PING Y BÚSQUEDA DE CLIENTES ─────────────────────────────
-function doGet(e) {
-  const action = (e?.parameter?.action || 'ping');
+/* ─── STATE ─── */
+let gestiones   = JSON.parse(localStorage.getItem('crm_gestiones') || '[]');
+let clienteData = JSON.parse(localStorage.getItem('crm_cliente')   || '{}');
+let pvGuardada  = localStorage.getItem('crm_pv_guardada') === '1';
+let pvMsgActual = localStorage.getItem('crm_pv_msg') || '';
+let pvPasosGenerados  = false;
+let pvMensajeGenerado = false;
+let rcPasosGenerados  = false;
+let rcMensajeGenerado = false;
+let rcMsgActual = '';
+let rcPasosActual = '';
+let pvAccionRapida   = '';
+let pvTiempoEstimado = '';
+let rcAccionRapida   = '';
+let rcTiempoEstimado = '';
 
-  if (action === 'buscar') {
-    const q = (e.parameter.q || '').trim().toLowerCase();
-    if (!q) return respuesta({ success: false, error: 'Sin término de búsqueda' });
+/* ─── ESTADO DEL SCORE IA-NATIVO ─── */
+let scoreIAActiva  = false;   // true una vez que la IA ya evaluó al menos una vez a este cliente
+let ultimoScoreIA  = null;    // último valor (0-100) entregado por la IA
+let scoreIATimer   = null;    // debounce del auto-análisis
+const accionState = {};
+const accionCallbacks = {};
 
-    const ss   = SpreadsheetApp.getActiveSpreadsheet();
-    const hoja = ss.getSheetByName('Clientes');
-    if (!hoja) return respuesta({ success: false, error: 'Hoja Clientes no existe aún' });
+/* ─── INIT ─── */
+(function init(){
+  const campos = ['nombre','telefono','correo','ciudad','vehiculo','ocupacion','precio','fuenteLead',
+    'pruebaManejo','tipoOperacion','estadoOperacion','seguro','enganche','engancheModo','plazo',
+    'tasaInteres','asistieron','manejaron','comentariosPrueba','disponibilidad','tiempoLlegada',
+    'descuento','montoDescuento','otroRegaloDesc','anticipo','documentacion','estatusCredito','decision','urgencia'];
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if(el && clienteData[id] !== undefined) el.value = clienteData[id];
+  });
+  const checks = ['rTapetes','rVidrios','rPelicula','rKitSeguridad','rPlacas','rOtro'];
+  checks.forEach(id => {
+    const el = document.getElementById(id);
+    if(el && clienteData[id] !== undefined) el.checked = clienteData[id];
+  });
+  togglePrueba(); toggleOperacion(); toggleDisponibilidad(); toggleDescuento(); toggleOtroRegalo();
+  renderHistorial(); recalcScore(); actualizarPasoSiguiente(); calcularFinanciamiento();
+  scheduleScoreIA();
 
-    const datos   = hoja.getDataRange().getValues();
-    if (datos.length < 2) return respuesta({ success: false, error: 'No hay clientes registrados' });
+  // Restaurar formulario/banner de Primera Visita
+  if(pvGuardada){
+    const pvGestion = gestiones.find(g => g.tipo === 'primeravisita');
+    if(pvGestion){
+      mostrarPVGuardada(pvGestion);
+      const rcYaExiste = gestiones.some(g => g.tipo !== 'primeravisita');
+      evaluarBloqueoRC(!!pvGestion.accionEstado || rcYaExiste);
+    } else {
+      // La gestión ya no existe (fue eliminada externamente), resetear
+      pvGuardada = false;
+      localStorage.removeItem('crm_pv_guardada');
+      localStorage.removeItem('crm_pv_msg');
+      evaluarBloqueoRC(false);
+    }
+  } else {
+    evaluarBloqueoRC(false);
+  }
 
-    const headers = datos[0];
-    const clientes = [];
+  // Restaurar el bloque independiente "🎯 Siguiente Acción Recomendada" (arriba, sobre Datos del Cliente)
+  // con base en la gestión más reciente, sea de Primera Visita o de Registro de Contacto.
+  inicializarAccionRecomendada();
+})();
 
-    for (let i = 1; i < datos.length; i++) {
-      const row    = datos[i];
-      const nombre = (row[1] || '').toString().toLowerCase();
-      const tel    = (row[2] || '').toString().toLowerCase();
-      const correo = (row[3] || '').toString().toLowerCase();
+/* ─── TOGGLES ─── */
+function togglePrueba(){ document.getElementById('datosPrueba').classList.toggle('hidden', document.getElementById('pruebaManejo').value !== 'si'); }
+function toggleOperacion(){
+  const v = document.getElementById('tipoOperacion').value;
+  document.getElementById('datosContado').classList.toggle('hidden', v !== 'contado');
+  document.getElementById('datosFinanciado').classList.toggle('hidden', v !== 'financiado');
+  toggleCredito();
+}
+function toggleDisponibilidad(){ document.getElementById('campoTiempoLlegada').style.display = document.getElementById('disponibilidad').value === 'no' ? 'block' : 'none'; }
+function toggleDescuento(){ document.getElementById('campoMontoDescuento').style.display = document.getElementById('descuento').value === 'si' ? 'block' : 'none'; }
+function toggleOtroRegalo(){ document.getElementById('campoOtroRegalo').style.display = document.getElementById('rOtro').checked ? 'block' : 'none'; }
+function toggleCredito(){ document.getElementById('bloqueCredito').classList.toggle('hidden', document.getElementById('tipoOperacion').value !== 'financiado'); }
 
-      if (nombre.includes(q) || tel.includes(q) || correo.includes(q)) {
-        const cliente = {};
-        headers.forEach((h, idx) => {
-          cliente[normalizarHeader(h)] = row[idx] !== undefined ? row[idx].toString() : '';
-        });
-        clientes.push(cliente);
-        if (clientes.length >= 8) break;
+/* ─── CALCULADOR FINANCIAMIENTO ─── */
+function cambiarModoEnganche(){
+  document.getElementById('enganche').value = '';
+  ajustarLimitesEnganche(); calcularFinanciamiento();
+  mostrarToast('Ingresa el enganche en la nueva unidad seleccionada.');
+}
+function ajustarLimitesEnganche(){
+  const precio = parseFloat(document.getElementById('precio').value)||0;
+  const modo   = document.getElementById('engancheModo').value;
+  const inp    = document.getElementById('enganche');
+  if(modo === 'pct'){ inp.max=100; inp.placeholder='Ej. 20'; }
+  else { inp.max=precio||''; inp.placeholder=precio?`máx. $${precio.toLocaleString('es-MX')}`:'0'; }
+}
+function calcularFinanciamiento(){
+  const precio = parseFloat(document.getElementById('precio').value)||0;
+  const modo   = document.getElementById('engancheModo').value;
+  const inp    = document.getElementById('enganche');
+  ajustarLimitesEnganche();
+  let engVal = parseFloat(inp.value)||0;
+  if(modo==='pct' && engVal>100){ engVal=100; inp.value=100; mostrarToast('El enganche en % no puede superar 100%.'); }
+  if(modo==='monto' && precio && engVal>precio){ engVal=precio; inp.value=precio; mostrarToast('El enganche no puede superar el precio del vehículo.'); }
+  const resBox = document.getElementById('resultadoFinanciamiento');
+  if(!precio||!engVal){ resBox.style.display='none'; onCampoChange(); return; }
+  const engancheMonto  = modo==='pct' ? precio*(engVal/100) : engVal;
+  const montoFinanciar = Math.max(precio-engancheMonto,0);
+  const plazo    = parseInt(document.getElementById('plazo').value)||0;
+  const tasaAnual= parseFloat(document.getElementById('tasaInteres').value)||0;
+  let mensualidad = plazo ? montoFinanciar/plazo : 0;
+  if(plazo && tasaAnual>0){
+    const tm = (tasaAnual/100)/12;
+    const f  = Math.pow(1+tm,plazo);
+    mensualidad = montoFinanciar*(tm*f)/(f-1)*1.16;
+  }
+  document.getElementById('kpiEnganche').textContent     = '$'+Math.round(engancheMonto).toLocaleString('es-MX');
+  document.getElementById('kpiMontoFinanciar').textContent = '$'+Math.round(montoFinanciar).toLocaleString('es-MX');
+  document.getElementById('kpiMensualidad').textContent  = plazo ? '$'+Math.round(mensualidad).toLocaleString('es-MX') : '—';
+  resBox.style.display = 'block';
+  onCampoChange();
+}
+
+/* ─── SCORE ───
+   El indicador principal ya NO se basa únicamente en la suma de parámetros fijos.
+   Esa suma ("heurística") solo sirve como estimación instantánea/preliminar mientras
+   la IA todavía no ha evaluado al cliente. En cuanto la IA emite su valoración
+   (evaluarScoreIA, o el análisis detallado de analizarConIA), ese resultado prevalece
+   y el indicador principal se actualiza para reflejarlo — incluyendo cuando hay
+   discrepancia entre la estimación preliminar y el análisis de la IA. */
+function colorParaScore(pts){
+  if(pts>=75) return '#10B981';
+  if(pts>=50) return '#F97316';
+  if(pts>=20) return '#8B5CF6';
+  return '#94A3B8';
+}
+function tagPorDefecto(pts){
+  if(pts>=75) return '🔥 Alta probabilidad';
+  if(pts>=50) return '⚡ Interés medio-alto';
+  if(pts>=20) return '🌱 En desarrollo';
+  return 'Sin datos';
+}
+function renderScoreVisual(pts,color,tagTxt,descTxt){
+  const arc=document.getElementById('scoreArc');
+  const num=document.getElementById('scoreNum');
+  const tag=document.getElementById('scoreTag');
+  const desc=document.getElementById('scoreDesc');
+  arc.style.strokeDashoffset = 220-(220*Math.max(0,Math.min(100,pts))/100);
+  num.textContent = pts===0?'—':pts;
+  arc.style.stroke=color; num.style.color=color;
+  tag.textContent=tagTxt;
+  tag.style.cssText=`background:${color}22;color:${color};display:inline-block;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px`;
+  desc.textContent=descTxt;
+}
+function marcarFuenteScore(texto){
+  const fuenteEl=document.getElementById('scoreFuente');
+  if(fuenteEl) fuenteEl.textContent=texto;
+}
+
+/* Aplica un score entregado por la IA (evaluación nativa o análisis detallado).
+   Este valor tiene siempre la última palabra sobre el indicador principal. */
+function aplicarScoreIA(pts, tagTxt, descTxt, fuenteLabel){
+  pts = Math.max(0,Math.min(100,Math.round(pts)));
+  scoreIAActiva = true;
+  ultimoScoreIA = pts;
+  const color = colorParaScore(pts);
+  renderScoreVisual(pts, color, tagTxt || tagPorDefecto(pts), descTxt || 'Evaluación generada por IA a partir del expediente completo del cliente.');
+  const hora = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  marcarFuenteScore(`🤖 ${fuenteLabel} · ${hora}`);
+}
+
+function recalcScore(){
+  let pts=0;
+  const nombre=document.getElementById('nombre').value.trim();
+  const tel=document.getElementById('telefono').value.trim();
+  const veh=document.getElementById('vehiculo').value.trim();
+  const precio=document.getElementById('precio').value;
+  const prueba=document.getElementById('pruebaManejo').value;
+  const tipoOp=document.getElementById('tipoOperacion').value;
+  const estado=document.getElementById('estadoOperacion').value;
+  const fuente=document.getElementById('fuenteLead').value;
+  const gCount=gestiones.length;
+  if(nombre) pts+=10; if(tel) pts+=10; if(veh) pts+=10;
+  if(precio) pts+=5;  if(fuente) pts+=5; if(prueba==='si') pts+=20;
+  if(tipoOp) pts+=15;
+  pts += Math.min(gCount*5,25);
+  pts  = Math.min(100,pts);
+
+  // Una operación cerrada o perdida es un HECHO objetivo capturado en el CRM, no una
+  // opinión: se refleja de inmediato sin esperar a la IA, tanto si ya hubo una
+  // evaluación de IA previa como si no.
+  if(estado==='cerrada'){
+    scoreIAActiva=false; ultimoScoreIA=null;
+    renderScoreVisual(100,'#10B981','✅ Cerrado','¡Venta cerrada! Activa el protocolo de posventa y solicita referidos.');
+    marcarFuenteScore('Estado registrado: cerrada');
+    return;
+  }
+  if(estado==='perdida'){
+    scoreIAActiva=false; ultimoScoreIA=null;
+    const ptsPerdida=Math.min(pts,15);
+    renderScoreVisual(ptsPerdida,'#EF4444','❌ Perdido','Documenta las razones y agenda reactivación en 30 días.');
+    marcarFuenteScore('Estado registrado: perdida');
+    return;
+  }
+
+  // Si la IA ya evaluó a este cliente, su valoración prevalece sobre la heurística:
+  // no se sobreescribe el indicador con el conteo de parámetros predefinidos.
+  if(scoreIAActiva && ultimoScoreIA!==null){
+    return;
+  }
+
+  // Sin evaluación de IA todavía: se muestra una estimación preliminar mientras se
+  // dispara automáticamente el análisis real con evaluarScoreIA().
+  const color=colorParaScore(pts);
+  const tagTxt=tagPorDefecto(pts);
+  const descTxt = pts===0
+    ? 'Completa los datos del cliente para activar el análisis.'
+    : pts>=75 ? 'Cliente muy calificado. Enfoca el esfuerzo en el cierre definitivo.'
+    : pts>=50 ? 'Avanza correctamente. Sigue generando confianza y resuelve objeciones.'
+    : pts>=20 ? 'Aún hay información por capturar. Califica mejor al cliente.'
+    : 'Completa los datos del cliente para activar el análisis.';
+  renderScoreVisual(pts,color,tagTxt,descTxt);
+  marcarFuenteScore(pts===0 ? 'Sin datos aún' : 'Estimación preliminar · pendiente de análisis IA');
+}
+
+/* ─── EVALUACIÓN NATIVA DE SCORE CON IA ───
+   Analiza de forma integral y objetiva toda la información disponible del cliente
+   (datos, comentarios de gestiones, sentimiento, historial) para emitir una
+   valoración realista y honesta de la probabilidad de cierre, en vez de basarse
+   solo en la suma de parámetros predefinidos del código. */
+function parseScoreIA(resp){
+  const s=(resp||'');
+  const mS=s.match(/SCORE:\s*(\d{1,3})/i);
+  const mT=s.match(/ETIQUETA:\s*(.+)/i);
+  const mJ=s.match(/JUSTIFICACION[NÓ]?:\s*([\s\S]+)/i);
+  const score = mS ? Math.max(0,Math.min(100,parseInt(mS[1],10))) : null;
+  return {
+    score,
+    tag: mT ? mT[1].trim() : null,
+    desc: mJ ? mJ[1].trim().split('\n')[0] : null
+  };
+}
+
+function scheduleScoreIA(){
+  if(scoreIATimer) clearTimeout(scoreIATimer);
+  scoreIATimer = setTimeout(()=>evaluarScoreIA(false), 2500);
+}
+
+async function evaluarScoreIA(manual){
+  const nombre=document.getElementById('nombre').value.trim();
+  if(!nombre) return; // sin datos mínimos del cliente no tiene sentido llamar a la IA
+  const estado=document.getElementById('estadoOperacion').value;
+  if(estado==='cerrada' || estado==='perdida') return; // esos casos son un hecho, no una opinión de la IA
+
+  const tieneKey = !!localStorage.getItem('nexus_api_key') || (typeof window!=='undefined' && window.claude && typeof window.claude.complete==='function');
+  if(!manual && !tieneKey) return; // en auto-análisis no interrumpimos con el modal de API key
+
+  const btn = document.getElementById('btnEvaluarScoreIA');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Evaluando…'; }
+  marcarFuenteScore('🤖 Analizando expediente con IA…');
+
+  const prompt = `Eres un director comercial senior de ventas automotrices, experto en evaluar de forma honesta y objetiva la probabilidad real de cierre de un cliente. Analiza de forma integral TODA la información disponible del expediente: datos del cliente, comentarios de las gestiones, sentimiento expresado, resultado de la prueba de manejo, estado de la operación y el historial completo de contacto. Da una valoración realista, sin optimismo excesivo: si la información es escasa, contradictoria o el cliente muestra señales frías, refleja eso con un score bajo o moderado; no infles el score solo por cortesía.
+
+Expediente completo del cliente:
+${buildContexto()}
+
+Responde EXCLUSIVAMENTE con este formato exacto, sin texto adicional antes ni después:
+SCORE: (un número entero de 0 a 100 — tu evaluación honesta de la probabilidad real de cierre)
+ETIQUETA: (frase corta de máximo 4 palabras que resuma el momento del cliente; puedes iniciar con un emoji)
+JUSTIFICACION: (1-2 frases citando evidencia concreta del expediente que sostiene ese score)`;
+
+  try{
+    const resp = await llamarIA(prompt, 300);
+    const {score,tag,desc} = parseScoreIA(resp);
+    if(score!==null){
+      aplicarScoreIA(score, tag, desc, 'Evaluado por IA');
+    } else if(manual){
+      mostrarToast('La IA no devolvió un formato válido. Intenta de nuevo.');
+    }
+  }catch(e){
+    if(manual) mostrarToast(e.message || 'No se pudo evaluar el score con IA.');
+    if(!scoreIAActiva) marcarFuenteScore('Estimación preliminar · sin conexión IA');
+  }
+  if(btn){ btn.disabled=false; btn.textContent='🤖 Evaluar con IA'; }
+}
+
+/* Extrae el % de "Probabilidad de cierre" del análisis detallado (analizarConIA).
+   Ante cualquier discrepancia con el indicador principal, este valor prevalece. */
+function extraerProbabilidadCierre(texto){
+  const m=(texto||'').match(/Probabilidad de cierre:\s*([\s\S]*?)(?:\n\s*\n|\nObjeciones detectadas:|$)/i);
+  if(!m) return null;
+  const bloque=m[1].trim();
+  const nums=bloque.match(/\d{1,3}/g);
+  if(!nums || !nums.length) return null;
+  const valores=nums.map(n=>parseInt(n,10)).filter(n=>n<=100);
+  if(!valores.length) return null;
+  const prom=Math.round(valores.reduce((a,b)=>a+b,0)/valores.length);
+  return { valor:prom, resumen: bloque.split('\n')[0] };
+}
+
+/* ─── SIGUIENTE PASO ─── */
+function actualizarPasoSiguiente(){
+  const estado=document.getElementById('estadoOperacion').value;
+  const prueba=document.getElementById('pruebaManejo').value;
+  const tipoOp=document.getElementById('tipoOperacion').value;
+  const nombre=document.getElementById('nombre').value.trim()||'el cliente';
+  let texto='';
+  if(estado==='cerrada')       texto=`Llamar a ${nombre} en 3 días para verificar satisfacción. En el primer servicio pedir referidos y enviar encuesta.`;
+  else if(estado==='perdida')  texto=`Registrar motivo de pérdida. Agendar contacto de reactivación en 30 días. Analizar objeciones para mejorar el proceso.`;
+  else if(!prueba)             texto=`Coordinar prueba de manejo con ${nombre}. Prepara la unidad y presenta los diferenciadores clave del modelo.`;
+  else if(!tipoOp)             texto=`Presentar a ${nombre} las opciones de financiamiento y pago de contado. Preparar cotización formal.`;
+  else                         texto=`Dar seguimiento a la decisión de ${nombre}. Resolver objeciones pendientes y proponer fecha de cierre.`;
+  document.getElementById('nextStepText').textContent=texto;
+}
+
+/* ─── AUTO-SAVE ─── */
+function onCampoChange(){
+  const campos=['nombre','telefono','correo','ciudad','vehiculo','ocupacion','precio','fuenteLead',
+    'pruebaManejo','tipoOperacion','estadoOperacion','seguro','enganche','engancheModo','plazo',
+    'tasaInteres','asistieron','manejaron','comentariosPrueba','disponibilidad','tiempoLlegada',
+    'descuento','montoDescuento','otroRegaloDesc','anticipo','documentacion','estatusCredito','decision','urgencia'];
+  campos.forEach(id => { const el=document.getElementById(id); if(el) clienteData[id]=el.value; });
+  const checks=['rTapetes','rVidrios','rPelicula','rKitSeguridad','rPlacas','rOtro'];
+  checks.forEach(id => { const el=document.getElementById(id); if(el) clienteData[id]=el.checked; });
+  localStorage.setItem('crm_cliente',JSON.stringify(clienteData));
+  recalcScore(); actualizarPasoSiguiente();
+  scheduleScoreIA();
+}
+
+/* ─── LÓGICA BLOQUEO / DESBLOQUEO ─── */
+function evaluarBtnGuardarPV(){
+  const btn = document.getElementById('btnGuardarPrimeraVisita');
+  const ok  = pvPasosGenerados && pvMensajeGenerado;
+  btn.disabled = !ok;
+  document.getElementById('reqPvPasos').className   = 'req-badge' + (pvPasosGenerados  ? ' done' : '');
+  document.getElementById('reqPvPasos').textContent  = (pvPasosGenerados  ? '✅' : '⬜') + ' Siguientes pasos generados';
+  document.getElementById('reqPvMensaje').className  = 'req-badge' + (pvMensajeGenerado ? ' done' : '');
+  document.getElementById('reqPvMensaje').textContent = (pvMensajeGenerado ? '✅' : '⬜') + ' Mensaje IA generado';
+}
+
+function evaluarBtnGuardarRC(){
+  const btn = document.getElementById('btnGuardar');
+  const ok  = rcPasosGenerados && rcMensajeGenerado;
+  btn.disabled = !ok;
+  document.getElementById('reqRcPasos').className   = 'req-badge' + (rcPasosGenerados  ? ' done' : '');
+  document.getElementById('reqRcPasos').textContent  = (rcPasosGenerados  ? '✅' : '⬜') + ' Siguientes pasos generados';
+  document.getElementById('reqRcMensaje').className  = 'req-badge' + (rcMensajeGenerado ? ' done' : '');
+  document.getElementById('reqRcMensaje').textContent = (rcMensajeGenerado ? '✅' : '⬜') + ' Mensaje IA generado';
+}
+
+function evaluarBloqueoRC(desbloqueado){
+  const card = document.getElementById('cardRegistrarContacto');
+  card.classList.toggle('bloqueado', !desbloqueado);
+  // Deshabilitar inputs y botones dentro si bloqueado
+  card.querySelectorAll('input,select,textarea,button').forEach(el => {
+    if(!desbloqueado) el.setAttribute('disabled','');
+    else el.removeAttribute('disabled');
+  });
+  // Restaurar el estado correcto de btn guardar RC
+  if(desbloqueado) evaluarBtnGuardarRC();
+}
+
+/* ─── REESCRIBIR CON IA (para campos de texto libre, dictado por voz) ─── */
+async function reescribirTexto(fieldId, btn){
+  const el = document.getElementById(fieldId);
+  if(!el) return;
+  const original = (el.value||'').trim();
+  if(!original){ mostrarToast('Escribe algo primero para poder reescribirlo.'); return; }
+  const textoOriginalBtn = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '⏳ Reescribiendo…';
+  const p = `Reescribe el siguiente texto en español, corrigiendo ortografía y gramática, y dale un orden lógico y claro a las ideas ya que probablemente fue dictado por voz de forma desordenada. Conserva el sentido, el tono y toda la información original, solo mejora la redacción. Responde ÚNICAMENTE con el texto reescrito, sin comillas, encabezados ni explicaciones adicionales.\n\nTexto original:\n${original}`;
+  try{
+    const resp = await llamarIA(p, 500);
+    el.value = resp.trim();
+    if(typeof el.dispatchEvent === 'function'){
+      el.dispatchEvent(new Event('input', {bubbles:true}));
+    }
+    mostrarToast('✓ Texto reescrito');
+  }catch(e){ mostrarToast('No se pudo reescribir. Intenta de nuevo.'); }
+  btn.disabled = false; btn.innerHTML = textoOriginalBtn;
+}
+
+/* ─── SIGUIENTE ACCIÓN RECOMENDADA — módulo reutilizable ───
+   La "Acción Recomendada" ya NO se genera con una llamada extra a la IA que resumía
+   (y devaluaba) el paso a apenas una frase de 15 palabras. Ahora se usa TAL CUAL la
+   acción rápida que la propia gestión (Primera Visita o Registro de Contacto) generó
+   al guardarse, junto con el tiempo estimado que la IA calculó en esa misma llamada. */
+function parseRespuestaPlan(resp){
+  const texto = (resp||'').trim();
+  const mPlan   = texto.match(/PLAN:\s*([\s\S]*?)(?:ACCI[OÓ]N_R[AÁ]PIDA:|$)/i);
+  const mAccion = texto.match(/ACCI[OÓ]N_R[AÁ]PIDA:\s*([\s\S]*?)(?:TIEMPO:|$)/i);
+  const mTiempo = texto.match(/TIEMPO:\s*(.+)/i);
+  return {
+    plan:         mPlan   ? mPlan[1].trim()   : texto,
+    accionRapida: mAccion ? mAccion[1].trim() : '',
+    tiempo:       mTiempo ? mTiempo[1].trim().replace(/\.$/,'') : '24-48 horas'
+  };
+}
+
+function diasDesdeTiempo(tiempoTexto){
+  const txt = tiempoTexto || '';
+  const nums = txt.match(/\d+/g);
+  const n = nums && nums.length ? parseInt(nums[nums.length-1]) : 1;
+  if(/semana/i.test(txt)) return Math.max(1, n*7);
+  if(/hora/i.test(txt))   return 1;
+  return Math.max(1, n||1);
+}
+
+function estimarDuracionAccion(texto){
+  const t = (texto||'').toLowerCase();
+  if(/cita|visita|showroom|mostrador|acude|presencial/.test(t)) return 60;
+  if(/prueba de manejo/.test(t)) return 45;
+  if(/llamad|llamar|teléfono|telefono/.test(t)) return 15;
+  if(/whatsapp|mensaje|correo|email/.test(t)) return 10;
+  return 20;
+}
+
+function renderAccionModule(container, prefix, resumen, tiempoTexto, diasSugeridos, onGuardar){
+  if(!container) return;
+  const hoy = new Date();
+  const fechaGenerada = hoy.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+  const sugerida = new Date(hoy.getTime() + (diasSugeridos||1)*86400000);
+  const fechaValue = sugerida.toISOString().slice(0,10);
+  const duracionDefault = estimarDuracionAccion(resumen);
+  accionState[prefix] = { estado:'', resumen, tiempoTexto };
+  accionCallbacks[prefix] = onGuardar;
+  container.innerHTML = `
+    <div class="accion-recomendada-card">
+      <div class="paso-eyebrow">🎯 Siguiente Acción Recomendada</div>
+      <div class="accion-meta-row">
+        <span>📅 Generada: ${fechaGenerada}</span>
+        <span>⏱ Tiempo estimado: ${tiempoTexto}</span>
+      </div>
+      <div class="paso-texto" style="margin:10px 0 14px">${(resumen||'').replace(/\n/g,'<br>')}</div>
+      <div class="grid-2" style="margin-bottom:14px">
+        <div class="campo" style="margin-bottom:0"><label>Fecha límite</label>
+          <input class="inp" type="date" id="${prefix}Fecha" value="${fechaValue}">
+        </div>
+        <div class="campo" style="margin-bottom:0"><label>Hora</label>
+          <input class="inp" type="time" id="${prefix}Hora" value="10:00">
+        </div>
+      </div>
+      <div class="campo" style="margin-bottom:14px"><label>⏱ Duración estimada (minutos, para la Agenda)</label>
+        <input class="inp" type="number" min="5" step="5" id="${prefix}Duracion" value="${duracionDefault}">
+      </div>
+      <div class="accion-status-row">
+        <button type="button" class="accion-btn realizado" id="${prefix}BtnRealizado" onclick="marcarEstadoAccion('${prefix}','realizado')">✅ Realizado</button>
+        <button type="button" class="accion-btn norealizado" id="${prefix}BtnNoRealizado" onclick="marcarEstadoAccion('${prefix}','no_realizado')">❌ No realizado</button>
+        <button type="button" class="accion-btn posponer" id="${prefix}BtnPosponer" onclick="marcarEstadoAccion('${prefix}','pospuesto')">🕓 Posponer</button>
+      </div>
+      <div class="campo hidden" id="${prefix}CampoExplicacion" style="margin-top:12px">
+        <label>¿Por qué no se realizó?</label>
+        <textarea class="inp" id="${prefix}Explicacion" oninput="evaluarBtnGuardarAccion('${prefix}')" placeholder="Explica brevemente qué pasó…"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:6px">
+          <button class="btn-ia sm" type="button" onclick="reescribirTexto('${prefix}Explicacion', this)">🪄 Reescribir</button>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn-primary full" id="${prefix}BtnGuardar" onclick="guardarAccion('${prefix}')" disabled>💾 Guardar</button>
+      </div>
+    </div>`;
+}
+
+function marcarEstadoAccion(prefix, estado){
+  accionState[prefix] = accionState[prefix] || {};
+  accionState[prefix].estado = estado;
+  const map = {Realizado:'realizado', NoRealizado:'no_realizado', Posponer:'pospuesto'};
+  Object.keys(map).forEach(k=>{
+    const btn = document.getElementById(prefix+'Btn'+k);
+    if(btn) btn.classList.toggle('active', map[k]===estado);
+  });
+  const campoExp = document.getElementById(prefix+'CampoExplicacion');
+  if(campoExp) campoExp.classList.toggle('hidden', estado!=='no_realizado');
+  if(estado==='pospuesto'){
+    const fechaInp = document.getElementById(prefix+'Fecha');
+    if(fechaInp){ try{ fechaInp.focus(); if(typeof fechaInp.showPicker==='function') fechaInp.showPicker(); }catch(e){} }
+  }
+  evaluarBtnGuardarAccion(prefix);
+}
+
+function evaluarBtnGuardarAccion(prefix){
+  const st = accionState[prefix] || {};
+  const btn = document.getElementById(prefix+'BtnGuardar');
+  if(!btn) return;
+  let ok = !!st.estado;
+  if(st.estado==='no_realizado'){
+    const expEl = document.getElementById(prefix+'Explicacion');
+    ok = ok && !!(expEl && expEl.value.trim());
+  }
+  btn.disabled = !ok;
+}
+
+function accionGuardadaHTML(st){
+  const map = {
+    realizado:    {color:'var(--elec-green)', bg:'var(--elec-green-dim)', label:'✅ Marcado como realizado'},
+    no_realizado: {color:'var(--elec-red)',   bg:'var(--elec-red-dim)',   label:'❌ Marcado como no realizado'},
+    pospuesto:    {color:'var(--elec-amber)', bg:'var(--elec-amber-dim)', label:'🕓 Acción pospuesta'}
+  };
+  const d = map[st.estado] || map.realizado;
+  return `<div class="accion-recomendada-card" style="border-color:${d.color}">
+    <p style="font-size:13px;font-weight:700;color:${d.color}">${d.label}</p>
+    ${st.fecha ? `<p style="font-size:12px;color:var(--text-dim);margin-top:6px">📅 ${st.fecha}${st.hora?' · 🕐 '+st.hora:''}</p>` : ''}
+    ${st.explicacion ? `<p style="font-size:12px;color:var(--text-dim);margin-top:6px;line-height:1.5">${st.explicacion}</p>` : ''}
+  </div>`;
+}
+
+/* ─── BLOQUE INDEPENDIENTE "SIGUIENTE ACCIÓN RECOMENDADA" (arriba, sobre Datos del Cliente) ───
+   Se alimenta SIEMPRE de la gestión más reciente (gestiones[0], sea de Primera Visita o de
+   Registro de Contacto). No tiene relación con el botón "Siguientes pasos", que es un plan
+   más detallado y vive dentro de cada tarjeta de gestión. */
+function limpiarAccionRecomendada(){
+  const cont = document.getElementById('accionRecomendadaContainer');
+  if(cont) cont.innerHTML = '<p class="text-muted" style="text-align:center;padding:10px 0">Aún no hay una acción recomendada. Se genera automáticamente al guardar tu próxima gestión.</p>';
+}
+
+async function inicializarAccionRecomendada(){
+  const cont = document.getElementById('accionRecomendadaContainer');
+  if(!cont) return;
+  if(!gestiones.length){ limpiarAccionRecomendada(); return; }
+
+  const ultima = gestiones[0]; // gestiones.unshift() → la más reciente siempre queda en [0]
+  if(!ultima || !ultima.pasoSiguiente){ limpiarAccionRecomendada(); return; }
+
+  const prefix = ultima.tipo === 'primeravisita' ? 'pvAccion' : 'rcAccion';
+
+  if(ultima.accionEstado){
+    cont.innerHTML = accionGuardadaHTML({
+      estado: ultima.accionEstado, fecha: ultima.accionFecha,
+      hora: ultima.accionHora, explicacion: ultima.accionExplicacion
+    });
+    return;
+  }
+
+  const resumen = ultima.pasoSiguiente;
+  const tiempo  = ultima.accionTiempo || '24-48 horas';
+  renderAccionModule(cont, prefix, resumen, tiempo, diasDesdeTiempo(tiempo), (st) => {
+    ultima.accionEstado = st.estado; ultima.accionExplicacion = st.explicacion;
+    ultima.accionFecha = st.fecha; ultima.accionHora = st.hora;
+    localStorage.setItem('crm_gestiones', JSON.stringify(gestiones));
+    cont.innerHTML = accionGuardadaHTML(st);
+    if(prefix === 'pvAccion'){
+      evaluarBloqueoRC(true);
+      mostrarToast('✓ Acción registrada. Registro de contacto habilitado.');
+      mostrarPVGuardada(ultima); // refresca la vista de PV para bloquear editar/eliminar
+    } else {
+      mostrarToast('✓ Acción registrada.');
+      setTimeout(resetearRC, 1100);
+    }
+  });
+}
+
+function guardarAccion(prefix){
+  const st = accionState[prefix] || {};
+  if(!st.estado){ mostrarToast('Selecciona un estado para la acción.'); return; }
+  if(st.estado==='no_realizado'){
+    const exp = (document.getElementById(prefix+'Explicacion')||{}).value||'';
+    if(!exp.trim()){ mostrarToast('Explica brevemente por qué no se realizó.'); return; }
+    st.explicacion = exp.trim();
+  } else {
+    st.explicacion = '';
+  }
+  st.fecha       = (document.getElementById(prefix+'Fecha')||{}).value || '';
+  st.hora        = (document.getElementById(prefix+'Hora')||{}).value || '';
+  st.duracionMin = parseInt((document.getElementById(prefix+'Duracion')||{}).value, 10) || 20;
+  finalizarGuardadoAccion(prefix, st);
+}
+
+/* ─── Evita que dos clientes queden agendados en el mismo horario ─── */
+async function evitarTraslapeAgenda(fecha, hora, duracionMin){
+  const url = localStorage.getItem('nexus_sheets_url')||'';
+  if(!url || !fecha || !hora) return null;
+  try{
+    const res  = await fetch(url+'?action=agenda');
+    const data = await res.json();
+    if(!data.success || !Array.isArray(data.tareas)) return null;
+
+    const nombreActual = (document.getElementById('nombre').value||'').trim().toLowerCase();
+    const ocupados = data.tareas
+      .filter(t => t.fecha===fecha && t.estado!=='realizado' && (t.nombre||'').trim().toLowerCase()!==nombreActual)
+      .map(t => {
+        const [th,tm] = (t.hora||'00:00').split(':').map(Number);
+        const ini = (th||0)*60 + (tm||0);
+        return { ini, fin: ini + (parseInt(t.duracionMin,10)||20) };
+      })
+      .sort((a,b)=>a.ini-b.ini);
+
+    const hayTraslape = (ini,fin) => ocupados.some(o => ini < o.fin && fin > o.ini);
+
+    const [h,m] = hora.split(':').map(Number);
+    const inicio = (h||0)*60 + (m||0);
+    const dur = duracionMin || 20;
+    if(!hayTraslape(inicio, inicio+dur)) return null;
+
+    for(let t = Math.max(inicio, 9*60); t <= 18*60; t += 15){
+      if(!hayTraslape(t, t+dur)){
+        const hh = String(Math.floor(t/60)).padStart(2,'0');
+        const mm = String(t%60).padStart(2,'0');
+        return { movido:true, hora:`${hh}:${mm}` };
       }
     }
-
-    if (!clientes.length) return respuesta({ success: false, error: 'No encontrado' });
-    return respuesta({ success: true, clientes });
-  }
-
-  if (action === 'agenda') {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    return respuesta({ success: true, tareas: obtenerAgenda(ss) });
-  }
-
-  return respuesta({ status: 'Nexus CRM Apps Script activo ✅', action: 'ping', timestamp: new Date().toLocaleString('es-MX') });
+    return null;
+  }catch(e){ return null; }
 }
 
-// ── AGENDA: TODAS LAS PRÓXIMAS ACCIONES PENDIENTES DE TODOS LOS CLIENTES ──
-function obtenerAgenda(ss) {
-  const hoja = ss.getSheetByName('Clientes');
-  if (!hoja) return [];
-
-  const datos = hoja.getDataRange().getValues();
-  if (datos.length < 2) return [];
-
-  const headers = datos[0];
-  const col = (nombreHeader) => headers.indexOf(nombreHeader);
-
-  const colNombre = col('Nombre');
-  const colTel    = col('Teléfono');
-  const colFecha  = col('Fecha Próxima Acción');
-  const colHora   = col('Hora Próxima Acción');
-  const colDur    = col('Duración Estimada (min)');
-  const colDesc   = col('Descripción Próxima Acción');
-  const colEstado = col('Estado Última Acción');
-
-  if (colFecha === -1) return []; // Aún no se ha guardado ninguna acción con fecha
-
-  const tareas = [];
-  for (let i = 1; i < datos.length; i++) {
-    const row = datos[i];
-    const fechaRaw = row[colFecha];
-    if (!fechaRaw) continue; // Sin próxima acción pendiente para este cliente
-
-    const estado = colEstado > -1 ? (row[colEstado] || '').toString() : '';
-    if (estado === 'realizado') continue; // Ya resuelto, no es pendiente
-
-    let fechaISO = fechaRaw;
-    if (fechaRaw instanceof Date) {
-      fechaISO = Utilities.formatDate(fechaRaw, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+async function finalizarGuardadoAccion(prefix, st){
+  if(st.estado==='pospuesto' && st.fecha && st.hora){
+    const ajuste = await evitarTraslapeAgenda(st.fecha, st.hora, st.duracionMin);
+    if(ajuste && ajuste.movido){
+      st.hora = ajuste.hora;
+      mostrarToast(`🕓 Ya tenías otro cliente a esa hora. Se movió a las ${ajuste.hora} para no juntar citas.`);
     }
-
-    let horaTxt = colHora > -1 ? row[colHora] : '';
-    if (horaTxt instanceof Date) {
-      horaTxt = Utilities.formatDate(horaTxt, Session.getScriptTimeZone(), 'HH:mm');
-    }
-
-    tareas.push({
-      nombre:      colNombre > -1 ? (row[colNombre] || '').toString() : '',
-      telefono:    colTel    > -1 ? (row[colTel]    || '').toString() : '',
-      fecha:       fechaISO.toString(),
-      hora:        (horaTxt || '').toString(),
-      duracionMin: colDur    > -1 ? (parseInt(row[colDur], 10) || 20) : 20,
-      accion:      colDesc   > -1 ? (row[colDesc]   || '').toString() : '',
-      estado:      estado || 'pendiente'
-    });
   }
-  return tareas;
+  if(typeof accionCallbacks[prefix] === 'function') accionCallbacks[prefix](st);
+  enviarAccionASheets(prefix, st);
 }
 
-// ── RESPUESTA JSON ────────────────────────────────────────────────
-function respuesta(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-// ── UPSERT CLIENTE ────────────────────────────────────────────────
-function upsertCliente(ss, data) {
-  let hoja = ss.getSheetByName('Clientes');
-
-  if (!hoja) {
-    hoja = ss.insertSheet('Clientes');
-    const headers = [
-      'Última actualización', 'Nombre', 'Teléfono', 'Correo', 'Ciudad', 'Ocupación',
-      'Fuente del Lead', 'Vehículo', 'Precio ($)', 'Prueba de Manejo',
-      'Tipo de Operación', 'Enganche', 'Plazo (meses)', 'Tasa de Interés (%)',
-      'Mensualidad Est.', 'Estado de Operación', 'Disponibilidad Vehículo',
-      'Tiempo de Llegada', 'Descuento', 'Monto Descuento ($)', 'Regalos / Beneficios',
-      'Anticipo / Pedido', 'Documentación', 'Estatus Crédito',
-      'Decisión de Compra', 'Urgencia', 'Total de Gestiones', 'Score CRM', 'Acción a Seguir'
-    ];
-    const rng = hoja.appendRow(headers).offset ? hoja.getRange(1,1,1,headers.length) : hoja.getRange(1,1,1,headers.length);
-    hoja.appendRow(headers);
-    const headerRange = hoja.getRange(1, 1, 1, headers.length);
-    headerRange.setFontWeight('bold').setBackground('#1C2E45').setFontColor('#FFFFFF');
-    hoja.setFrozenRows(1);
-    [1,2,3,4,5,6,7,8,9,15,21,29].forEach((col, i) => {
-      const widths = [165,160,130,130,140,140,120,200,100,120,220,320];
-      hoja.setColumnWidth(col, widths[i] || 140);
-    });
-    // Si appendRow ya insertó la primera fila, eliminar la fila duplicada
-    if (hoja.getLastRow() > 1) hoja.deleteRow(2);
-  }
-
-  const nombre = (data.nombre || '').trim();
-  const fila   = encontrarFilaCliente(hoja, nombre);
-
-  const valores = [
-    new Date().toLocaleString('es-MX'),
-    nombre,
-    data.telefono        || '',
-    data.correo          || '',
-    data.ciudad          || '',
-    data.ocupacion       || '',
-    data.fuenteLead      || '',
-    data.vehiculo        || '',
-    data.precio          || '',
-    data.pruebaManejo    || '',
-    data.tipoOperacion   || '',
-    data.enganche        || '',
-    data.plazo           || '',
-    data.tasaInteres     || '',
-    data.mensualidad     || '',
-    data.estadoOperacion || '',
-    data.disponibilidad  || '',
-    data.tiempoLlegada   || '',
-    data.descuento       || '',
-    data.montoDescuento  || '',
-    data.regalos         || '',
-    data.anticipo        || '',
-    data.documentacion   || '',
-    data.estatusCredito  || '',
-    data.decision        || '',
-    data.urgencia        || '',
-    data.totalGestiones  || 0,
-    data.score           || '—'
-    // Columna 29 "Acción a Seguir" se actualiza por separado vía guardarAccionSeguir
-  ];
-
-  if (fila > 0) {
-    hoja.getRange(fila, 1, 1, valores.length).setValues([valores]);
-  } else {
-    hoja.appendRow(valores);
-    const ultima = hoja.getLastRow();
-    if (ultima % 2 === 0) hoja.getRange(ultima, 1, 1, valores.length).setBackground('#F8FAFC');
-  }
-}
-
-// ── BUSCAR FILA DEL CLIENTE POR NOMBRE ───────────────────────────
-function encontrarFilaCliente(hoja, nombre) {
-  if (!nombre) return -1;
-  const datos = hoja.getDataRange().getValues();
-  for (let i = 1; i < datos.length; i++) {
-    if ((datos[i][1]||'').toString().trim().toLowerCase() === nombre.trim().toLowerCase()) return i + 1;
-  }
-  return -1;
-}
-
-// ── GUARDAR GESTIÓN (registro permanente, nunca sobrescribe) ──────
-function guardarGestion(ss, data) {
-  let hoja = ss.getSheetByName('Gestiones');
-
-  if (!hoja) {
-    hoja = ss.insertSheet('Gestiones');
-    const headers = [
-      'Fecha de Registro', 'Cliente', 'Fecha del Contacto',
-      'Tipo de Contacto', 'Calidad', 'Notas del Vendedor',
-      'Siguiente Paso / Acción', 'Mensaje IA Vinculado'
-    ];
-    hoja.appendRow(headers);
-    const rng = hoja.getRange(1, 1, 1, headers.length);
-    rng.setFontWeight('bold').setBackground('#1C2E45').setFontColor('#FFFFFF');
-    hoja.setFrozenRows(1);
-    [1,2,3,4,5,6,7,8].forEach((col, i) => {
-      const widths = [165,160,165,160,100,320,280,320];
-      hoja.setColumnWidth(col, widths[i]||160);
-    });
-  }
-
-  const tipoMap = {
-    sincontacto:'Sin contacto aún', primeravisita:'Primera visita',
-    llamada:'Llamada', whatsapp:'WhatsApp', cita:'Cita presencial',
-    seguimiento:'Seguimiento', posventa:'Posventa', email:'Correo'
+/* ─── Envía la Acción a Seguir (con fecha/hora/duración) al Script para la Agenda ─── */
+async function enviarAccionASheets(prefix, st){
+  const url = localStorage.getItem('nexus_sheets_url')||'';
+  if(!url) return;
+  const nombreCliente = (document.getElementById('nombre').value||'').trim();
+  if(!nombreCliente) return;
+  const info = accionState[prefix] || {};
+  const payload = {
+    tipo: 'accion_seguir',
+    nombreCliente,
+    accionTexto: info.resumen || '',
+    plazo: info.tiempoTexto || '',
+    estado: st.estado,
+    motivo: st.explicacion || '',
+    fecha: st.fecha || '',
+    hora: st.hora || '',
+    duracionMin: st.duracionMin || 20,
+    fechaGestionTexto: new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})
   };
-  const calidadMap = { positivo:'🟢 Positivo', neutral:'🟡 Neutral', negativo:'🔴 Negativo' };
-
-  const valores = [
-    new Date().toLocaleString('es-MX'),
-    data.nombreCliente   || '',
-    data.fecha           || '',
-    tipoMap[data.tipo]   || data.tipo || '',
-    calidadMap[data.calidad] || data.calidad || '',
-    data.comentarios     || '',
-    data.pasoSiguiente   || '',
-    data.mensajeIA       ? 'El mensaje correspondiente a esta gestión es el siguiente:\n' + data.mensajeIA : ''
-  ];
-
-  hoja.appendRow(valores);
-
-  // Color en columna de calidad
-  const ultima   = hoja.getLastRow();
-  const celdaCal = hoja.getRange(ultima, 5);
-  if (data.calidad === 'positivo')     celdaCal.setFontColor('#059669');
-  else if (data.calidad === 'negativo') celdaCal.setFontColor('#DC2626');
-  else                                  celdaCal.setFontColor('#EA580C');
-
-  // Activar ajuste de texto en columnas largas
-  hoja.getRange(ultima, 6, 1, 3).setWrap(true);
+  try{
+    await fetch(url, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload) });
+  }catch(e){ /* silencioso: no bloquea el flujo local si falla la conexión */ }
 }
 
-// ── LIMPIAR GESTIONES DE UN CLIENTE (para re-sync) ───────────────
-function limpiarGestionesCliente(ss, nombre) {
-  const hoja = ss.getSheetByName('Gestiones');
-  if (!hoja || !nombre) return;
-  const datos = hoja.getDataRange().getValues();
-  const filasBorrar = [];
-  for (let i = datos.length - 1; i >= 1; i--) {
-    if ((datos[i][1]||'').toString().trim().toLowerCase() === nombre.trim().toLowerCase()) {
-      filasBorrar.push(i + 1);
-    }
-  }
-  filasBorrar.forEach(f => hoja.deleteRow(f));
+/* ─── PRIMERA VISITA — PASOS ───
+   Genera un plan de seguimiento profesional (3-4 pasos, sofisticado) que se muestra
+   en esta misma tarjeta, y por separado UNA acción rápida y concreta (lista para
+   ejecutar ya) que es la que alimentará el bloque "🎯 Siguiente Acción Recomendada". */
+async function generarPasosPV(){
+  const btn = document.getElementById('btnPvPasos');
+  const box = document.getElementById('pvPasosBox');
+  const txt = document.getElementById('pvPasosTexto');
+  const comentarios = document.getElementById('comentariosPrimeraVisita').value.trim();
+  if(!comentarios){ mostrarToast('Escribe los comentarios de la primera visita primero.'); return; }
+  btn.disabled=true; btn.textContent='⏳ Generando…';
+  box.classList.remove('hidden');
+  txt.innerHTML='<div class="ai-loading"><div class="spinner"></div> Generando plan de seguimiento…</div>';
+  const p=`Eres un coach de ventas automotriz senior. Con base en esta primera visita del cliente, genera un plan de seguimiento profesional Y una acción inmediata. Responde EXACTAMENTE con este formato, sin texto adicional antes ni después, sin comillas:\n\nPLAN:\n1. (primer paso concreto y específico)\n2. (siguiente paso)\n(continúa numerando tantos pasos como consideres profesionalmente necesarios: pueden ser 2, pueden ser 7, tú decides según la complejidad real del caso — no fuerces un número fijo, sé un consultor senior, no una plantilla)\n\nACCION_RAPIDA: (una sola acción específica y lista para ejecutar hoy o en las próximas horas, máximo 2 líneas, sin emojis ni encabezados)\nTIEMPO: (rango de tiempo realista para ejecutar esa acción rápida, ejemplo "24-48 horas")\n\nContexto del cliente:\n${buildContexto()}\n\nComentarios de la primera visita: ${comentarios}\nSentimiento: ${document.getElementById('calidadPrimeraVisita').value}`;
+  try{
+    const resp = await llamarIA(p, 600);
+    const {plan, accionRapida, tiempo} = parseRespuestaPlan(resp);
+    txt.innerHTML = (plan||resp).replace(/\n/g,'<br>');
+    pvAccionRapida = accionRapida || plan;
+    pvTiempoEstimado = tiempo;
+    pvPasosGenerados = true;
+  }catch(e){ txt.textContent = 'Error al generar. Intenta de nuevo.'; pvPasosGenerados=false; }
+  btn.disabled=false; btn.textContent='⚡ Siguientes pasos';
+  evaluarBtnGuardarPV();
 }
 
-// ── GUARDAR / ACTUALIZAR ACCIÓN A SEGUIR ─────────────────────────
-function guardarAccionSeguir(ss, data) {
-  const hoja = ss.getSheetByName('Clientes');
-  if (!hoja || !data.nombreCliente) return;
-
-  const fila = encontrarFilaCliente(hoja, data.nombreCliente);
-  if (fila < 1) return;
-
-  const colIdx = getOrCreateColumnaFija(hoja, 'Acción a Seguir');
-
-  const accionTexto  = data.accionTexto || '';
-  const plazo        = data.plazo || '';
-  const fechaGestion = data.fechaGestionTexto ||
-    new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
-
-  let estadoLinea, color;
-  if (data.estado === 'realizado') {
-    estadoLinea = '✅ Realizado';
-    color = '#059669';
-  } else if (data.estado === 'no_realizado') {
-    estadoLinea = `❌ No realizado — Motivo: ${data.motivo || 'Sin especificar'}`;
-    color = '#DC2626';
-  } else if (data.estado === 'pospuesto') {
-    const fecha = data.fecha
-      ? new Date(data.fecha + 'T00:00:00').toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' })
-      : 'Sin definir';
-    estadoLinea = `⏸ Pospuesto → Próximo seguimiento: ${fecha}${data.hora ? ' ' + data.hora : ''}`;
-    color = '#EA580C';
-  } else {
-    estadoLinea = '🕓 Pendiente';
-    color = '#64748B';
-  }
-
-  const texto =
-    `📅 Fecha: ${fechaGestion}\n` +
-    `📋 Acción: ${accionTexto}` + (plazo ? ` (${plazo})` : '') + `\n` +
-    estadoLinea;
-
-  const celda = hoja.getRange(fila, colIdx);
-  celda.setValue(texto).setWrap(true).setFontColor(color);
-
-  // Columnas de soporte para reportes y filtros
-  hoja.getRange(fila, getOrCreateColumnaFija(hoja, 'Fecha Última Gestión')).setValue(fechaGestion);
-  hoja.getRange(fila, getOrCreateColumnaFija(hoja, 'Estado Última Acción')).setValue(data.estado || '');
-
-  // ── Columnas estructuradas para la AGENDA (fecha/hora/duración reales, no texto) ──
-  const colFechaAgenda = getOrCreateColumnaFija(hoja, 'Fecha Próxima Acción');
-  const colHoraAgenda  = getOrCreateColumnaFija(hoja, 'Hora Próxima Acción');
-  const colDurAgenda   = getOrCreateColumnaFija(hoja, 'Duración Estimada (min)');
-  const colDescAgenda  = getOrCreateColumnaFija(hoja, 'Descripción Próxima Acción');
-
-  if (data.estado === 'pospuesto' && data.fecha) {
-    // Forzar texto plano para que 'fecha' y 'hora' siempre regresen como string (evita
-    // que Sheets las convierta a Date con otro huso horario al leerlas de vuelta).
-    hoja.getRange(fila, colFechaAgenda).setNumberFormat('@').setValue(data.fecha);
-    hoja.getRange(fila, colHoraAgenda).setNumberFormat('@').setValue(data.hora || '');
-    hoja.getRange(fila, colDurAgenda).setValue(data.duracionMin || 20);
-    hoja.getRange(fila, colDescAgenda).setValue(accionTexto);
-  } else if (data.estado === 'realizado') {
-    // Ya no queda pendiente: se limpia para que desaparezca de la Agenda.
-    hoja.getRange(fila, colFechaAgenda).setValue('');
-    hoja.getRange(fila, colHoraAgenda).setValue('');
-  }
-  // Si es "no_realizado" se deja la fecha/hora previa intacta, por si se quiere reagendar.
+/* ─── PRIMERA VISITA — MENSAJE IA ─── */
+async function generarMensajePV(){
+  const btn = document.getElementById('btnPvMensaje');
+  const box = document.getElementById('pvMensajeBox');
+  const txt = document.getElementById('pvMensajeTexto');
+  const comentarios = document.getElementById('comentariosPrimeraVisita').value.trim();
+  if(!comentarios){ mostrarToast('Escribe los comentarios de la primera visita primero.'); return; }
+  btn.disabled=true; btn.textContent='⏳ Generando…';
+  box.classList.remove('hidden');
+  txt.innerHTML='<div class="ai-loading"><div class="spinner"></div> Generando mensaje…</div>';
+  const p=`Eres un vendedor de autos experto en WhatsApp en México. El cliente acaba de terminar su primera visita al showroom.\n\nContexto: ${buildContexto()}\nComentarios de la visita: ${comentarios}\nSentimiento: ${document.getElementById('calidadPrimeraVisita').value}\n\nRedacta UN mensaje de seguimiento post-visita. Máximo 4 líneas. Natural, cálido y con call-to-action claro. 1 emoji máximo. Listo para copiar. Solo el mensaje, sin comillas ni explicaciones.`;
+  try{
+    const resp = await llamarIA(p, 300);
+    txt.textContent = resp;
+    pvMsgActual = resp;
+    pvMensajeGenerado = true;
+  }catch(e){ txt.textContent = 'Error al generar. Intenta de nuevo.'; pvMensajeGenerado=false; }
+  btn.disabled=false; btn.textContent='💬 Mensaje IA';
+  evaluarBtnGuardarPV();
 }
 
-// ── ELIMINAR CLIENTE COMPLETO ─────────────────────────────────────
-function eliminarClienteCompleto(ss, nombreCliente) {
-  const nombre = (nombreCliente || '').toString().trim();
-  if (!nombre) return;
-
-  const hojaClientes = ss.getSheetByName('Clientes');
-  if (hojaClientes) {
-    const fila = encontrarFilaCliente(hojaClientes, nombre);
-    if (fila > 0) hojaClientes.deleteRow(fila);
-  }
-  limpiarGestionesCliente(ss, nombre);
-}
-
-// ── BUSCAR O CREAR COLUMNA FIJA POR ENCABEZADO ───────────────────
-function getOrCreateColumnaFija(hoja, nombreHeader) {
-  const ultimaCol  = Math.max(hoja.getLastColumn(), 1);
-  const headerRow  = hoja.getRange(1, 1, 1, ultimaCol).getValues()[0];
-  let colIdx       = headerRow.indexOf(nombreHeader) + 1; // 0 = no existe
-
-  if (colIdx === 0) {
-    colIdx = ultimaCol + 1;
-    const cell = hoja.getRange(1, colIdx);
-    cell.setValue(nombreHeader).setFontWeight('bold').setBackground('#1C2E45').setFontColor('#FFFFFF');
-    hoja.setColumnWidth(colIdx, 260);
-  }
-  return colIdx;
-}
-
-// ── NORMALIZAR ENCABEZADO → CAMPO JS ─────────────────────────────
-function normalizarHeader(h) {
-  const map = {
-    'Última actualización':'timestamp','Nombre':'nombre','Teléfono':'telefono',
-    'Correo':'correo','Ciudad':'ciudad','Ocupación':'ocupacion',
-    'Fuente del Lead':'fuenteLead','Vehículo':'vehiculo','Precio ($)':'precio',
-    'Prueba de Manejo':'pruebaManejo','Tipo de Operación':'tipoOperacion',
-    'Enganche':'enganche','Plazo (meses)':'plazo','Tasa de Interés (%)':'tasaInteres',
-    'Mensualidad Est.':'mensualidad','Estado de Operación':'estadoOperacion',
-    'Disponibilidad Vehículo':'disponibilidad','Tiempo de Llegada':'tiempoLlegada',
-    'Descuento':'descuento','Monto Descuento ($)':'montoDescuento',
-    'Regalos / Beneficios':'regalos','Anticipo / Pedido':'anticipo',
-    'Documentación':'documentacion','Estatus Crédito':'estatusCredito',
-    'Decisión de Compra':'decision','Urgencia':'urgencia',
-    'Total de Gestiones':'totalGestiones','Score CRM':'score',
-    'Acción a Seguir':'accionSeguir','Fecha Última Gestión':'fechaUltimaGestion',
-    'Estado Última Acción':'estadoUltimaAccion'
+/* ─── GUARDAR PRIMERA VISITA ─── */
+document.getElementById('btnGuardarPrimeraVisita').addEventListener('click', async () => {
+  const comentarios = document.getElementById('comentariosPrimeraVisita').value.trim();
+  if(!comentarios){ mostrarToast('Escribe los comentarios antes de guardar.'); return; }
+  const calidad = document.getElementById('calidadPrimeraVisita').value;
+  const g = {
+    id: Date.now(),
+    fecha: new Date().toLocaleString('es-MX'),
+    tipo: 'primeravisita',
+    calidad,
+    comentarios,
+    pasoSiguiente: pvAccionRapida || '',
+    planDetallado: document.getElementById('pvPasosTexto').innerText || '',
+    accionTiempo: pvTiempoEstimado || '24-48 horas',
+    mensajeIA: pvMsgActual || '',
+    accionEstado: '', accionExplicacion: '', accionFecha: '', accionHora: ''
   };
-  return map[h] || h.toLowerCase().replace(/\s+/g,'_');
+  gestiones.unshift(g);
+  localStorage.setItem('crm_gestiones', JSON.stringify(gestiones));
+  localStorage.setItem('crm_pv_guardada', '1');
+  if(pvMsgActual) localStorage.setItem('crm_pv_msg', pvMsgActual);
+  pvGuardada = true;
+  mostrarPVGuardada(g);
+  renderHistorial(); recalcScore();
+  mostrarToast('✓ Primera visita guardada');
+  evaluarScoreIA(false);
+
+  // Genera/actualiza el bloque independiente de arriba con la Acción Recomendada
+  inicializarAccionRecomendada();
+});
+
+function mostrarPVGuardada(g){
+  document.getElementById('pvFormulario').classList.add('hidden');
+  document.getElementById('pvGuardada').classList.remove('hidden');
+  document.getElementById('pvResumenGuardado').textContent =
+    `${g.fecha} · Sentimiento: ${g.calidad} · "${g.comentarios.substring(0,80)}${g.comentarios.length>80?'…':''}"`;
+  if(g.mensajeIA){
+    document.getElementById('pvMensajeGuardado').classList.remove('hidden');
+    document.getElementById('pvMensajeGuardadoTexto').textContent = g.mensajeIA;
+  }
+  // Una vez que ya se registró la Siguiente Acción Recomendada de esta gestión,
+  // ya se avanzó de proceso: se bloquean "Replantear" y "Eliminar" definitivamente.
+  const bloqueada = !!g.accionEstado;
+  const acciones = document.getElementById('pvAccionesGuardado');
+  const msgBloqueo = document.getElementById('pvBloqueadaMsg');
+  if(acciones)  acciones.classList.toggle('hidden', bloqueada);
+  if(msgBloqueo) msgBloqueo.classList.toggle('hidden', !bloqueada);
 }
+
+function replantearPV(){
+  const pvGestion = gestiones.find(g => g.tipo === 'primeravisita');
+  if(pvGestion && pvGestion.accionEstado){
+    mostrarToast('🔒 Ya avanzaste a Registrar Contacto. La primera visita quedó bloqueada.');
+    return;
+  }
+  document.getElementById('pvGuardada').classList.add('hidden');
+  document.getElementById('pvFormulario').classList.remove('hidden');
+  limpiarAccionRecomendada();
+  pvPasosGenerados=false; pvMensajeGenerado=false; pvAccionRapida=''; pvTiempoEstimado='';
+  evaluarBtnGuardarPV();
+}
+
+function eliminarPV(){
+  const pvGestion = gestiones.find(g => g.tipo === 'primeravisita');
+  if(pvGestion && pvGestion.accionEstado){
+    mostrarToast('🔒 Ya avanzaste a Registrar Contacto. No puedes eliminar la primera visita.');
+    return;
+  }
+  gestiones = gestiones.filter(g => g.tipo !== 'primeravisita');
+  localStorage.setItem('crm_gestiones', JSON.stringify(gestiones));
+  localStorage.removeItem('crm_pv_guardada');
+  localStorage.removeItem('crm_pv_msg');
+  pvGuardada=false; pvMsgActual='';
+  pvPasosGenerados=false; pvMensajeGenerado=false; pvAccionRapida=''; pvTiempoEstimado='';
+  document.getElementById('pvGuardada').classList.add('hidden');
+  document.getElementById('pvFormulario').classList.remove('hidden');
+  document.getElementById('pvMensajeBox').classList.add('hidden');
+  document.getElementById('pvPasosBox').classList.add('hidden');
+  document.getElementById('comentariosPrimeraVisita').value='';
+  limpiarAccionRecomendada();
+  evaluarBtnGuardarPV();
+  evaluarBloqueoRC(false);
+  scoreIAActiva=false; ultimoScoreIA=null;
+  renderHistorial(); recalcScore();
+  scheduleScoreIA();
+  mostrarToast('🗑 Gestión de primera visita eliminada');
+}
+
+/* ─── REGISTRAR CONTACTO — PASOS ───
+   Igual que en Primera Visita: un plan de seguimiento profesional (3-4 pasos) para
+   esta tarjeta, y una acción rápida separada para el bloque de Acción Recomendada. */
+async function generarPasosRC(){
+  const btn = document.getElementById('btnRcPasos');
+  const box = document.getElementById('rcPasosBox');
+  const txt = document.getElementById('rcPasosTexto');
+  const comentarios = document.getElementById('comentariosGestion').value.trim();
+  if(!comentarios){ mostrarToast('Escribe las notas del contacto primero.'); return; }
+  btn.disabled=true; btn.textContent='⏳ Generando…';
+  box.classList.remove('hidden');
+  txt.innerHTML='<div class="ai-loading"><div class="spinner"></div> Generando plan de seguimiento…</div>';
+  const tipo = document.getElementById('tipoContacto').value;
+  const calidad = document.getElementById('calidadContacto').value;
+  const p=`Eres un coach de ventas automotriz senior. Con base en este contacto de seguimiento, genera un plan de seguimiento profesional Y una acción inmediata. Responde EXACTAMENTE con este formato, sin texto adicional antes ni después, sin comillas:\n\nPLAN:\n1. (primer paso concreto y específico)\n2. (siguiente paso)\n(continúa numerando tantos pasos como consideres profesionalmente necesarios: pueden ser 2, pueden ser 7, tú decides según la complejidad real del caso — no fuerces un número fijo, sé un consultor senior, no una plantilla)\n\nACCION_RAPIDA: (una sola acción específica y lista para ejecutar hoy o en las próximas horas, máximo 2 líneas, sin emojis ni encabezados)\nTIEMPO: (rango de tiempo realista para ejecutar esa acción rápida, ejemplo "24-48 horas")\n\nContexto: ${buildContexto()}\nTipo de contacto: ${tipo}\nCalidad: ${calidad}\nNotas: ${comentarios}`;
+  try{
+    const resp = await llamarIA(p, 600);
+    const {plan, accionRapida, tiempo} = parseRespuestaPlan(resp);
+    txt.innerHTML = (plan||resp).replace(/\n/g,'<br>');
+    rcAccionRapida = accionRapida || plan;
+    rcTiempoEstimado = tiempo;
+    rcPasosGenerados = true;
+  }catch(e){ txt.textContent='Error al generar. Intenta de nuevo.'; rcPasosGenerados=false; }
+  btn.disabled=false; btn.textContent='⚡ Siguientes pasos';
+  evaluarBtnGuardarRC();
+}
+
+/* ─── REGISTRAR CONTACTO — MENSAJE IA ─── */
+async function generarMensajeRC(){
+  const btn = document.getElementById('btnWhatsApp');
+  const box = document.getElementById('rcMensajeBox');
+  const txt = document.getElementById('rcMensajeTexto');
+  const comentarios = document.getElementById('comentariosGestion').value.trim();
+  if(!comentarios){ mostrarToast('Escribe las notas del contacto primero.'); return; }
+  btn.disabled=true; btn.textContent='⏳ Generando…';
+  box.classList.remove('hidden');
+  txt.innerHTML='<div class="ai-loading"><div class="spinner"></div> Generando mensaje…</div>';
+  const tipo = document.getElementById('tipoContacto').value;
+  const calidad = document.getElementById('calidadContacto').value;
+  const p=`Eres un vendedor de autos experto en WhatsApp en México.\n\nContexto: ${buildContexto()}\nTipo de contacto: ${tipo}\nCalidad del contacto: ${calidad}\nNotas: ${comentarios}\n\nRedacta UN mensaje de seguimiento. Máximo 4-5 líneas. Natural, cálido, con call-to-action claro. 1-2 emojis máximo. Solo el mensaje, sin comillas ni explicaciones.`;
+  try{
+    const resp = await llamarIA(p, 300);
+    txt.textContent = resp;
+    rcMsgActual = resp;
+    rcMensajeGenerado = true;
+  }catch(e){ txt.textContent='Error al generar. Intenta de nuevo.'; rcMensajeGenerado=false; }
+  btn.disabled=false; btn.textContent='💬 Mensaje IA';
+  evaluarBtnGuardarRC();
+}
+
+/* ─── GUARDAR GESTIÓN DE CONTACTO ─── */
+document.getElementById('btnGuardar').addEventListener('click', async () => {
+  const comentarios = document.getElementById('comentariosGestion').value.trim();
+  if(!comentarios){ mostrarToast('Escribe las notas del contacto antes de guardar.'); return; }
+  const g = {
+    id: Date.now(),
+    fecha: new Date().toLocaleString('es-MX'),
+    tipo: document.getElementById('tipoContacto').value,
+    calidad: document.getElementById('calidadContacto').value,
+    comentarios,
+    pasoSiguiente: rcAccionRapida || '',
+    planDetallado: document.getElementById('rcPasosTexto').innerText || '',
+    accionTiempo: rcTiempoEstimado || '24-48 horas',
+    mensajeIA: rcMsgActual || '',
+    accionEstado: '', accionExplicacion: '', accionFecha: '', accionHora: ''
+  };
+  gestiones.unshift(g);
+  localStorage.setItem('crm_gestiones', JSON.stringify(gestiones));
+  renderHistorial(); recalcScore();
+  mostrarToast('✓ Contacto guardado');
+  evaluarScoreIA(false);
+
+  // Mostrar banner de éxito; el bloque de arriba "🎯 Siguiente Acción Recomendada" se
+  // actualiza solo. El ciclo se repite indefinidamente para cada nuevo contacto.
+  document.getElementById('rcFormulario').classList.add('hidden');
+  document.getElementById('rcGuardado').classList.remove('hidden');
+  inicializarAccionRecomendada();
+});
+
+function resetearRC(){
+  document.getElementById('comentariosGestion').value='';
+  document.getElementById('rcPasosBox').classList.add('hidden');
+  document.getElementById('rcMensajeBox').classList.add('hidden');
+  rcPasosGenerados=false; rcMensajeGenerado=false; rcMsgActual=''; rcPasosActual='';
+  rcAccionRapida=''; rcTiempoEstimado='';
+  evaluarBtnGuardarRC();
+  document.getElementById('rcGuardado').classList.add('hidden');
+  document.getElementById('rcFormulario').classList.remove('hidden');
+}
+
+/* ─── HISTORIAL ─── */
+function renderHistorial(){
+  const lista = document.getElementById('listaGestiones');
+  const total = document.getElementById('totalGestiones');
+  total.textContent = gestiones.length;
+  if(!gestiones.length){
+    lista.innerHTML='<p class="text-muted" style="text-align:center;padding:20px 0">Sin gestiones registradas aún.</p>';
+    return;
+  }
+  const tipoMap={sincontacto:'⏳ Sin contacto aún',primeravisita:'🚗 Primera visita',llamada:'📞 Llamada',whatsapp:'💬 WhatsApp',cita:'🤝 Cita',seguimiento:'📋 Seguimiento',posventa:'⭐ Posventa',email:'📧 Correo'};
+  const colorMap={positivo:'#10B981',neutral:'#F97316',negativo:'#EF4444'};
+  lista.innerHTML = gestiones.map(g => `
+    <div class="gestion-item" style="border-left-color:${colorMap[g.calidad]||'var(--accent)'}">
+      <div class="gestion-meta">
+        <span class="gestion-tipo">${tipoMap[g.tipo]||g.tipo}</span>
+        <span>${g.fecha}</span>
+      </div>
+      <p style="font-size:13px;line-height:1.5;color:var(--text);margin-bottom:${(g.pasoSiguiente||g.mensajeIA)?'8px':'0'}">${g.comentarios}</p>
+      ${g.pasoSiguiente ? `<div style="margin-top:6px;padding:8px 10px;background:var(--accent-dim);border-radius:var(--radius-xs);font-size:12px;color:var(--accent-bright)"><strong>⚡ Siguiente paso:</strong> ${g.pasoSiguiente}</div>` : ''}
+      ${g.mensajeIA ? `<div class="gestion-msg"><div class="gestion-msg-label">El mensaje correspondiente a esta gestión es el siguiente:</div>${g.mensajeIA}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+/* ─── ANÁLISIS IA ─── */
+document.getElementById('btnAnalizar').addEventListener('click', analizarConIA);
+async function analizarConIA(){
+  const btn = document.getElementById('btnAnalizar');
+  const out = document.getElementById('resumenAnalisis');
+  btn.disabled=true; btn.textContent='⏳ Analizando…';
+  out.innerHTML='<div class="ai-loading"><div class="spinner"></div> Generando análisis con IA…</div>';
+  const prompt=`Eres un experto coach de ventas automotriz y neuroventas en México. Analiza el siguiente expediente de cliente a fondo, con el mismo nivel de detalle y profundidad que usaría un consultor senior en un reporte real para el vendedor. Responde EXACTAMENTE con esta estructura de encabezados en texto plano, SIN emojis ni símbolos antes del texto (cada encabezado en su propia línea, seguido de dos puntos y luego el desarrollo). Dentro de cada bloque puedes usar sub-puntos con guion y texto en **negritas** para resaltar ideas clave:
+
+Etapa detectada: Identifica con precisión en qué etapa del proceso está el cliente (prospección, calificación, presentación, manejo de objeciones, negociación o cierre). Explica por qué, citando evidencia concreta del expediente.
+
+Diagnóstico y estado emocional: Desarrolla el perfil del cliente con profundidad. Incluye: perfil narrativo breve, lista de señales positivas, lista de señales de alerta, y su estado emocional/actitud actual.
+
+Probabilidad de cierre: Da un rango estimado en % con justificación sólida de 3-4 líneas explicando qué la sostiene y qué la haría bajar si no se actúa.
+
+Objeciones detectadas: Identifica la objeción principal (y si aplica, una secundaria latente). Para cada una explica qué hay detrás y cómo manejarla con un guion de venta sugerido entre comillas, listo para usar.
+
+Técnica y estrategia de cierre: Recomienda la técnica de venta más adecuada y explica por qué. Desglosa 2-3 acciones concretas numeradas (Acción 1, Acción 2...) con título y explicación práctica.
+
+Voz activa: Si hay frases del cliente o vendedor en las notas, sugiere 2-4 correcciones formato 'original' → 'mejorada'. Si no hay frases suficientes, omite este bloque.
+
+Neuroventas aplicadas: Lista 3-4 principios aplicables a este caso (anclaje emocional, urgencia, prueba social, lenguaje de propiedad anticipada, micro-compromisos progresivos) explicando cómo aplicarlos concretamente.
+
+Congruencia a verificar: Solo si hay incongruencia entre ocupación y vehículo/monto, señálala con tacto. Si no aplica, omite este bloque.
+
+Qué decirle hoy: Script específico y listo para usar entre comillas. Usa cierre de alternativa cuando aplique.
+
+Expediente del cliente:
+${buildContexto()}
+
+Sé específico y bien desarrollado — profundiza como un consultor experto. Usa el nombre del cliente. IMPORTANTE: sin emojis en encabezados, solo texto seguido de dos puntos.`;
+  try{
+    const texto = await llamarIA(prompt, 4000);
+    out.innerHTML = formatMD(texto);
+    // Ante cualquier discrepancia entre el indicador principal y este análisis
+    // detallado, siempre prevalece el porcentaje derivado del análisis.
+    const estado=document.getElementById('estadoOperacion').value;
+    if(estado!=='cerrada' && estado!=='perdida'){
+      const prob = extraerProbabilidadCierre(texto);
+      if(prob){
+        aplicarScoreIA(prob.valor, null, `Según el análisis detallado: ${prob.resumen}`, 'Actualizado por análisis detallado');
+      }
+    }
+  }catch(e){
+    out.innerHTML=`<span style="color:var(--red)">${e.message||'Error al conectar con IA.'}</span>`;
+  }
+  btn.disabled=false; btn.textContent='⚡ Analizar con IA';
+}
+
+/* ─── MOTOR IA ─── */
+async function llamarIA(prompt, maxTokens){
+  if(typeof window!=='undefined' && window.claude && typeof window.claude.complete==='function'){
+    return await window.claude.complete(prompt);
+  }
+  const apiKey = localStorage.getItem('nexus_api_key')||'';
+  if(!apiKey){
+    document.getElementById('modalApiKey').classList.remove('hidden');
+    throw new Error('Ingresa tu API key de Anthropic para continuar. Después vuelve a presionar el botón.');
+  }
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,messages:[{role:'user',content:prompt}]})
+  });
+  if(res.status===401){ localStorage.removeItem('nexus_api_key'); document.getElementById('modalApiKey').classList.remove('hidden'); throw new Error('API key inválida.'); }
+  if(!res.ok) throw new Error(`Error de API (${res.status}). Intenta de nuevo.`);
+  const data = await res.json();
+  return data.content?.map(b=>b.text||'').join('')||'Sin respuesta.';
+}
+function guardarApiKey(){ const k=(document.getElementById('inputApiKey').value||'').trim(); if(!k){mostrarToast('Ingresa una API key válida.');return;} localStorage.setItem('nexus_api_key',k); document.getElementById('modalApiKey').classList.add('hidden'); mostrarToast('✓ API key guardada. Vuelve a presionar el botón de IA.'); }
+function cancelarApiKey(){ document.getElementById('modalApiKey').classList.add('hidden'); }
+
+/* ─── COPIAR ─── */
+function copiarTexto(texto, mensajeOk){
+  function fallback(){ const ta=document.createElement('textarea'); ta.value=texto; ta.style.position='fixed'; ta.style.left='-9999px'; document.body.appendChild(ta); ta.focus(); ta.select(); try{document.execCommand('copy');mostrarToast(mensajeOk);}catch(e){mostrarToast('No se pudo copiar.');} document.body.removeChild(ta); }
+  if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(texto).then(()=>mostrarToast(mensajeOk)).catch(fallback); }
+  else fallback();
+}
+document.getElementById('btnCopiarAnalisis').addEventListener('click', ()=>{
+  const txt=document.getElementById('resumenAnalisis').innerText.trim();
+  if(!txt||txt.includes('Registra gestiones')){ mostrarToast('Aún no hay análisis para copiar.'); return; }
+  copiarTexto(txt,'✓ Análisis copiado');
+});
+
+/* ─── BUILD CONTEXTO ─── */
+function buildContexto(){
+  const g=gestiones.slice(0,6).map(x=>`[${x.fecha}] ${x.tipo} (${x.calidad}): ${x.comentarios}`).join('\n');
+  const regalos=[];
+  if(document.getElementById('rTapetes').checked)     regalos.push('Tapetes');
+  if(document.getElementById('rVidrios').checked)     regalos.push('Vidrios de seguridad');
+  if(document.getElementById('rPelicula').checked)    regalos.push('Película antiasalto');
+  if(document.getElementById('rKitSeguridad').checked)regalos.push('Kit de seguridad completo');
+  if(document.getElementById('rPlacas').checked)      regalos.push('Placas y tenencia');
+  if(document.getElementById('rOtro').checked)        regalos.push(document.getElementById('otroRegaloDesc').value||'Otro');
+  return `Nombre: ${document.getElementById('nombre').value||'—'}
+Teléfono: ${document.getElementById('telefono').value||'—'}
+Ciudad: ${document.getElementById('ciudad').value||'—'}
+Ocupación: ${document.getElementById('ocupacion').value||'No registrada'}
+Vehículo: ${document.getElementById('vehiculo').value||'—'}
+Precio: $${document.getElementById('precio').value||'—'} MXN
+Fuente: ${document.getElementById('fuenteLead').value||'—'}
+Prueba de manejo: ${document.getElementById('pruebaManejo').value||'No realizada'}
+Reacción del cliente en la prueba de manejo: ${(document.getElementById('comentariosPrueba')?.value||'').trim()||'No registrada'}
+Comentarios de primera visita (borrador actual, aún sin guardar): ${(document.getElementById('comentariosPrimeraVisita')?.value||'').trim()||'Ninguno'} — Sentimiento: ${document.getElementById('calidadPrimeraVisita')?.value||'—'}
+Operación: ${document.getElementById('tipoOperacion').value||'—'}${document.getElementById('tipoOperacion').value==='financiado'?`\nMensualidad estimada: ${document.getElementById('kpiMensualidad').textContent} a ${document.getElementById('plazo').value||'—'} meses`:''}
+Estado: ${document.getElementById('estadoOperacion').value}
+Disponibilidad: ${document.getElementById('disponibilidad').value==='si'?'En existencia':document.getElementById('disponibilidad').value==='no'?`No disponible, llega en ${document.getElementById('tiempoLlegada').value||'tiempo no especificado'}`:'—'}
+Descuento: ${document.getElementById('descuento').value==='si'?`Sí, $${document.getElementById('montoDescuento').value||'—'} MXN`:document.getElementById('descuento').value==='no'?'No':'—'}
+Regalos: ${regalos.length?regalos.join(', '):'Ninguno'}
+Anticipo/pedido: ${document.getElementById('anticipo').value||'—'}
+Documentación: ${document.getElementById('documentacion').value||'—'}
+Estatus crédito: ${document.getElementById('estatusCredito').value||'No aplica'}
+Quién decide: ${document.getElementById('decision').value||'—'}
+Urgencia: ${document.getElementById('urgencia').value||'No mencionó'}
+Gestiones totales: ${gestiones.length}
+Historial reciente:\n${g||'Ninguna'}`;
+}
+
+/* ─── FORMAT MD ─── */
+function formatMD(txt){
+  const encabezados=[
+    [/^\s*Etapa detectada\s*:/gmi,'📍 Etapa detectada:'],
+    [/^\s*Diagn[oó]stico y estado emocional\s*:/gmi,'🧠 Diagnóstico y estado emocional:'],
+    [/^\s*Probabilidad de cierre\s*:/gmi,'📊 Probabilidad de cierre:'],
+    [/^\s*Objeciones detectadas\s*:/gmi,'🚧 Objeciones detectadas:'],
+    [/^\s*T[eé]cnica y estrategia de cierre\s*:/gmi,'🎯 Técnica y estrategia de cierre:'],
+    [/^\s*Voz activa\s*:/gmi,'⚡ Voz activa:'],
+    [/^\s*Neuroventas aplicadas\s*:/gmi,'🧲 Neuroventas aplicadas:'],
+    [/^\s*Congruencia a verificar\s*:/gmi,'⚠️ Congruencia a verificar:'],
+    [/^\s*Qu[eé] decirle hoy\s*:/gmi,'🔜 Qué decirle hoy:'],
+  ];
+  let out=txt;
+  encabezados.forEach(([r,l])=>{ out=out.replace(r,l); });
+  return out
+    .replace(/\*\*(.+?)\*\*/g,'<strong style="color:var(--text)">$1</strong>')
+    .replace(/^(📍|🧠|📊|🚧|🎯|⚡|🧲|⚠️|🔜)\s*(.+?):/gm,'<div style="font-weight:700;color:var(--accent-bright);margin:16px 0 6px;font-size:14.5px"><span style="font-family:\'Apple Color Emoji\',\'Segoe UI Emoji\',\'Noto Color Emoji\',\'Twemoji Mozilla\',sans-serif">$1</span> $2:</div>')
+    .replace(/^[-•]\s+(.+)$/gm,'<div style="margin:4px 0 4px 14px;padding-left:10px;border-left:2px solid var(--line)">$1</div>')
+    .replace(/^(Acción \d+[—\-–]?\s*.*)$/gm,'<div style="font-weight:700;color:var(--text);margin:10px 0 2px">$1</div>')
+    .replace(/\n\n/g,'<br><br>')
+    .replace(/\n/g,'<br>');
+}
+
+/* ─── MENÚ PRINCIPAL ─── */
+function toggleMenuPrincipal(){
+  const menu    = document.getElementById('menuPrincipal');
+  const overlay = document.getElementById('menuOverlay');
+  const btn     = document.getElementById('btnMenuPrincipal');
+  const icono   = document.getElementById('menuIcono');
+  const abierto = !menu.classList.contains('hidden');
+
+  if(abierto){
+    cerrarMenu();
+  } else {
+    // Posicionar el panel justo debajo del botón
+    const rect = btn.getBoundingClientRect();
+    menu.style.top  = (rect.bottom + 8) + 'px';
+    menu.style.right = (window.innerWidth - rect.right) + 'px';
+    menu.style.left  = 'auto';
+    // En pantallas muy pequeñas, ajustar para no salirse
+    if(rect.right > window.innerWidth - 10){
+      menu.style.right = '8px';
+    }
+    menu.classList.remove('hidden');
+    overlay.classList.remove('hidden');
+    icono.textContent = '✕';
+  }
+}
+function cerrarMenu(){
+  document.getElementById('menuPrincipal').classList.add('hidden');
+  document.getElementById('menuOverlay').classList.add('hidden');
+  document.getElementById('menuIcono').textContent = '☰';
+}
+function irAConfiguracion(){
+  // Restaurar valores guardados en los inputs del modal
+  const url = localStorage.getItem('nexus_sheets_url')||'';
+  const key = localStorage.getItem('nexus_api_key')||'';
+  const elUrl = document.getElementById('sheetsUrl');
+  const elKey = document.getElementById('apiKeyConfig');
+  if(elUrl) elUrl.value = url;
+  if(elKey) elKey.value = key;
+  document.getElementById('modalConfiguracion').classList.remove('hidden');
+}
+function cerrarModalConfig(){
+  document.getElementById('modalConfiguracion').classList.add('hidden');
+}
+function abrirModalAnalisis(){ /* ya no se usa */ }
+function cerrarModalAnalisis(){ /* ya no se usa */ }
+
+/* ─── AGENDA — próximas acciones de todos los clientes ─── */
+let agendaData = [];
+let agendaVistaActual = 'hoy';
+
+function abrirAgenda(){
+  document.getElementById('modalAgenda').classList.remove('hidden');
+  cargarAgenda();
+}
+function cerrarAgenda(){
+  document.getElementById('modalAgenda').classList.add('hidden');
+}
+
+async function cargarAgenda(){
+  const cont = document.getElementById('agendaContenido');
+  const url  = localStorage.getItem('nexus_sheets_url')||'';
+  if(!url){
+    cont.innerHTML = '<p class="text-muted" style="text-align:center;padding:30px 0">Configura primero la URL de Google Sheets en ⚙️ Configuración.</p>';
+    return;
+  }
+  cont.innerHTML = '<div class="ai-loading" style="justify-content:center"><div class="spinner"></div> Cargando agenda…</div>';
+  try{
+    const res  = await fetch(url+'?action=agenda');
+    const data = await res.json();
+    if(!data.success){
+      cont.innerHTML = `<p class="text-muted" style="text-align:center;padding:30px 0">${data.error||'No se pudo cargar la agenda.'}</p>`;
+      return;
+    }
+    agendaData = Array.isArray(data.tareas) ? data.tareas : [];
+    renderAgenda(agendaVistaActual);
+  }catch(e){
+    cont.innerHTML = '<p class="text-muted" style="text-align:center;padding:30px 0">❌ Error de conexión al cargar la agenda.</p>';
+  }
+}
+
+function cambiarVistaAgenda(vista){
+  agendaVistaActual = vista;
+  document.getElementById('tabAgendaHoy').classList.toggle('active', vista==='hoy');
+  document.getElementById('tabAgendaMes').classList.toggle('active', vista==='mes');
+  document.getElementById('tabAgendaTodas').classList.toggle('active', vista==='todas');
+  renderAgenda(vista);
+}
+
+function renderAgenda(vista){
+  const cont   = document.getElementById('agendaContenido');
+  const hoy    = new Date();
+  const hoyISO = hoy.toISOString().slice(0,10);
+  const mesActual = hoyISO.slice(0,7);
+
+  let lista = agendaData.filter(t => t.fecha);
+  if(vista==='hoy')      lista = lista.filter(t => t.fecha === hoyISO);
+  else if(vista==='mes') lista = lista.filter(t => t.fecha.slice(0,7) === mesActual);
+  // 'todas' → sin filtro adicional de fecha
+
+  lista.sort((a,b) => (a.fecha+(a.hora||'00:00')).localeCompare(b.fecha+(b.hora||'00:00')));
+
+  if(!lista.length){
+    const msg = vista==='hoy' ? 'Sin pendientes para hoy 🎉' : vista==='mes' ? 'Sin pendientes este mes 🎉' : 'No hay acciones pendientes registradas.';
+    cont.innerHTML = `<p class="text-muted" style="text-align:center;padding:30px 0">${msg}</p>`;
+    return;
+  }
+
+  let fechaAnterior = '';
+  let html = '';
+  lista.forEach(t => {
+    if(t.fecha !== fechaAnterior){
+      const f = new Date(t.fecha+'T00:00:00');
+      const esHoy = t.fecha === hoyISO;
+      const esAtrasada = t.fecha < hoyISO;
+      const colorHeader = esAtrasada ? 'var(--red)' : esHoy ? 'var(--accent-bright)' : 'var(--muted)';
+      const prefijo = esHoy ? '📍 HOY · ' : esAtrasada ? '⚠️ ATRASADA · ' : '';
+      html += `<p style="font-size:11px;font-weight:700;color:${colorHeader};text-transform:uppercase;letter-spacing:0.06em;margin:18px 0 8px">${prefijo}${f.toLocaleDateString('es-MX',{weekday:'long',day:'2-digit',month:'long'})}</p>`;
+      fechaAnterior = t.fecha;
+    }
+    const colorEstado = t.estado==='pospuesto' ? 'var(--orange)' : t.estado==='no_realizado' ? 'var(--red)' : 'var(--accent)';
+    html += `
+      <div class="gestion-item" style="border-left-color:${colorEstado};margin-bottom:10px">
+        <div class="gestion-meta">
+          <span class="gestion-tipo">🕐 ${t.hora||'sin hora'} · ${t.duracionMin||20} min</span>
+          <span>${t.estado||'pendiente'}</span>
+        </div>
+        <p style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">${t.nombre||'Cliente'}</p>
+        ${t.accion ? `<p style="font-size:12px;color:var(--text-dim);line-height:1.5">${t.accion}</p>` : ''}
+        ${t.telefono ? `<p style="font-size:11px;color:var(--muted);margin-top:4px">📞 ${t.telefono}</p>` : ''}
+      </div>`;
+  });
+  cont.innerHTML = html;
+}
+
+/* ─── RESUMEN DE GESTIONES (función independiente del Analizador IA) ─── */
+async function generarResumenGestiones(){
+  if(!gestiones.length){ mostrarToast('No hay gestiones registradas aún.'); return; }
+  const box = document.getElementById('resumenGestionesBox');
+  const txt = document.getElementById('resumenGestionesTexto');
+  box.classList.remove('hidden');
+  txt.innerHTML='<div class="ai-loading"><div class="spinner"></div> Generando resumen…</div>';
+
+  const historial = gestiones.map((g,i) =>
+    `${i+1}. [${g.fecha}] ${g.tipo} (${g.calidad}): ${g.comentarios}${g.pasoSiguiente?' | Paso: '+g.pasoSiguiente:''}`
+  ).join('\n');
+
+  const nombre = document.getElementById('nombre').value.trim() || 'el cliente';
+  const prompt = `Genera un resumen ejecutivo claro y ordenado de todo el historial de gestiones con ${nombre}. El resumen debe indicar: cuántos contactos se han tenido, cómo ha evolucionado la relación, los temas más recurrentes, los acuerdos o compromisos establecidos, y el estado actual del proceso. Sé concreto y directo. Máximo 150 palabras.\n\nHistorial de gestiones:\n${historial}`;
+
+  try{
+    const resp = await llamarIA(prompt, 500);
+    txt.innerHTML = resp.replace(/\n/g,'<br>');
+  }catch(e){
+    txt.innerHTML = `<span style="color:var(--red)">${e.message||'Error al generar resumen.'}</span>`;
+  }
+}
+
+/* ─── GUARDAR FICHA COMPLETA (sync) ─── */
+async function guardarFichaCompleta(){
+  cerrarMenu();
+  const url = localStorage.getItem('nexus_sheets_url')||'';
+  if(!url){
+    mostrarToast('Configura primero la URL de Google Sheets en ⚙️ Configuración.');
+    irAConfiguracion();
+    return;
+  }
+  mostrarToast('☁️ Guardando ficha completa…');
+  await sincronizarSheets();
+}
+
+/* ─── ELIMINAR CLIENTE EN SHEETS ─── */
+function eliminarClienteSheets(){
+  const nombre = document.getElementById('nombre').value.trim();
+  if(!nombre){ mostrarToast('No hay cliente cargado para eliminar.'); return; }
+  const el = document.getElementById('nombreEliminar');
+  if(el) el.textContent = nombre;
+  document.getElementById('modalEliminarCliente').classList.remove('hidden');
+}
+async function confirmarEliminarCliente(){
+  document.getElementById('modalEliminarCliente').classList.add('hidden');
+  const nombre = document.getElementById('nombre').value.trim();
+  const url    = localStorage.getItem('nexus_sheets_url')||'';
+  if(url){
+    try{
+      await fetch(url,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify({ tipo:'eliminar_cliente', nombreCliente:nombre })
+      });
+      mostrarToast('✓ Cliente eliminado de Google Sheets');
+    }catch(e){ mostrarToast('⚠️ No se pudo conectar con Sheets, pero se limpió localmente.'); }
+  }
+  // Limpiar local igual que Nueva Ficha
+  localStorage.removeItem('crm_cliente');
+  localStorage.removeItem('crm_gestiones');
+  localStorage.removeItem('crm_pv_guardada');
+  localStorage.removeItem('crm_pv_msg');
+  location.reload();
+}
+function cancelarEliminarCliente(){
+  document.getElementById('modalEliminarCliente').classList.add('hidden');
+}
+
+/* ─── TOAST ─── */
+function mostrarToast(msg='✓ Listo'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* ─── CONFIGURACIÓN ─── */
+(function initConfig(){
+  const url = localStorage.getItem('nexus_sheets_url')||'';
+  const key = localStorage.getItem('nexus_api_key')||'';
+  if(url){ const el=document.getElementById('sheetsUrl'); if(el) el.value=url; }
+  if(key){ const el=document.getElementById('apiKeyConfig'); if(el) el.value=key; }
+})();
+
+function guardarConfigSheets(){
+  const url = (document.getElementById('sheetsUrl').value||'').trim();
+  if(url) localStorage.setItem('nexus_sheets_url', url);
+}
+
+function guardarApiKeyConfig(){
+  const key = (document.getElementById('apiKeyConfig').value||'').trim();
+  if(!key){ mostrarToast('Ingresa una API key válida.'); return; }
+  localStorage.setItem('nexus_api_key', key);
+  mostrarToast('✓ API key guardada correctamente.');
+}
+
+function borrarApiKey(){
+  localStorage.removeItem('nexus_api_key');
+  const el = document.getElementById('apiKeyConfig');
+  if(el) el.value='';
+  mostrarToast('🗑 API key eliminada.');
+}
+
+async function probarConexionSheets(){
+  const url = localStorage.getItem('nexus_sheets_url')||'';
+  if(!url){ mostrarToast('Primero guarda la URL del Web App.'); return; }
+  const est = document.getElementById('sheetsEstado');
+  est.textContent='Probando conexión…'; est.style.color='var(--muted)';
+  try{
+    const res = await fetch(url+'?action=ping');
+    const data = await res.json();
+    est.textContent = '✅ Conexión exitosa — ' + (data.status||'OK');
+    est.style.color = 'var(--green)';
+  }catch(e){
+    est.textContent = '❌ No se pudo conectar. Verifica la URL e intenta de nuevo.';
+    est.style.color = 'var(--red)';
+  }
+}
+
+async function sincronizarSheets(){
+  const url = localStorage.getItem('nexus_sheets_url')||'';
+  if(!url){ mostrarToast('Configura primero la URL del Web App en Configuración.'); return; }
+  const est = document.getElementById('sheetsEstado');
+  est.textContent='Sincronizando…'; est.style.color='var(--muted)';
+
+  const regalos=[];
+  if(document.getElementById('rTapetes').checked)      regalos.push('Tapetes');
+  if(document.getElementById('rVidrios').checked)      regalos.push('Vidrios de seguridad');
+  if(document.getElementById('rPelicula').checked)     regalos.push('Película antiasalto');
+  if(document.getElementById('rKitSeguridad').checked) regalos.push('Kit de seguridad completo');
+  if(document.getElementById('rPlacas').checked)       regalos.push('Placas y tenencia');
+  if(document.getElementById('rOtro').checked)         regalos.push(document.getElementById('otroRegaloDesc').value||'Otro');
+
+  const mensualidadEl = document.getElementById('kpiMensualidad');
+
+  const payload = {
+    tipo:            'sync_completo',
+    nombre:          document.getElementById('nombre').value||'',
+    telefono:        document.getElementById('telefono').value||'',
+    correo:          document.getElementById('correo').value||'',
+    ciudad:          document.getElementById('ciudad').value||'',
+    ocupacion:       document.getElementById('ocupacion').value||'',
+    fuenteLead:      document.getElementById('fuenteLead').value||'',
+    vehiculo:        document.getElementById('vehiculo').value||'',
+    precio:          document.getElementById('precio').value||'',
+    pruebaManejo:    document.getElementById('pruebaManejo').value||'',
+    tipoOperacion:   document.getElementById('tipoOperacion').value||'',
+    enganche:        document.getElementById('enganche').value||'',
+    plazo:           document.getElementById('plazo').value||'',
+    tasaInteres:     document.getElementById('tasaInteres').value||'',
+    mensualidad:     mensualidadEl ? mensualidadEl.textContent : '',
+    estadoOperacion: document.getElementById('estadoOperacion').value||'',
+    disponibilidad:  document.getElementById('disponibilidad').value||'',
+    tiempoLlegada:   document.getElementById('tiempoLlegada').value||'',
+    descuento:       document.getElementById('descuento').value||'',
+    montoDescuento:  document.getElementById('montoDescuento').value||'',
+    regalos:         regalos.join(', '),
+    anticipo:        document.getElementById('anticipo').value||'',
+    documentacion:   document.getElementById('documentacion').value||'',
+    estatusCredito:  document.getElementById('estatusCredito').value||'',
+    decision:        document.getElementById('decision').value||'',
+    urgencia:        document.getElementById('urgencia').value||'',
+    totalGestiones:  gestiones.length,
+    score:           document.getElementById('scoreNum').textContent||'—',
+    gestiones:       gestiones.map(g => ({
+      fecha:       g.fecha,
+      tipo:        g.tipo,
+      calidad:     g.calidad,
+      comentarios: g.comentarios,
+      pasoSiguiente: g.pasoSiguiente||'',
+      mensajeIA:   g.mensajeIA||''
+    }))
+  };
+
+  try{
+    const res = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(data.success){
+      est.textContent='✅ Sincronización completa — ' + new Date().toLocaleTimeString('es-MX');
+      est.style.color='var(--green)';
+      mostrarToast('✅ Datos sincronizados con Google Sheets');
+    } else {
+      est.textContent='❌ Error: ' + (data.error||'Respuesta inesperada');
+      est.style.color='var(--red)';
+    }
+  }catch(e){
+    est.textContent='❌ Error de conexión. Verifica la URL e intenta de nuevo.';
+    est.style.color='var(--red)';
+  }
+}
+</script>
+</body>
+</html>
