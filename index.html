@@ -1,3201 +1,438 @@
-<!DOCTYPE html>
-<html lang="es" data-theme="dark">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nexus CRM — Gestión de Ventas Automotriz</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-
-/* ═══════════════════════════════════════════════════════════════
-   NEXUS DESIGN SYSTEM — tokens completos
-═══════════════════════════════════════════════════════════════ */
-:root {
-  --bg:        #0D1B2E;
-  --panel:     #152238;
-  --panel-2:   #1C2E45;
-  --panel-3:   #243650;
-  --line:      #2A3F5A;
-  --grad:      linear-gradient(135deg, #22D3EE 0%, #3B82F6 100%);
-  --grad-h:    linear-gradient(135deg, #38E4FF 0%, #60A5FA 100%);
-  --grad-glow: rgba(34,211,238,0.38);
-  --accent:       #3B82F6;
-  --accent-bright:#60A5FA;
-  --accent-dim:   rgba(59,130,246,0.14);
-  --accent-glow:  rgba(59,130,246,0.28);
-  --text:     #FFFFFF;
-  --text-dim: rgba(255,255,255,0.70);
-  --muted:    #94A3B8;
-  --green:       #10B981;
-  --green-dim:   rgba(16,185,129,0.14);
-  --red:         #EF4444;
-  --red-dim:     rgba(239,68,68,0.14);
-  --orange:      #F97316;
-  --orange-dim:  rgba(249,115,22,0.14);
-  --purple:      #8B5CF6;
-  --purple-dim:  rgba(139,92,246,0.14);
-  --radius:    16px;
-  --radius-sm: 12px;
-  --radius-xs: 10px;
-  --radius-pill: 999px;
-  --shadow:      0 2px 18px rgba(0,0,0,0.38);
-  --shadow-glow: 0 0 22px rgba(59,130,246,0.22);
-  --transition: all 0.28s cubic-bezier(.4,0,.2,1);
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-}
-[data-theme="light"] {
-  --bg:        #FFFFFF;
-  --panel:     #FAFBFC;
-  --panel-2:   #F1F4F8;
-  --panel-3:   #E8EDF5;
-  --line:      #E2E8F0;
-  --grad:      linear-gradient(135deg, #22D3EE 0%, #3B82F6 100%);
-  --grad-glow: rgba(34,211,238,0.25);
-  --accent:       #0369A1;
-  --accent-bright:#0284C7;
-  --accent-dim:   rgba(3,105,161,0.08);
-  --accent-glow:  rgba(3,105,161,0.14);
-  --text:     #0F172A;
-  --text-dim: rgba(15,23,42,0.65);
-  --muted:    #64748B;
-  --green:     #059669;
-  --green-dim: rgba(5,150,105,0.10);
-  --red:       #DC2626;
-  --red-dim:   rgba(220,38,38,0.10);
-  --orange:    #EA580C;
-  --orange-dim:rgba(234,88,12,0.10);
-  --purple:    #7C3AED;
-  --purple-dim:rgba(124,58,237,0.10);
-  --shadow:      0 1px 10px rgba(15,23,42,0.07), 0 4px 18px rgba(15,23,42,0.04);
-  --shadow-glow: 0 0 16px rgba(3,105,161,0.16);
-}
-
-/* ── RESET + BASE ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 15px;
-  min-height: 100vh;
-  padding-bottom: 80px;
-  transition: background 0.35s, color 0.35s;
-}
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--line); border-radius: 99px; }
-
-body::before {
-  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(34,211,238,0.05) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(59,130,246,0.04) 0%, transparent 70%);
-}
-[data-theme="light"] body::before { display: none; }
-
-/* ── TOPBAR ── */
-.topbar {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(13,27,46,0.92);
-  border-bottom: 1px solid var(--line);
-  padding: 12px 20px;
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  backdrop-filter: blur(20px) saturate(1.6);
-}
-[data-theme="light"] .topbar {
-  background: rgba(255,255,255,0.96);
-  box-shadow: 0 1px 12px rgba(15,23,42,0.08);
-}
-.topbar-left  { display: flex; align-items: center; gap: 10px; }
-.topbar-right { display: flex; align-items: center; gap: 7px; }
-
-.app-logo {
-  width: 34px; height: 34px;
-  background: var(--grad);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px; flex-shrink: 0;
-  box-shadow: 0 2px 16px var(--grad-glow);
-  transition: var(--transition); cursor: pointer;
-}
-.app-logo:hover { transform: rotate(-8deg) scale(1.08); }
-.app-name { font-size: 16px; color: var(--accent); letter-spacing: 0.06em; font-weight: 600; }
-.app-sub  { font-size: 10px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; line-height: 1; }
-
-.icon-btn {
-  height: 36px;
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: var(--radius-pill); color: var(--muted);
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 0 14px;
-  font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition);
-  font-family: var(--font);
-}
-.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-/* ── LAYOUT ── */
-.wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px; position: relative; z-index: 1; }
-
-/* ══ DOCK FLOTANTE: GUARDAR TODO / ELIMINAR FICHA ══
-   Fijo respecto a la ventana (no al scroll de la página), siempre pegado justo debajo
-   del topbar. En reposo solo asoma una pequeña pestaña; al tocarla se despliega por
-   completo mostrando ambos botones, sin importar en qué parte de la pantalla esté el usuario. */
-.dock-guardar-todo {
-  position: fixed; left: 50%; transform: translateX(-50%);
-  width: min(860px, calc(100% - 32px));
-  z-index: 150;
-  display: flex; justify-content: center;
-  pointer-events: none;
-}
-.dock-guardar-todo-panel {
-  pointer-events: auto;
-  width: 100%;
-  background: var(--panel);
-  border: 1px solid var(--accent);
-  border-top: none;
-  border-radius: 0 0 14px 14px;
-  box-shadow: 0 10px 28px var(--accent-dim);
-  overflow: hidden;
-  max-height: 30px;
-  transition: max-height 0.28s ease;
-  cursor: pointer;
-}
-.dock-guardar-todo-panel.expanded { max-height: 220px; cursor: default; }
-.dock-guardar-todo-grip {
-  height: 30px; display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
-  color: var(--accent-bright); background: var(--accent-dim);
-}
-.dock-guardar-todo-body { display: flex; gap: 10px; padding: 12px 14px; }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-.col-2  { grid-column: span 2; }
-@media(max-width: 560px) {
-  .grid-2, .grid-3 { grid-template-columns: 1fr; }
-  .col-2 { grid-column: span 1; }
-}
-
-/* ── CARDS ── */
-.card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 22px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow);
-  transition: border-color 0.25s, box-shadow 0.25s;
-  animation: cardIn 0.55s cubic-bezier(.16,1,.3,1) both;
-}
-.card:hover { border-color: rgba(34,211,238,0.18); }
-[data-theme="light"] .card {
-  background: #FFFFFF; border-color: #E2E8F0;
-  box-shadow: 0 1px 8px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.04);
-}
-[data-theme="light"] .card:hover { border-color: #93C5FD; }
-
-.card-inner {
-  background: var(--panel-2); border: 1px solid var(--line);
-  border-radius: var(--radius-sm); padding: 16px;
-}
-
-/* Card con borde degradado */
-.card-accent {
-  background: var(--panel); border-radius: var(--radius);
-  padding: 20px; margin-bottom: 14px;
-  position: relative; isolation: isolate;
-  animation: cardIn 0.55s cubic-bezier(.16,1,.3,1) both;
-}
-.card-accent::before {
-  content: ''; position: absolute; inset: 0; border-radius: var(--radius);
-  border: 1.5px solid transparent;
-  background: var(--grad) border-box;
-  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: destination-out; mask-composite: exclude;
-}
-
-.card-header {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 18px;
-}
-.card-icon {
-  width: 34px; height: 34px;
-  background: var(--accent-dim);
-  border: 1px solid var(--accent-glow);
-  border-radius: var(--radius-xs);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; flex-shrink: 0;
-}
-.card-title { font-size: 16px; font-weight: 700; color: var(--text); }
-
-/* ── INPUTS ── */
-label {
-  display: block; font-size: 11px; font-weight: 600; color: var(--muted);
-  margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em;
-}
-.inp {
-  width: 100%; background: var(--panel-2); border: 1px solid var(--line);
-  border-radius: var(--radius-sm); padding: 11px 14px;
-  color: var(--text); font-family: var(--font); font-size: 14px;
-  transition: border-color 0.2s, box-shadow 0.2s; outline: none;
-}
-.inp:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-.inp::placeholder { color: var(--muted); }
-[data-theme="light"] .inp { background: #FFFFFF; border-color: #CBD5E1; color: #0F172A; }
-[data-theme="light"] .inp:focus { border-color: #0369A1; box-shadow: 0 0 0 3px rgba(3,105,161,0.10); }
-[data-theme="light"] select.inp option { background: #FFFFFF; color: #0F172A; }
-select.inp option { background: var(--panel-2); }
-textarea.inp { resize: vertical; min-height: 90px; line-height: 1.6; }
-
-/* ── BUTTONS ── */
-.btn-primary {
-  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  background: var(--grad); color: #FFFFFF; border: none; border-radius: var(--radius-pill);
-  padding: 12px 24px; font-size: 14px; font-weight: 700;
-  cursor: pointer; font-family: var(--font);
-  transition: transform 0.15s, box-shadow 0.2s, filter 0.15s;
-}
-.btn-primary:hover  { transform: translateY(-2px); box-shadow: 0 8px 28px var(--grad-glow); filter: brightness(1.06); }
-.btn-primary:active { transform: scale(0.97); }
-.btn-primary:disabled { opacity: 0.5; cursor: default; transform: none; }
-.btn-primary.full { width: 100%; padding: 14px 0; font-size: 15px; }
-
-.btn-ghost {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  background: var(--panel-2); color: var(--text-dim);
-  border: 1px solid var(--line); border-radius: var(--radius-pill);
-  padding: 11px 22px; font-size: 14px; font-weight: 600;
-  cursor: pointer; font-family: var(--font); transition: var(--transition);
-}
-.btn-ghost:hover { border-color: var(--accent); color: var(--accent-bright); transform: translateY(-2px); }
-
-.btn-sm {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: var(--panel-2); border: 1px solid var(--line);
-  border-radius: var(--radius-pill); padding: 8px 16px;
-  font-size: 13px; cursor: pointer; color: var(--text); font-family: var(--font);
-  transition: all 0.2s; font-weight: 600;
-}
-.btn-sm:hover { border-color: var(--accent); color: var(--accent-bright); transform: translateY(-1px); }
-.btn-sm.success { border-color: var(--green); color: var(--green); }
-.btn-sm.danger  { border-color: var(--red);   color: var(--red);   }
-.btn-sm.warning { border-color: var(--orange); color: var(--orange); }
-
-/* ── SECTION TITLE ── */
-.section-title {
-  font-size: 11px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase;
-  margin: 20px 0 12px; display: flex; align-items: center; gap: 8px;
-}
-.section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
-
-/* ── SUBSECCIÓN (campos condicionales) ── */
-.sub-section {
-  margin-top: 14px; padding: 16px;
-  background: var(--panel-2); border: 1px solid var(--line);
-  border-left: 3px solid var(--accent);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-}
-
-/* ── SCORE WIDGET ── */
-.score-widget {
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 22px; margin-bottom: 14px;
-  display: flex; align-items: center; gap: 22px;
-  box-shadow: var(--shadow);
-  animation: cardIn 0.4s cubic-bezier(.16,1,.3,1) both;
-}
-[data-theme="light"] .score-widget { background: #FFFFFF; border-color: #E2E8F0; }
-.score-ring-wrap { position: relative; flex-shrink: 0; }
-.score-ring-wrap svg { transform: rotate(-90deg); }
-.score-center {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-}
-.score-number { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.score-label  { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
-.score-details { flex: 1; min-width: 0; }
-.score-tag {
-  display: inline-block; padding: 4px 12px; border-radius: var(--radius-pill);
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.08em; margin-bottom: 8px;
-}
-.score-desc { color: var(--text-dim); font-size: 13px; line-height: 1.55; }
-
-/* ── NEXT STEP BANNER ── */
-.next-step {
-  background: var(--accent-dim); border: 1px solid var(--accent-glow);
-  border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px;
-  animation: fadeUp 0.5s ease both;
-}
-.next-step-eyebrow {
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.12em; color: var(--accent-bright); margin-bottom: 6px;
-}
-.next-step-text { font-size: 14px; color: var(--text); line-height: 1.6; }
-.next-step-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
-.next-step-fecha {
-  display: inline-block; font-size: 11.5px; font-weight: 700; color: var(--accent-bright);
-  background: var(--accent-glow); border-radius: var(--radius-pill); padding: 3px 11px;
-  margin-bottom: 9px; letter-spacing: 0.01em;
-}
-.ultima-accion-guardada {
-  border: 1px dashed var(--line); border-radius: var(--radius); padding: 10px 13px;
-  margin-bottom: 12px; font-size: 12px; line-height: 1.55; color: var(--text-dim);
-  white-space: pre-line; background: rgba(148,163,184,0.06);
-}
-.ultima-accion-guardada b { color: var(--text); }
-
-/* ── BARRAS DE PROGRESO ── */
-.bar-row   { margin-bottom: 12px; }
-.bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
-.bar-label span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
-.bar-bg    { height: 7px; background: var(--line); border-radius: var(--radius-pill); overflow: hidden; }
-.bar-fill  { height: 100%; border-radius: var(--radius-pill); animation: barGrow .9s cubic-bezier(.16,1,.3,1) both; position: relative; overflow: hidden; }
-.bar-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transform: translateX(-100%); animation: barShine 1.4s ease .5s; }
-.bar-fill.grad  { background: var(--grad); }
-.bar-fill.green { background: var(--green); }
-.bar-fill.red   { background: var(--red); }
-
-/* ── PILLS / STATUS ── */
-.pill-status { display: inline-flex; align-items: center; gap: 5px; border-radius: var(--radius-pill); padding: 5px 13px; font-size: 12px; font-weight: 700; }
-.pill-status.pos     { background: var(--green-dim);  color: var(--green); }
-.pill-status.neg     { background: var(--red-dim);    color: var(--red);   }
-.pill-status.neutral { background: rgba(148,163,184,0.14); color: var(--muted); }
-
-/* ── KPI ROW ── */
-.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 14px; text-align: center; }
-.kpi-item { padding: 12px 8px; background: var(--panel-3); border-radius: var(--radius-xs); }
-.kpi-num { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; word-break: break-word; }
-.kpi-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
-
-/* ── SPINNER ── */
-.spinner {
-  width: 20px; height: 20px;
-  border: 2.5px solid var(--line);
-  border-top-color: #22D3EE; border-right-color: #3B82F6;
-  border-radius: 50%; animation: spin 0.8s cubic-bezier(.5,.1,.5,.9) infinite;
-  display: inline-block; flex-shrink: 0;
-}
-
-/* ── AI OUTPUT ── */
-.ai-output {
-  background: var(--panel-2); border: 1px solid var(--line);
-  border-radius: var(--radius-sm); padding: 16px;
-  min-height: 100px; color: var(--text);
-  font-size: 14px; line-height: 1.75;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
-}
-.ai-loading { display: flex; align-items: center; gap: 10px; color: var(--muted); }
-.ai-placeholder { color: var(--muted); font-style: italic; }
-
-.btn-mejorar-ia {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: var(--accent-dim); border: 1px solid var(--accent-glow);
-  color: var(--accent-bright); border-radius: var(--radius-pill);
-  padding: 5px 12px; font-size: 11.5px; font-weight: 700;
-  cursor: pointer; font-family: var(--font); margin-top: 6px;
-  transition: all 0.15s;
-}
-.btn-mejorar-ia:hover  { transform: translateY(-1px); filter: brightness(1.08); }
-.btn-mejorar-ia:disabled { opacity: 0.55; cursor: default; transform: none; }
-.campo-ia-row { display: flex; justify-content: flex-end; }
-
-/* ── TOAST ── */
-.toast {
-  position: fixed; bottom: 92px; left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: var(--panel-3); border: 1px solid var(--line);
-  color: var(--text); border-radius: var(--radius-sm);
-  padding: 12px 22px; font-size: 14px; font-weight: 600;
-  z-index: 999; opacity: 0; pointer-events: none;
-  transition: opacity 0.25s, transform 0.25s;
-  box-shadow: var(--shadow); white-space: nowrap;
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* ── HISTORIAL ── */
-.historial-list { display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; }
-.gestion-item {
-  background: var(--panel-2); border: 1px solid var(--line);
-  border-left: 3px solid var(--accent); border-radius: var(--radius-xs);
-  padding: 12px 14px;
-}
-.gestion-meta {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: 11px; color: var(--muted); margin-bottom: 6px; gap: 8px;
-}
-.gestion-tipo {
-  background: var(--accent-dim); color: var(--accent-bright);
-  padding: 2px 10px; border-radius: 99px;
-  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
-  white-space: nowrap;
-}
-
-/* ── BADGE ── */
-.badge { display: inline-flex; align-items: center; background: var(--grad); color: #000; font-size: 10px; font-weight: 800; padding: 2px 10px; border-radius: 20px; letter-spacing: 0.04em; vertical-align: middle; }
-
-/* ── UTILIDADES ── */
-.text-muted   { color: var(--muted); }
-.text-accent  { color: var(--accent-bright); }
-.text-green   { color: var(--green); }
-.text-red     { color: var(--red); }
-.text-grad    { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.hidden       { display: none !important; }
-.campo        { margin-bottom: 14px; }
-
-/* ── ANIMACIONES ── */
-@keyframes cardIn  { from { opacity:0; transform:translateY(16px) scale(0.984); } to { opacity:1; transform:translateY(0) scale(1); } }
-@keyframes fadeUp  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-@keyframes spin    { to { transform:rotate(360deg); } }
-@keyframes barGrow { from { transform:scaleX(0); } to { transform:scaleX(1); } }
-@keyframes barShine{ to { transform:translateX(100%); } }
-
-/* ══ CONFIG MODAL ══ */
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 1000;
-  display: flex; align-items: center; justify-content: center; padding: 16px;
-  opacity: 0; pointer-events: none; transition: opacity 0.25s;
-}
-.modal-overlay.open { opacity: 1; pointer-events: all; }
-.modal-box {
-  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-  width: 100%; max-width: 640px; max-height: 90vh; overflow: hidden;
-  display: flex; flex-direction: column;
-  transform: translateY(24px); transition: transform 0.25s;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.52);
-}
-.modal-overlay.open .modal-box { transform: translateY(0); }
-.modal-head {
-  display: flex; align-items: center; gap: 12px; padding: 20px 22px 0;
-}
-.modal-head-title { font-size: 17px; font-weight: 700; flex: 1; }
-.modal-close {
-  background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px;
-  width: 32px; height: 32px; cursor: pointer; color: var(--text);
-  display: flex; align-items: center; justify-content: center; font-size: 16px;
-  transition: all 0.2s;
-}
-.modal-close:hover { border-color: var(--red); color: var(--red); }
-.modal-tabs {
-  display: flex; gap: 4px; padding: 16px 22px 0; border-bottom: 1px solid var(--line);
-}
-.modal-tab {
-  padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
-  border-radius: var(--radius-xs) var(--radius-xs) 0 0; color: var(--muted);
-  border: 1px solid transparent; border-bottom: none; background: transparent;
-  font-family: var(--font); transition: all 0.18s; display: flex; gap: 6px; align-items: center;
-}
-.modal-tab:hover { color: var(--text); background: var(--panel-2); }
-.modal-tab.active { background: var(--panel-2); color: var(--accent-bright); border-color: var(--line); border-bottom-color: var(--panel-2); margin-bottom: -1px; }
-.modal-body { padding: 22px; overflow-y: auto; flex: 1; }
-.modal-body::-webkit-scrollbar { width: 4px; }
-.modal-body::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
-.tab-pane { display: none; }
-.tab-pane.active { display: block; }
-
-/* ── API Provider Cards ── */
-.provider-card {
-  border: 1px solid var(--line); border-radius: var(--radius-sm);
-  padding: 16px; margin-bottom: 12px; transition: border-color 0.2s;
-  background: var(--panel-2);
-}
-.provider-card.selected { border-color: var(--accent); background: var(--accent-dim); }
-.provider-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.provider-logo { font-size: 22px; width: 36px; text-align: center; }
-.provider-name { font-weight: 700; font-size: 14px; }
-.provider-desc { font-size: 11px; color: var(--muted); }
-.provider-radio { margin-left: auto; appearance: none; width: 18px; height: 18px;
-  border: 2px solid var(--line); border-radius: 50%; cursor: pointer;
-  transition: all 0.2s; position: relative; background: var(--panel);
-}
-.provider-radio:checked { border-color: var(--accent); background: var(--accent); }
-.api-key-wrap { display: flex; gap: 8px; align-items: center; }
-.api-key-wrap .inp { font-family: monospace; font-size: 12px; letter-spacing: 0.04em; }
-.btn-icon-sm {
-  flex-shrink: 0; width: 38px; height: 38px; border-radius: var(--radius-xs);
-  border: 1px solid var(--line); background: var(--panel); cursor: pointer;
-  color: var(--muted); font-size: 15px; display: flex; align-items: center;
-  justify-content: center; transition: all 0.18s;
-}
-.btn-icon-sm:hover { border-color: var(--accent); color: var(--accent-bright); }
-.btn-icon-sm.danger:hover { border-color: var(--red); color: var(--red); }
-.key-status { font-size: 11px; margin-top: 5px; }
-.key-ok  { color: var(--green); }
-.key-err { color: var(--red); }
-
-/* Danger zone */
-.danger-zone { border: 1px solid rgba(239,68,68,0.25); border-radius: var(--radius-sm); padding: 16px; }
-.danger-zone-title { font-size: 12px; font-weight: 700; color: var(--red); margin-bottom: 14px; letter-spacing: 0.08em; text-transform: uppercase; }
-.danger-btn {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px; border-radius: var(--radius-xs); border: 1px solid var(--line);
-  background: var(--panel); margin-bottom: 8px; cursor: pointer;
-  transition: all 0.18s; font-family: var(--font);
-}
-.danger-btn:hover { border-color: var(--red); background: var(--red-dim); }
-.danger-btn-label { font-size: 13px; font-weight: 600; color: var(--text); }
-.danger-btn-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-.danger-btn-icon { font-size: 18px; }
-
-/* ══ AI CHAT FLOTANTE ══ */
-.ai-fab {
-  position: fixed; bottom: 22px; right: 22px; z-index: 900;
-  width: 56px; height: 56px; border-radius: 50%;
-  background: var(--grad); border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; font-size: 24px;
-  box-shadow: 0 8px 28px var(--accent-glow); transition: all 0.22s;
-}
-.ai-fab:hover { transform: scale(1.1); box-shadow: 0 12px 36px var(--grad-glow); }
-.ai-fab .ai-fab-badge {
-  position: absolute; top: -2px; right: -2px; width: 14px; height: 14px;
-  background: var(--green); border-radius: 50%; border: 2px solid var(--bg);
-  display: none;
-}
-.ai-fab .ai-fab-badge.on { display: block; }
-
-.ai-chat-panel {
-  position: fixed; bottom: 90px; right: 22px; z-index: 901;
-  width: 360px; max-height: 520px; background: var(--panel);
-  border: 1px solid var(--line); border-radius: var(--radius);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.48);
-  display: flex; flex-direction: column; overflow: hidden;
-  transform: scale(0.9) translateY(20px); opacity: 0;
-  pointer-events: none; transform-origin: bottom right;
-  transition: transform 0.22s cubic-bezier(.4,0,.2,1), opacity 0.22s;
-}
-.ai-chat-panel.open { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
-.ai-chat-head {
-  padding: 14px 16px; border-bottom: 1px solid var(--line);
-  display: flex; align-items: center; gap: 10px;
-}
-.ai-chat-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--grad); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-.ai-chat-name { font-weight: 700; font-size: 13px; }
-.ai-chat-model { font-size: 11px; color: var(--muted); }
-.ai-chat-close { margin-left: auto; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px; line-height: 1; }
-.ai-chat-close:hover { color: var(--text); }
-.ai-chat-messages {
-  flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px;
-}
-.ai-chat-messages::-webkit-scrollbar { width: 3px; }
-.ai-chat-messages::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
-.chat-msg { display: flex; gap: 8px; align-items: flex-start; }
-.chat-msg.user { flex-direction: row-reverse; }
-.chat-bubble {
-  max-width: 82%; padding: 9px 13px; border-radius: 14px;
-  font-size: 13px; line-height: 1.55;
-}
-.chat-msg.ai   .chat-bubble { background: var(--panel-2); border: 1px solid var(--line); border-top-left-radius: 4px; color: var(--text); }
-.chat-msg.user .chat-bubble { background: var(--grad); color: #fff; border-top-right-radius: 4px; }
-.chat-msg .chat-av { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; background: var(--panel-2); }
-.chat-msg.user .chat-av { background: var(--grad); }
-.ai-chat-footer { padding: 10px 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; }
-.ai-chat-input {
-  flex: 1; background: var(--panel-2); border: 1px solid var(--line);
-  border-radius: var(--radius-xs); padding: 9px 12px;
-  color: var(--text); font-size: 13px; font-family: var(--font); outline: none; resize: none;
-  max-height: 80px; transition: border-color 0.2s;
-}
-.ai-chat-input:focus { border-color: var(--accent); }
-.ai-chat-send {
-  width: 38px; height: 38px; background: var(--grad); border: none; border-radius: var(--radius-xs);
-  cursor: pointer; color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; align-self: flex-end; transition: all 0.18s;
-}
-.ai-chat-send:hover { filter: brightness(1.1); transform: scale(1.05); }
-.ai-chat-send:disabled { opacity: 0.4; cursor: default; transform: none; }
-.chat-ctx-btn {
-  font-size: 11px; color: var(--accent-bright); background: var(--accent-dim);
-  border: 1px solid var(--accent-glow); border-radius: var(--radius-pill);
-  padding: 4px 10px; cursor: pointer; font-family: var(--font);
-  white-space: nowrap; transition: all 0.18s;
-}
-.chat-ctx-btn:hover { background: var(--accent); color: #fff; }
-.typing-dot { display: inline-block; width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: typing 1.2s infinite; margin: 0 1px; }
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
-@keyframes typing { 0%,80%,100% { transform: scale(0.6); opacity:0.4 } 40% { transform: scale(1); opacity:1 } }
-
-/* ══ RESUMEN IA ══ */
-.resumen-section { margin-bottom:20px; }
-.resumen-section-title {
-  font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
-  color:var(--accent-bright); margin-bottom:8px; display:flex; align-items:center; gap:8px;
-}
-.resumen-section-title::after { content:''; flex:1; height:1px; background:var(--line); }
-.resumen-body-text {
-  font-size:13px; line-height:1.75; color:var(--text);
-  background:var(--panel-2); border:1px solid var(--line);
-  border-radius:var(--radius-xs); padding:14px; white-space:pre-wrap; min-height:52px;
-}
-.resumen-ultimo {
-  background:var(--accent-dim); border:1px solid var(--accent-glow);
-  border-radius:var(--radius-xs); padding:12px 14px; margin-bottom:16px;
-}
-.resumen-ultimo-label { font-size:11px; color:var(--accent-bright); font-weight:700; margin-bottom:5px; letter-spacing:.05em; text-transform:uppercase; }
-.resumen-ultimo-text { font-size:12px; color:var(--text); line-height:1.6; white-space:pre-wrap; max-height:120px; overflow-y:auto; }
-</style>
-</head>
-<body>
-
-<!-- ══ TOPBAR ══ -->
-<div class="topbar">
-  <div class="topbar-left">
-    <div class="app-logo">🚗</div>
-    <div>
-      <div class="app-name">Nexus CRM</div>
-      <div class="app-sub">Ventas Automotriz</div>
-    </div>
-  </div>
-  <div class="topbar-right">
-    <button class="icon-btn" onclick="toggleConfigModal()" id="btnConfig" title="Configuración">
-      <span>⚙️</span><span>Config</span>
-    </button>
-    <button class="icon-btn" id="btnTema" onclick="toggleTheme()" title="Cambiar tema">
-      <span id="themeIcon">☀️</span>
-      <span id="themeLabel">Claro</span>
-    </button>
-    <button class="icon-btn" id="btnNuevo" onclick="crearNuevaFicha()">✚ Nueva ficha</button>
-  </div>
-</div>
-
-<!-- ══ DOCK GUARDAR TODO / ELIMINAR FICHA ══ -->
-<div class="dock-guardar-todo" id="dockGuardarTodo">
-  <div class="dock-guardar-todo-panel" id="panelGuardarTodo" onclick="toggleDockGuardarTodo()">
-    <div class="dock-guardar-todo-grip">⋯ Acciones de la ficha ⋯</div>
-    <div class="dock-guardar-todo-body" onclick="event.stopPropagation()">
-      <button class="btn-primary" id="btnGuardarTodo" onclick="guardarTodo()" style="flex:3">💾 Guardar todo</button>
-      <button class="btn-sm danger" id="btnEliminarFicha" onclick="eliminarContactoActual()" style="flex:1; white-space:nowrap">🗑️ Eliminar ficha</button>
-    </div>
-    <div id="msgGuardarTodo" style="display:none;margin:0 14px 12px;font-size:12px;text-align:center"></div>
-  </div>
-</div>
-
-<!-- ══ MODAL CONFIGURACIÓN ══ -->
-<div class="modal-overlay" id="configModal" onclick="closeModalOutside(event)">
-  <div class="modal-box">
-    <div class="modal-head">
-      <span style="font-size:22px">⚙️</span>
-      <div class="modal-head-title">Configuración</div>
-      <button class="modal-close" onclick="toggleConfigModal()">✕</button>
-    </div>
-    <div class="modal-tabs">
-      <button class="modal-tab active" onclick="switchTab('sheets')" id="tab-sheets">📊 Sheets</button>
-      <button class="modal-tab" onclick="switchTab('ia')" id="tab-ia">🤖 IA</button>
-      <button class="modal-tab" onclick="switchTab('datos')" id="tab-datos">🗑️ Datos</button>
-    </div>
-    <div class="modal-body">
-
-      <!-- ── TAB: SHEETS ── -->
-      <div class="tab-pane active" id="pane-sheets">
-        <div class="campo" style="margin-bottom:14px">
-          <label>URL del Web App (Google Apps Script)</label>
-          <input class="inp" type="url" id="sheetsWebAppUrl"
-            placeholder="https://script.google.com/macros/s/XXXXXXXXX/exec"
-            oninput="guardarSheetsUrl()" style="font-size:13px">
-          <p style="font-size:11px;color:var(--muted);margin-top:6px">
-            Obtienes esta URL al desplegar tu Apps Script → Implementar → Nueva implementación → Aplicación web.
-          </p>
-        </div>
-        <div id="sheetsStatus" style="font-size:12px;color:var(--green);margin-bottom:14px"></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn-primary" onclick="syncCompletoSheets()" id="btnSyncSheets">☁️ Sincronizar expediente completo</button>
-        </div>
-        <div id="sheetsStatusMsg" style="margin-top:10px;font-size:12px;display:none"></div>
-      </div>
-
-      <!-- ── TAB: IA ── -->
-      <div class="tab-pane" id="pane-ia">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:16px">
-          Elige tu proveedor de IA activo e ingresa tu API Key. La clave se guarda solo en este navegador (localStorage). Nunca se comparte con terceros.
-        </p>
-
-        <!-- Claude -->
-        <div class="provider-card" id="card-claude">
-          <div class="provider-header">
-            <div class="provider-logo">🟣</div>
-            <div>
-              <div class="provider-name">Claude — Anthropic</div>
-              <div class="provider-desc">claude-sonnet-4-6 · Análisis profundo y redacción</div>
-            </div>
-            <input type="radio" name="aiProvider" value="claude" class="provider-radio" onchange="setActiveProvider('claude')" id="radio-claude">
-          </div>
-          <div class="api-key-wrap">
-            <input class="inp" type="password" id="key-claude" placeholder="sk-ant-api03-..." oninput="onApiKeyInput('claude')">
-            <button class="btn-icon-sm" onclick="toggleKeyVisibility('claude')" title="Mostrar/ocultar">👁️</button>
-            <button class="btn-icon-sm danger" onclick="eliminarApiKey('claude')" title="Eliminar clave">🗑️</button>
-          </div>
-          <div class="key-status" id="status-claude"></div>
-        </div>
-
-        <!-- ChatGPT -->
-        <div class="provider-card" id="card-openai">
-          <div class="provider-header">
-            <div class="provider-logo">🟢</div>
-            <div>
-              <div class="provider-name">ChatGPT — OpenAI</div>
-              <div class="provider-desc">gpt-4o-mini · Respuestas rápidas y versátiles</div>
-            </div>
-            <input type="radio" name="aiProvider" value="openai" class="provider-radio" onchange="setActiveProvider('openai')" id="radio-openai">
-          </div>
-          <div class="api-key-wrap">
-            <input class="inp" type="password" id="key-openai" placeholder="sk-..." oninput="onApiKeyInput('openai')">
-            <button class="btn-icon-sm" onclick="toggleKeyVisibility('openai')" title="Mostrar/ocultar">👁️</button>
-            <button class="btn-icon-sm danger" onclick="eliminarApiKey('openai')" title="Eliminar clave">🗑️</button>
-          </div>
-          <div class="key-status" id="status-openai"></div>
-        </div>
-
-        <!-- Gemini -->
-        <div class="provider-card" id="card-gemini">
-          <div class="provider-header">
-            <div class="provider-logo">🔵</div>
-            <div>
-              <div class="provider-name">Gemini — Google</div>
-              <div class="provider-desc">gemini-3.0-flash (fallback 2.5-flash) · Plan gratuito Google AI Studio</div>
-            </div>
-            <input type="radio" name="aiProvider" value="gemini" class="provider-radio" onchange="setActiveProvider('gemini')" id="radio-gemini">
-          </div>
-          <div class="api-key-wrap">
-            <input class="inp" type="password" id="key-gemini" placeholder="AIzaSy..." oninput="onApiKeyInput('gemini')">
-            <button class="btn-icon-sm" onclick="toggleKeyVisibility('gemini')" title="Mostrar/ocultar">👁️</button>
-            <button class="btn-icon-sm danger" onclick="eliminarApiKey('gemini')" title="Eliminar clave">🗑️</button>
-          </div>
-          <div class="key-status" id="status-gemini"></div>
-        </div>
-
-        <!-- Grok -->
-        <div class="provider-card" id="card-grok">
-          <div class="provider-header">
-            <div class="provider-logo">⚫</div>
-            <div>
-              <div class="provider-name">Grok — xAI</div>
-              <div class="provider-desc">grok-3-mini · Directo y sin filtros</div>
-            </div>
-            <input type="radio" name="aiProvider" value="grok" class="provider-radio" onchange="setActiveProvider('grok')" id="radio-grok">
-          </div>
-          <div class="api-key-wrap">
-            <input class="inp" type="password" id="key-grok" placeholder="xai-..." oninput="onApiKeyInput('grok')">
-            <button class="btn-icon-sm" onclick="toggleKeyVisibility('grok')" title="Mostrar/ocultar">👁️</button>
-            <button class="btn-icon-sm danger" onclick="eliminarApiKey('grok')" title="Eliminar clave">🗑️</button>
-          </div>
-          <div class="key-status" id="status-grok"></div>
-        </div>
-      </div>
-
-      <!-- ── TAB: DATOS ── -->
-      <div class="tab-pane" id="pane-datos">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:18px">
-          Estas acciones son permanentes y no se pueden deshacer. Todos los datos se almacenan localmente en tu navegador.
-        </p>
-        <div class="danger-zone">
-          <div class="danger-zone-title">⚠️ Zona de peligro</div>
-
-          <button class="danger-btn" onclick="confirmarAccion('keys', '¿Eliminar todas las API Keys?', 'Se borrarán las claves de Claude, ChatGPT, Gemini y Grok.', eliminarTodasApiKeys)">
-            <div>
-              <div class="danger-btn-label">🔑 Eliminar todas las API Keys</div>
-              <div class="danger-btn-sub">Borra las claves de los 4 proveedores de IA</div>
-            </div>
-            <div class="danger-btn-icon">→</div>
-          </button>
-
-          <button class="danger-btn" onclick="confirmarAccion('gestiones', '¿Eliminar historial de gestiones?', 'Se eliminarán todas las gestiones registradas del cliente actual.', eliminarHistorialGestiones)">
-            <div>
-              <div class="danger-btn-label">📋 Eliminar historial de gestiones</div>
-              <div class="danger-btn-sub">Solo el cliente actual</div>
-            </div>
-            <div class="danger-btn-icon">→</div>
-          </button>
-
-          <button class="danger-btn" onclick="confirmarAccion('todo', '¿Eliminar TODO?', 'Se borrarán el expediente, gestiones, API Keys, Sheets URL y configuración del chat.', eliminarTodo)">
-            <div>
-              <div class="danger-btn-label" style="color:var(--red)">💥 Eliminar todo y resetear app</div>
-              <div class="danger-btn-sub">Expediente + gestiones + API Keys + Sheets URL + chat</div>
-            </div>
-            <div class="danger-btn-icon">→</div>
-          </button>
-        </div>
-      </div>
-
-    </div><!-- /modal-body -->
-  </div>
-</div>
-
-<!-- ══ AI CHAT PANEL ══ -->
-<button class="ai-fab" id="aiFab" onclick="toggleAIChat()" title="Asistente IA">
-  🤖<div class="ai-fab-badge" id="aiFabBadge"></div>
-</button>
-<div class="ai-chat-panel" id="aiChatPanel">
-  <div class="ai-chat-head">
-    <div class="ai-chat-avatar" id="chatAvatar">🤖</div>
-    <div>
-      <div class="ai-chat-name" id="chatName">Asistente IA</div>
-      <div class="ai-chat-model" id="chatModel">Sin configurar</div>
-    </div>
-    <button class="ai-chat-close" onclick="toggleAIChat()">✕</button>
-  </div>
-  <div class="ai-chat-messages" id="chatMessages">
-    <div class="chat-msg ai">
-      <div class="chat-av">🤖</div>
-      <div class="chat-bubble">¡Hola! Soy tu asistente de ventas automotriz. Puedo ayudarte con seguimientos, guiones de llamada, manejo de objeciones y estrategias de cierre. ¿En qué te ayudo?<br><br>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-          <button class="chat-ctx-btn" onclick="sendContextMsg('📋 Dame un resumen del cliente actual')">📋 Resumen cliente</button>
-          <button class="chat-ctx-btn" onclick="sendContextMsg('📞 Ayúdame a redactar un mensaje de seguimiento por WhatsApp')">📞 Msg WhatsApp</button>
-          <button class="chat-ctx-btn" onclick="sendContextMsg('🎯 Dame ideas para cerrar esta venta')">🎯 Cierre</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="ai-chat-footer">
-    <textarea class="ai-chat-input" id="chatInput" placeholder="Escribe tu pregunta…" rows="1"
-      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"
-      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-    <button class="ai-chat-send" id="chatSendBtn" onclick="sendChat()">➤</button>
-  </div>
-</div>
-
-<!-- ══ CONFIRM DIALOG ══ -->
-<div class="modal-overlay" id="confirmModal" onclick="closeConfirmOutside(event)">
-  <div class="modal-box" style="max-width:400px">
-    <div class="modal-head" style="padding-bottom:16px">
-      <span style="font-size:22px">⚠️</span>
-      <div class="modal-head-title" id="confirmTitle">¿Confirmar?</div>
-      <button class="modal-close" onclick="closeConfirm()">✕</button>
-    </div>
-    <div style="padding:0 22px 20px">
-      <p id="confirmMsg" style="color:var(--muted);font-size:13px;margin-bottom:20px;line-height:1.6"></p>
-      <div style="display:flex;gap:10px">
-        <button class="btn-ghost" style="flex:1" onclick="closeConfirm()">Cancelar</button>
-        <button id="confirmOkBtn" class="btn-primary" style="flex:1;background:linear-gradient(135deg,#EF4444,#DC2626)" onclick="executeConfirm()">Sí, eliminar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ MODAL RESUMEN IA ══ -->
-<div class="modal-overlay" id="resumenModal" onclick="if(event.target===this)cerrarResumenModal()">
-  <div class="modal-box" style="max-width:680px">
-    <div class="modal-head">
-      <span style="font-size:22px">✨</span>
-      <div>
-        <div class="modal-head-title">Resumen completo del cliente</div>
-        <div id="resumenModalSub" style="font-size:11px;color:var(--muted);margin-top:2px">Gestiones · Pasos a seguir · Mensajes</div>
-      </div>
-      <button class="modal-close" onclick="cerrarResumenModal()">✕</button>
-    </div>
-
-    <!-- Acciones -->
-    <div style="padding:14px 22px 0; display:flex; gap:10px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:14px">
-      <button class="btn-primary" id="btnGenerarResumen" onclick="generarResumenIA()">✨ Generar resumen con IA</button>
-      <button class="btn-ghost" id="btnCopiarResumen" onclick="copiarResumen()" style="display:none">📋 Copiar todo</button>
-      <button class="btn-ghost" id="btnGuardarResumen" onclick="guardarResumenComoGestion()" style="display:none;border-color:var(--green);color:var(--green)">💾 Guardar como gestión</button>
-      <span id="resumenGuardadoMsg" style="font-size:12px;color:var(--green);align-self:center;display:none">✅ Guardado</span>
-    </div>
-
-    <div class="modal-body" id="resumenModalBody">
-
-      <!-- Último resumen guardado -->
-      <div id="ultimoResumenBox" style="display:none" class="resumen-ultimo">
-        <div class="resumen-ultimo-label">📌 Último resumen guardado</div>
-        <div class="resumen-ultimo-text" id="ultimoResumenTexto"></div>
-        <div id="ultimoResumenFecha" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
-      </div>
-
-      <!-- Estado inicial -->
-      <div id="resumenEstadoInicial" style="text-align:center;padding:32px 0;color:var(--muted)">
-        <div style="font-size:36px;margin-bottom:12px">✨</div>
-        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Genera un resumen inteligente</div>
-        <div style="font-size:12px;line-height:1.6">La IA analizará todas tus gestiones, el análisis de la situación,<br>los pasos a seguir y los mensajes redactados para crear un<br>resumen completo y accionable.</div>
-      </div>
-
-      <!-- Resultado del resumen -->
-      <div id="resumenContenido" style="display:none">
-
-        <div class="resumen-section">
-          <div class="resumen-section-title">📋 Resumen de gestiones</div>
-          <div class="resumen-body-text" id="resumenGestiones"></div>
-        </div>
-
-        <div class="resumen-section">
-          <div class="resumen-section-title">📍 Situación actual y diagnóstico</div>
-          <div class="resumen-body-text" id="resumenSituacion"></div>
-        </div>
-
-        <div class="resumen-section">
-          <div class="resumen-section-title">🎯 Próximos pasos recomendados</div>
-          <div class="resumen-body-text" id="resumenPasos"></div>
-        </div>
-
-        <div class="resumen-section">
-          <div class="resumen-section-title">💬 Mensajes listos para enviar</div>
-          <div class="resumen-body-text" id="resumenMensajes"></div>
-        </div>
-
-      </div>
-
-      <!-- Typing indicator -->
-      <div id="resumenTyping" style="display:none;text-align:center;padding:40px 0;color:var(--muted)">
-        <div style="display:flex;justify-content:center;gap:6px;margin-bottom:12px">
-          <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
-        </div>
-        <div style="font-size:13px">Analizando toda la información del cliente…</div>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-<div class="wrap">
-
-  <!-- ══ SCORE WIDGET ══ -->
-  <div class="score-widget">
-    <div class="score-ring-wrap">
-      <svg width="88" height="88" viewBox="0 0 88 88">
-        <circle cx="44" cy="44" r="35" fill="none" stroke="var(--line)" stroke-width="9"/>
-        <circle id="scoreArc" cx="44" cy="44" r="35" fill="none" stroke="#3B82F6"
-          stroke-width="9" stroke-linecap="round"
-          stroke-dasharray="220" stroke-dashoffset="220"
-          style="transition: stroke-dashoffset 0.9s ease, stroke 0.5s"/>
-      </svg>
-      <div class="score-center">
-        <span class="score-number" id="scoreNum">—</span>
-        <span class="score-label">Score</span>
-      </div>
-    </div>
-    <div class="score-details">
-      <div class="score-tag" id="scoreTag">Sin datos</div>
-      <div class="score-desc" id="scoreDesc">Completa los datos del cliente para obtener la probabilidad de cierre.</div>
-    </div>
-  </div>
-
-  <!-- ══ SIGUIENTE PASO ══ -->
-  <div class="next-step">
-    <div class="next-step-eyebrow">⚡ Siguiente acción recomendada</div>
-    <div id="ultimaAccionGuardada" class="ultima-accion-guardada" style="display:none"></div>
-    <div class="next-step-fecha" id="nextStepFecha"></div>
-    <div class="next-step-text" id="nextStepText">Ingresa los datos del cliente para activar las recomendaciones automáticas.</div>
-    <div class="next-step-actions">
-      <button class="btn-sm" id="btnRealizado" onclick="marcarAccion('realizado')">✓ Realizado</button>
-      <button class="btn-sm" id="btnNoRealizado" onclick="marcarAccion('no_realizado')">✗ No realizado</button>
-      <button class="btn-sm" id="btnPosponer" onclick="marcarAccion('posponer')">⏸ Posponer</button>
-    </div>
-    <div id="bloqueFechaPosponer" style="display:none; margin-top:10px">
-      <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px">📅 Fecha y hora del próximo seguimiento acordado</label>
-      <input type="date" class="inp" id="fechaProximoSeguimiento" style="max-width:190px; display:inline-block" onchange="onFechaProximoChange()">
-      <input type="time" class="inp" id="horaProximoSeguimiento" style="max-width:120px; display:inline-block; margin-left:6px" onchange="onFechaProximoChange()">
-    </div>
-    <div id="bloqueMotivoNoRealizado" style="display:none; margin-top:10px">
-      <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px">✍️ ¿Por qué no se realizó? (obligatorio)</label>
-      <textarea class="inp" id="motivoNoRealizado" style="min-height:60px" placeholder="Ej. El cliente no contestó, canceló la cita, no había disponibilidad…" oninput="onMotivoNoRealizadoChange()"></textarea>
-      <div class="campo-ia-row">
-        <button type="button" class="btn-mejorar-ia" id="btnMejorarMotivo" onclick="mejorarTextoIA('motivoNoRealizado','btnMejorarMotivo')">✨ Reescribir con IA</button>
-      </div>
-    </div>
-    <div id="estadoAccionInfo" style="font-size:11.5px; margin-top:9px; display:none"></div>
-    <button class="btn-sm" id="btnCrearSiguienteAccion" style="margin-top:10px; width:100%" onclick="crearSiguienteAccionManual()">🆕 Crear siguiente acción recomendada</button>
-  </div>
-
-  <!-- ══ DATOS DEL CLIENTE ══ -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-icon">👤</div>
-      <div class="card-title">Datos del Cliente</div>
-    </div>
-
-    <div class="campo" style="margin-bottom:14px">
-      <label>Buscar cliente registrado en Sheets</label>
-      <div style="display:flex; gap:10px">
-        <input class="inp" type="text" id="buscarClienteInput"
-          placeholder="Nombre, teléfono o correo…" style="flex:1"
-          onkeydown="if(event.key==='Enter') buscarCliente()">
-        <button class="btn-ghost" id="btnBuscarCliente" style="white-space:nowrap" onclick="buscarCliente()">🔍 Buscar</button>
-      </div>
-      <!-- Resultados de búsqueda -->
-      <div id="buscarResultados" style="display:none; margin-top:8px; border:1px solid var(--line); border-radius:var(--radius-xs); overflow:hidden; background:var(--panel-2)"></div>
-      <div id="buscarStatus" style="font-size:12px; margin-top:6px; color:var(--muted)"></div>
-    </div>
-
-    <div class="grid-2">
-      <div class="campo">
-        <label>Nombre completo</label>
-        <input class="inp" type="text" id="nombre" placeholder="Ej. Juan García López" oninput="onCampoChange()">
-      </div>
-      <div class="campo">
-        <label>Teléfono / WhatsApp</label>
-        <input class="inp" type="tel" id="telefono" placeholder="+52 55 0000 0000" oninput="onCampoChange()">
-      </div>
-      <div class="campo">
-        <label>Correo electrónico</label>
-        <input class="inp" type="email" id="correo" placeholder="cliente@email.com" oninput="onCampoChange()">
-      </div>
-      <div class="campo">
-        <label>Ciudad / Estado</label>
-        <input class="inp" type="text" id="ciudad" placeholder="Monterrey, N.L." oninput="onCampoChange()">
-      </div>
-      <div class="campo col-2">
-        <label>Vehículo de interés</label>
-        <input class="inp" type="text" id="vehiculo" placeholder="Ej. Mazda CX-5 2024 iSport" oninput="onCampoChange()">
-      </div>
-      <div class="campo">
-        <label>Ocupación del cliente (opcional)</label>
-        <input class="inp" type="text" id="ocupacion" placeholder="Ej. Empresario, médico, enfermera…" oninput="onCampoChange()">
-      </div>
-      <div class="campo">
-        <label>Precio de la unidad ($)</label>
-        <input class="inp" type="number" id="precio" placeholder="0" min="0" oninput="onCampoChange(); calcularFinanciamiento()">
-      </div>
-      <div class="campo">
-        <label>Fuente del lead</label>
-        <select class="inp" id="fuenteLead" onchange="onCampoChange()">
-          <option value="">Seleccionar</option>
-          <option value="showroom">Visita al showroom</option>
-          <option value="web">Página web</option>
-          <option value="referido">Referido</option>
-          <option value="redes">Redes sociales</option>
-          <option value="llamada">Llamada entrante</option>
-          <option value="evento">Evento / expo</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ PROCESO DE VENTA ══ -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-icon">📋</div>
-      <div class="card-title">Proceso de Venta</div>
-    </div>
-
-    <div class="campo">
-      <label>¿Se realizó la prueba de manejo?</label>
-      <select class="inp" id="pruebaManejo" onchange="togglePrueba(); onCampoChange()">
-        <option value="">Seleccionar</option>
-        <option value="si">✅ Sí se realizó</option>
-        <option value="no">❌ No se realizó</option>
-      </select>
-    </div>
-    <div id="datosPrueba" class="sub-section hidden">
-      <div class="grid-2" style="margin-bottom:12px">
-        <div class="campo">
-          <label>Personas que asistieron</label>
-          <input class="inp" type="number" id="asistieron" min="0" oninput="onCampoChange()">
-        </div>
-        <div class="campo">
-          <label>Personas que manejaron</label>
-          <input class="inp" type="number" id="manejaron" min="0" oninput="onCampoChange()">
-        </div>
-      </div>
-      <div class="campo">
-        <label>Reacción del cliente</label>
-        <textarea class="inp" id="comentariosPrueba" style="min-height:70px" placeholder="¿Qué le gustó o preocupó?" oninput="onCampoChange()"></textarea>
-        <div class="campo-ia-row">
-          <button type="button" class="btn-mejorar-ia" id="btnMejorarPrueba" onclick="mejorarTextoIA('comentariosPrueba','btnMejorarPrueba')">✨ Reescribir con IA</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="campo" style="margin-top:14px">
-      <label>Tipo de operación</label>
-      <select class="inp" id="tipoOperacion" onchange="toggleOperacion(); onCampoChange()">
-        <option value="">Seleccionar</option>
-        <option value="contado">💵 De contado</option>
-        <option value="financiado">🏦 Financiado</option>
-      </select>
-    </div>
-    <div id="datosContado" class="sub-section hidden">
-      <div class="campo">
-        <label>¿Adquirió el seguro con nosotros?</label>
-        <select class="inp" id="seguro" onchange="onCampoChange()">
-          <option value="">Seleccionar</option>
-          <option value="si">✅ Sí</option>
-          <option value="no">❌ No</option>
-        </select>
-      </div>
-    </div>
-    <div id="datosFinanciado" class="sub-section hidden">
-      <div class="grid-2" style="margin-bottom:12px">
-        <div class="campo">
-          <label>Enganche</label>
-          <div style="display:flex;gap:8px">
-            <input class="inp" type="number" id="enganche" min="0" max="100" placeholder="0" oninput="calcularFinanciamiento()" style="flex:2">
-            <select class="inp" id="engancheModo" onchange="cambiarModoEnganche()" style="flex:1">
-              <option value="pct">%</option>
-              <option value="monto">$</option>
-            </select>
-          </div>
-        </div>
-        <div class="campo">
-          <label>Plazo (meses)</label>
-          <select class="inp" id="plazo" onchange="calcularFinanciamiento()">
-            <option value="">Seleccionar</option>
-            <option value="12">12 meses</option>
-            <option value="24">24 meses</option>
-            <option value="36">36 meses</option>
-            <option value="48">48 meses</option>
-            <option value="60">60 meses</option>
-            <option value="72">72 meses</option>
-          </select>
-        </div>
-      </div>
-      <div class="campo">
-        <label>Tasa de interés anual (%) — opcional</label>
-        <input class="inp" type="number" id="tasaInteres" min="0" step="0.1" placeholder="Ej. 14.5" oninput="calcularFinanciamiento()">
-      </div>
-
-      <div class="card-inner" id="resultadoFinanciamiento" style="margin-top:18px; padding:20px; display:none">
-        <div class="kpi-row">
-          <div class="kpi-item">
-            <div class="kpi-num text-accent" id="kpiEnganche">$0</div>
-            <div class="kpi-lbl">Enganche</div>
-          </div>
-          <div class="kpi-item">
-            <div class="kpi-num" id="kpiMontoFinanciar">$0</div>
-            <div class="kpi-lbl">A financiar</div>
-          </div>
-          <div class="kpi-item">
-            <div class="kpi-num text-green" id="kpiMensualidad">$0</div>
-            <div class="kpi-lbl">Mensualidad est.</div>
-          </div>
-        </div>
-        <p class="text-muted" style="font-size:11px;margin-top:10px;text-align:center">
-          *Cálculo estimado (incluye IVA 16% sobre intereses). No incluye seguro, comisiones u otros cargos de la cotización formal.
-        </p>
-      </div>
-    </div>
-
-    <div class="campo" style="margin-top:14px">
-      <label>Estado actual</label>
-      <select class="inp" id="estadoOperacion" onchange="onCampoChange()">
-        <option value="proceso">🔄 En proceso</option>
-        <option value="cerrada">✅ Cerrada y vendida</option>
-        <option value="perdida">❌ Perdida / No cerró</option>
-      </select>
-    </div>
-
-  </div>
-
-  <!-- ══ INFORMACIÓN ADICIONAL ══ -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-icon">🎁</div>
-      <div class="card-title">Información Adicional</div>
-    </div>
-
-    <!-- Disponibilidad del vehículo -->
-    <div class="section-title">Disponibilidad</div>
-    <div class="grid-2">
-      <div class="campo">
-        <label>¿El vehículo está disponible?</label>
-        <select class="inp" id="disponibilidad" onchange="toggleDisponibilidad(); onCampoChange()">
-          <option value="">Seleccionar</option>
-          <option value="si">✅ Sí, en existencia</option>
-          <option value="no">🚚 No, hay que pedirlo</option>
-        </select>
-      </div>
-      <div class="campo" id="campoTiempoLlegada" style="display:none">
-        <label>Tiempo estimado de llegada</label>
-        <input class="inp" type="text" id="tiempoLlegada" placeholder="Ej. 2 semanas, 30 días…" oninput="onCampoChange()">
-      </div>
-    </div>
-
-    <!-- Descuento -->
-    <div class="section-title">Descuento o regalo</div>
-    <div class="grid-2">
-      <div class="campo">
-        <label>¿Se le dio descuento?</label>
-        <select class="inp" id="descuento" onchange="toggleDescuento(); onCampoChange()">
-          <option value="">Seleccionar</option>
-          <option value="si">✅ Sí</option>
-          <option value="no">❌ No</option>
-        </select>
-      </div>
-      <div class="campo" id="campoMontoDescuento" style="display:none">
-        <label>Monto del descuento ($)</label>
-        <input class="inp" type="number" id="montoDescuento" placeholder="0" min="0" oninput="onCampoChange()">
-      </div>
-    </div>
-
-    <div class="campo">
-      <label>¿Se le regaló algún accesorio / beneficio?</label>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px" id="regaloCheckboxes">
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px">
-          <input type="checkbox" id="rTapetes" onchange="onCampoChange()"> 🛏 Tapetes
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px">
-          <input type="checkbox" id="rVidrios" onchange="onCampoChange()"> 🪟 Vidrios de seguridad
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px">
-          <input type="checkbox" id="rPelicula" onchange="onCampoChange()"> 🛡 Película antiasalto
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px">
-          <input type="checkbox" id="rKitSeguridad" onchange="onCampoChange()"> 🔒 Kit de seguridad completo
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px">
-          <input type="checkbox" id="rPlacas" onchange="onCampoChange()"> 🪪 Placas y tenencia
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:6px 14px">
-          <input type="checkbox" id="rOtro" onchange="toggleOtroRegalo(); onCampoChange()"> ➕ Otro
-        </label>
-      </div>
-      <div id="campoOtroRegalo" style="display:none;margin-top:10px">
-        <input class="inp" type="text" id="otroRegaloDesc" placeholder="Describe qué se le regaló o agregó…" oninput="onCampoChange()">
-      </div>
-    </div>
-
-    <!-- Documentación y compromiso -->
-    <div class="section-title">Documentación y compromiso</div>
-    <div class="grid-2">
-      <div class="campo">
-        <label>¿Dejó anticipo o firmó pedido?</label>
-        <select class="inp" id="anticipo" onchange="onCampoChange()">
-          <option value="">Seleccionar</option>
-          <option value="anticipo">💰 Dejó anticipo</option>
-          <option value="pedido">📝 Firmó pedido</option>
-          <option value="ambos">✅ Anticipo + pedido</option>
-          <option value="no">❌ Ninguno aún</option>
-        </select>
-      </div>
-      <div class="campo">
-        <label>¿Dejó documentación?</label>
-        <select class="inp" id="documentacion" onchange="toggleCredito(); onCampoChange()">
-          <option value="">Seleccionar</option>
-          <option value="si">✅ Sí, entregó documentos</option>
-          <option value="no">❌ No ha entregado</option>
-          <option value="parcial">📄 Parcialmente</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Estatus crédito (solo si operación = financiado) -->
-    <div id="bloqueCredito" class="sub-section hidden">
-      <div class="campo">
-        <label>Estatus del crédito</label>
-        <select class="inp" id="estatusCredito" onchange="onCampoChange()">
-          <option value="">Seleccionar</option>
-          <option value="pendiente">⏳ Pendiente de revisar</option>
-          <option value="proceso">🔄 En proceso de autorización</option>
-          <option value="aprobado">✅ Aprobado</option>
-          <option value="negado">❌ Negado</option>
-          <option value="contrapropuesta">🔁 Contrapropuesta del banco</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Decisión de compra -->
-    <div class="section-title">Perfil de decisión</div>
-    <div class="grid-2">
-      <div class="campo">
-        <label>¿Quién toma la decisión de compra?</label>
-        <select class="inp" id="decision" onchange="onCampoChange()">
-          <option value="">Seleccionar</option>
-          <option value="propio">👤 El cliente mismo</option>
-          <option value="pareja">👫 Junto con su pareja</option>
-          <option value="familia">👨‍👩‍👧 Familia / tercero</option>
-          <option value="empresa">🏢 Decisión empresarial</option>
-        </select>
-      </div>
-      <div class="campo">
-        <label>¿Para cuándo quiere el vehículo?</label>
-        <select class="inp" id="urgencia" onchange="onCampoChange()">
-          <option value="">Seleccionar / No mencionó</option>
-          <option value="inmediato">🔥 De inmediato / ya</option>
-          <option value="semana">📅 Esta semana</option>
-          <option value="quincena">📅 Esta quincena</option>
-          <option value="mes">🗓 Este mes</option>
-          <option value="sinprisa">😌 Sin prisa definida</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Primera visita / presentación del producto -->
-    <div class="section-title">Primera visita / presentación</div>
-    <div class="campo">
-      <label>Comentarios de la primera visita</label>
-      <textarea class="inp" id="comentariosPrimeraVisita" placeholder="Describe cómo fue la presentación: qué le gustó, dudas, objeciones, reacción general…"></textarea>
-      <div class="campo-ia-row">
-        <button type="button" class="btn-mejorar-ia" id="btnMejorarPrimeraVisita" onclick="mejorarTextoIA('comentariosPrimeraVisita','btnMejorarPrimeraVisita')">✨ Reescribir con IA</button>
-      </div>
-    </div>
-    <div class="campo">
-      <label>Sentimiento de la primera visita</label>
-      <select class="inp" id="calidadPrimeraVisita">
-        <option value="positivo">🟢 Positivo</option>
-        <option value="neutral">🟡 Neutral</option>
-        <option value="negativo">🔴 Negativo</option>
-      </select>
-    </div>
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px">
-      <button class="btn-ghost" id="btnPasosRapidos" style="flex:1">⚡ Siguientes pasos</button>
-      <button class="btn-ghost" id="btnWhatsAppPrimeraVisita" style="flex:1">💬 Mensaje IA</button>
-    </div>
-    <div id="outputPasosRapidos" class="ai-output hidden" style="margin-bottom:14px"></div>
-    <div id="cardWhatsAppPrimeraVisita" class="hidden" style="margin-bottom:14px">
-      <div id="outputWhatsAppPrimeraVisita" class="ai-output" style="margin-bottom:10px"></div>
-      <div style="display:flex;gap:10px">
-        <button class="btn-sm success" id="btnCopiarMensajePrimeraVisita">📋 Copiar mensaje</button>
-        <button class="btn-sm" onclick="generarMensajeWAPrimeraVisita()">🔄 Regenerar</button>
-      </div>
-    </div>
-    <button class="btn-primary full" id="btnGuardarPrimeraVisita">💾 Generar gestión</button>
-
-  </div>
-
-  <!-- ══ REGISTRAR CONTACTO ══ -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-icon">💬</div>
-      <div class="card-title">Registrar Contacto</div>
-    </div>
-    <div class="grid-2" style="margin-bottom:14px">
-      <div class="campo">
-        <label>Tipo de contacto</label>
-        <select class="inp" id="tipoContacto">
-          <option value="sincontacto">⏳ Aún no ha habido contacto</option>
-          <option value="llamada">📞 Llamada</option>
-          <option value="whatsapp">💬 WhatsApp</option>
-          <option value="cita">🤝 Cita presencial</option>
-          <option value="seguimiento">📋 Seguimiento</option>
-          <option value="posventa">⭐ Posventa</option>
-          <option value="email">📧 Correo</option>
-        </select>
-      </div>
-      <div class="campo">
-        <label>Calificación del contacto</label>
-        <select class="inp" id="calidadContacto">
-          <option value="positivo">🟢 Positivo — avanza</option>
-          <option value="neutral">🟡 Neutral — sin cambios</option>
-          <option value="negativo">🔴 Negativo — retrocede</option>
-        </select>
-      </div>
-    </div>
-    <div class="campo">
-      <label>Notas del contacto</label>
-      <textarea class="inp" id="comentariosGestion" placeholder="¿Qué se habló? ¿Acuerdos? ¿Objeciones? ¿Próximos pasos?"></textarea>
-      <div class="campo-ia-row">
-        <button type="button" class="btn-mejorar-ia" id="btnMejorarGestion" onclick="mejorarTextoIA('comentariosGestion','btnMejorarGestion')">✨ Reescribir con IA</button>
-      </div>
-    </div>
-    <div style="display:flex; gap:10px; flex-wrap:wrap">
-      <button class="btn-primary full" id="btnGuardar" style="flex:2">💾 Generar gestión</button>
-      <button class="btn-ghost" id="btnWhatsApp" style="flex:1">💬 Mensaje IA</button>
-    </div>
-  </div>
-
-  <!-- ══ ANÁLISIS IA ══ -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-icon">🧠</div>
-      <div class="card-title">Análisis Inteligente</div>
-      <div style="margin-left:auto">
-        <button class="btn-primary" id="btnAnalizar">⚡ Analizar con IA</button>
-      </div>
-    </div>
-    <div id="resumenAnalisis" class="ai-output">
-      <span class="ai-placeholder">Registra una gestión y presiona "Analizar con IA" para obtener diagnóstico completo del cliente, señales de compra, objeciones y estrategia de cierre.</span>
-    </div>
-    <div style="margin-top:12px">
-      <button class="btn-sm" id="btnCopiarAnalisis">📋 Copiar análisis</button>
-    </div>
-  </div>
-
-  <!-- ══ MENSAJE WHATSAPP IA ══ -->
-  <div class="card hidden" id="cardWhatsApp">
-    <div class="card-header">
-      <div class="card-icon">💬</div>
-      <div class="card-title">Mensaje de Seguimiento</div>
-      <div style="margin-left:auto">
-        <button class="btn-sm" onclick="document.getElementById('cardWhatsApp').classList.add('hidden')">✕ Cerrar</button>
-      </div>
-    </div>
-    <div id="outputWhatsApp" class="ai-output" style="margin-bottom:14px"></div>
-    <div style="display:flex;gap:10px">
-      <button class="btn-sm success" id="btnCopiarMensaje">📋 Copiar mensaje</button>
-      <button class="btn-sm" onclick="generarMensajeWA()">🔄 Regenerar</button>
-    </div>
-  </div>
-
-  <!-- ══ HISTORIAL ══ -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-icon">📅</div>
-      <div class="card-title">Historial de Gestiones</div>
-      <div style="margin-left:auto; display:flex; gap:8px; align-items:center">
-        <button class="btn-sm" onclick="abrirResumenIA()" style="background:var(--accent-dim);border-color:var(--accent);color:var(--accent-bright);font-weight:700">
-          ✨ Resumen IA
-        </button>
-        <span class="badge" id="totalGestiones">0</span>
-      </div>
-    </div>
-    <div class="historial-list" id="listaGestiones">
-      <p class="text-muted" style="text-align:center;padding:20px 0">Sin gestiones registradas aún.</p>
-    </div>
-  </div>
-
-</div><!-- /wrap -->
-
-<div class="toast" id="toast"></div>
-
-<!-- ══ MODAL CONFIRMACIÓN NUEVA FICHA ══ -->
-<div id="modalNuevaFicha" class="hidden" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px)">
-  <div class="card" style="max-width:380px;width:100%;margin:0;animation:cardIn 0.25s ease both">
-    <div class="card-header">
-      <div class="card-icon">⚠️</div>
-      <div class="card-title">Crear nueva ficha</div>
-    </div>
-    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:20px">
-      Se borrará toda la información del cliente actual: datos, gestiones, historial y análisis. Esta acción no se puede deshacer.
-    </p>
-    <div style="display:flex;gap:10px">
-      <button class="btn-ghost" style="flex:1" onclick="cancelarNuevaFicha()">Cancelar</button>
-      <button class="btn-primary" style="flex:1" onclick="confirmarNuevaFicha()">Sí, limpiar todo</button>
-    </div>
-  </div>
-</div>
-
-<script>
-/* ─── NUEVA FICHA (sin diálogos nativos del navegador, que pueden estar bloqueados en sandbox) ─── */
-function crearNuevaFicha() {
-  const modal = document.getElementById('modalNuevaFicha');
-  if (modal) modal.classList.remove('hidden');
-}
-
-function cancelarNuevaFicha() {
-  const modal = document.getElementById('modalNuevaFicha');
-  if (modal) modal.classList.add('hidden');
-}
-
-function confirmarNuevaFicha() {
+/**
+ * ═══════════════════════════════════════════════════════════════════
+ *  NEXUS CRM PRO — Google Apps Script
+ *  Sincronización de clientes, gestiones y acciones desde Nexus CRM
+ *
+ *  INSTRUCCIONES DE INSTALACIÓN:
+ *  1. Abre tu Google Spreadsheet
+ *  2. Extensiones → Apps Script
+ *  3. Borra el código de ejemplo y pega TODO este archivo
+ *  4. Clic en el ícono 💾 Guardar
+ *  5. Clic en "Implementar" → "Nueva implementación"
+ *     - Tipo: Aplicación web
+ *     - Ejecutar como: Yo (tu cuenta de Google)
+ *     - Quién tiene acceso: Cualquier persona
+ *  6. Clic en "Implementar" y autoriza los permisos solicitados
+ *  7. Copia la URL del Web App que aparece
+ *  8. En Nexus CRM → Configuración → pega la URL y guárdala
+ *
+ *  HOJAS QUE SE CREAN AUTOMÁTICAMENTE:
+ *  · Clientes  — Una fila por cliente, se actualiza en cada sync
+ *  · Gestiones — Una fila por gestión (registro permanente, sin sobrescribir)
+ * ═══════════════════════════════════════════════════════════════════
+ */
+
+// ── RECIBIR POST DESDE NEXUS CRM ──────────────────────────────────
+function doPost(e) {
   try {
-    localStorage.removeItem('crm_cliente');
-    localStorage.removeItem('crm_gestiones');
-    localStorage.removeItem('crm_accion_seguir');
-    localStorage.removeItem('crm_postventa_step');
-    localStorage.removeItem('crm_accion_manual_counter');
-    if (typeof accionManualCounter !== 'undefined') accionManualCounter = 0;
-    if (typeof postventaStep !== 'undefined') postventaStep = 0;
-    if (typeof accionSeguir !== 'undefined') { accionSeguir.texto=''; accionSeguir.estado=null; accionSeguir.fecha=''; accionSeguir.motivo=''; accionSeguir.hora=''; }
-    const ultimaAccionBox = document.getElementById('ultimaAccionGuardada');
-    if (ultimaAccionBox) { ultimaAccionBox.style.display = 'none'; ultimaAccionBox.innerHTML = ''; }
-    if (typeof gestiones !== 'undefined') gestiones.length = 0;
-    if (typeof clienteData !== 'undefined') { for (const k in clienteData) delete clienteData[k]; }
-
-    const camposTexto = ['nombre','telefono','correo','ciudad','vehiculo','ocupacion','precio',
-      'asistieron','manejaron','comentariosPrueba','tiempoLlegada','montoDescuento','otroRegaloDesc',
-      'enganche','tasaInteres','comentariosGestion','comentariosPrimeraVisita'];
-    camposTexto.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-
-    const camposSelect = ['fuenteLead','pruebaManejo','tipoOperacion','seguro','estadoOperacion',
-      'disponibilidad','descuento','anticipo','documentacion','estatusCredito','decision','urgencia',
-      'engancheModo','plazo','tipoContacto','calidadContacto','calidadPrimeraVisita'];
-    camposSelect.forEach(id => { const el = document.getElementById(id); if (el) el.selectedIndex = 0; });
-
-    const checks = ['rTapetes','rVidrios','rPelicula','rKitSeguridad','rPlacas','rOtro'];
-    checks.forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
-
-    try { if (typeof togglePrueba === 'function') togglePrueba(); } catch(e){}
-    try { if (typeof toggleOperacion === 'function') toggleOperacion(); } catch(e){}
-    try { if (typeof toggleDisponibilidad === 'function') toggleDisponibilidad(); } catch(e){}
-    try { if (typeof toggleDescuento === 'function') toggleDescuento(); } catch(e){}
-    try { if (typeof toggleOtroRegalo === 'function') toggleOtroRegalo(); } catch(e){}
-    try { if (typeof toggleCredito === 'function') toggleCredito(); } catch(e){}
-
-    const resFin = document.getElementById('resultadoFinanciamiento');
-    if (resFin) resFin.style.display = 'none';
-    const cardWA = document.getElementById('cardWhatsApp');
-    if (cardWA) cardWA.classList.add('hidden');
-    const resumen = document.getElementById('resumenAnalisis');
-    if (resumen) resumen.innerHTML = '<span class="ai-placeholder">Registra una gestión y presiona "Analizar con IA" para obtener diagnóstico completo del cliente, señales de compra, objeciones y estrategia de cierre.</span>';
-
-    try { if (typeof renderHistorial === 'function') renderHistorial(); } catch(e){}
-    try { if (typeof recalcScore === 'function') recalcScore(); } catch(e){}
-    try { if (typeof actualizarPasoSiguiente === 'function') actualizarPasoSiguiente(); } catch(e){}
-    try { if (typeof mostrarToast === 'function') mostrarToast('✓ Ficha nueva — todo limpio'); } catch(e){}
-
-    cancelarNuevaFicha();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } catch(err) {
-    console.error('Error en confirmarNuevaFicha:', err);
-    cancelarNuevaFicha();
-    try { if (typeof mostrarToast === 'function') mostrarToast('Hubo un problema al limpiar. Intenta de nuevo.'); } catch(e){}
-  }
-}
-
-/* ─── THEME ─── */
-(function() {
-  const saved = localStorage.getItem('nexus-theme') || 'dark';
-  document.documentElement.dataset.theme = saved;
-  const icon  = document.getElementById('themeIcon');
-  const label = document.getElementById('themeLabel');
-  if (icon && label) {
-    icon.textContent  = saved === 'dark' ? '☀️' : '🌙';
-    label.textContent = saved === 'dark' ? 'Claro' : 'Oscuro';
-  }
-})();
-
-function toggleTheme() {
-  const html = document.documentElement;
-  const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
-  html.dataset.theme = next;
-  localStorage.setItem('nexus-theme', next);
-  document.getElementById('themeIcon').textContent  = next === 'dark' ? '☀️' : '🌙';
-  document.getElementById('themeLabel').textContent = next === 'dark' ? 'Claro' : 'Oscuro';
-}
-
-/* ─── DOCK FLOTANTE: GUARDAR TODO / ELIMINAR FICHA ─── */
-function posicionarDockGuardarTodo() {
-  const topbar = document.querySelector('.topbar');
-  const dock = document.getElementById('dockGuardarTodo');
-  if (topbar && dock) dock.style.top = topbar.offsetHeight + 'px';
-}
-window.addEventListener('resize', posicionarDockGuardarTodo);
-posicionarDockGuardarTodo();
-
-function toggleDockGuardarTodo() {
-  const panel = document.getElementById('panelGuardarTodo');
-  if (panel) panel.classList.toggle('expanded');
-}
-document.addEventListener('click', (e) => {
-  const panel = document.getElementById('panelGuardarTodo');
-  if (panel && panel.classList.contains('expanded') && !panel.contains(e.target)) {
-    panel.classList.remove('expanded');
-  }
-});
-
-/* ─── STATE ─── */
-let gestiones   = JSON.parse(localStorage.getItem('crm_gestiones') || '[]');
-let clienteData = JSON.parse(localStorage.getItem('crm_cliente')   || '{}');
-let accionSeguir = JSON.parse(localStorage.getItem('crm_accion_seguir') || 'null') || { texto:'', estado:null, fecha:'', motivo:'' };
-let accionManualCounter = parseInt(localStorage.getItem('crm_accion_manual_counter') || '0', 10);
-let postventaStep = parseInt(localStorage.getItem('crm_postventa_step') || '0', 10) || 0;
-let accionPlazoActual = '';
-
-/* Pasos escalonados de postventa una vez que la operación está CERRADA.
-   Avanza cuando el usuario guarda la acción como "Realizado" estando en estado cerrada. */
-const PASOS_POSTVENTA = [
-  { texto: n => `Llamar a ${n} para verificar satisfacción con la unidad y el servicio recibido. Enviar encuesta de satisfacción.`, plazo: 'en los próximos 3 días' },
-  { texto: n => `Solicitar a ${n} referidos de familiares o conocidos interesados en adquirir un vehículo. Ofrecer incentivo por referido.`, plazo: 'en la próxima semana' },
-  { texto: n => `Activar estrategia de recompra con ${n}: presentar plan de renovación de su unidad y/o propuesta de compra para algún familiar.`, plazo: 'en los próximos 60-90 días' }
-];
-
-/* ─── INIT ─── */
-(function init() {
-  const campos = ['nombre','telefono','correo','ciudad','vehiculo','ocupacion','precio','fuenteLead',
-                  'pruebaManejo','tipoOperacion','estadoOperacion','seguro',
-                  'enganche','engancheModo','plazo','tasaInteres','asistieron','manejaron','comentariosPrueba',
-                  'disponibilidad','tiempoLlegada','descuento','montoDescuento','otroRegaloDesc',
-                  'anticipo','documentacion','estatusCredito','decision','urgencia'];
-  campos.forEach(id => {
-    const el = document.getElementById(id);
-    if (el && clienteData[id] !== undefined) el.value = clienteData[id];
-  });
-  const checks = ['rTapetes','rVidrios','rPelicula','rKitSeguridad','rPlacas','rOtro'];
-  checks.forEach(id => {
-    const el = document.getElementById(id);
-    if (el && clienteData[id] !== undefined) el.checked = clienteData[id];
-  });
-  togglePrueba(); toggleOperacion(); toggleDisponibilidad(); toggleDescuento(); toggleOtroRegalo();
-  renderHistorial(); recalcScore(); actualizarPasoSiguiente(); calcularFinanciamiento();
-})();
-
-/* ─── TOGGLES ─── */
-function togglePrueba() {
-  document.getElementById('datosPrueba').classList.toggle('hidden', document.getElementById('pruebaManejo').value !== 'si');
-}
-function toggleOperacion() {
-  const v = document.getElementById('tipoOperacion').value;
-  document.getElementById('datosContado').classList.toggle('hidden', v !== 'contado');
-  document.getElementById('datosFinanciado').classList.toggle('hidden', v !== 'financiado');
-  toggleCredito();
-}
-function toggleDisponibilidad() {
-  document.getElementById('campoTiempoLlegada').style.display = document.getElementById('disponibilidad').value === 'no' ? 'block' : 'none';
-}
-function toggleDescuento() {
-  document.getElementById('campoMontoDescuento').style.display = document.getElementById('descuento').value === 'si' ? 'block' : 'none';
-}
-function toggleOtroRegalo() {
-  document.getElementById('campoOtroRegalo').style.display = document.getElementById('rOtro').checked ? 'block' : 'none';
-}
-function toggleCredito() {
-  const esFinanciado = document.getElementById('tipoOperacion').value === 'financiado';
-  document.getElementById('bloqueCredito').classList.toggle('hidden', !esFinanciado);
-}
-
-/* ─── CALCULADOR DE FINANCIAMIENTO ─── */
-function cambiarModoEnganche() {
-  // Al cambiar de modo, el valor anterior ya no es válido en la nueva unidad: se limpia para evitar confusión.
-  const inp = document.getElementById('enganche');
-  inp.value = '';
-  ajustarLimitesEnganche();
-  calcularFinanciamiento();
-  mostrarToast('Ingresa el enganche en la nueva unidad seleccionada.');
-}
-
-function ajustarLimitesEnganche() {
-  const precio = parseFloat(document.getElementById('precio').value) || 0;
-  const modo   = document.getElementById('engancheModo').value;
-  const inp    = document.getElementById('enganche');
-  if (modo === 'pct') {
-    inp.max = 100;
-    inp.placeholder = 'Ej. 20';
-  } else {
-    inp.max = precio || '';
-    inp.placeholder = precio ? `máx. $${precio.toLocaleString('es-MX')}` : '0';
-  }
-}
-
-function calcularFinanciamiento() {
-  const precio   = parseFloat(document.getElementById('precio').value) || 0;
-  const modo     = document.getElementById('engancheModo').value;
-  const inp      = document.getElementById('enganche');
-  ajustarLimitesEnganche();
-
-  let engVal = parseFloat(inp.value) || 0;
-
-  // Validación dura: % nunca > 100, $ nunca > precio del vehículo.
-  if (modo === 'pct' && engVal > 100) {
-    engVal = 100; inp.value = 100;
-    mostrarToast('El enganche en porcentaje no puede ser mayor a 100%.');
-  }
-  if (modo === 'monto' && precio && engVal > precio) {
-    engVal = precio; inp.value = precio;
-    mostrarToast('El enganche no puede ser mayor al precio del vehículo.');
-  }
-
-  const plazo    = parseInt(document.getElementById('plazo').value) || 0;
-  const tasaAnual= parseFloat(document.getElementById('tasaInteres').value) || 0;
-  const resBox   = document.getElementById('resultadoFinanciamiento');
-
-  if (!precio || !engVal) { resBox.style.display = 'none'; onCampoChange(); return; }
-
-  const engancheMonto = modo === 'pct' ? precio * (engVal / 100) : engVal;
-  const montoFinanciar = Math.max(precio - engancheMonto, 0);
-
-  let mensualidad = plazo ? montoFinanciar / plazo : 0;
-  if (plazo && tasaAnual > 0) {
-    const tasaMensual = (tasaAnual / 100) / 12;
-    const factor = Math.pow(1 + tasaMensual, plazo);
-    mensualidad = montoFinanciar * (tasaMensual * factor) / (factor - 1);
-    mensualidad = mensualidad * 1.16; // IVA 16% sobre el componente financiero estimado
-  }
-
-  document.getElementById('kpiEnganche').textContent = '$' + Math.round(engancheMonto).toLocaleString('es-MX');
-  document.getElementById('kpiMontoFinanciar').textContent = '$' + Math.round(montoFinanciar).toLocaleString('es-MX');
-  document.getElementById('kpiMensualidad').textContent = plazo ? '$' + Math.round(mensualidad).toLocaleString('es-MX') : '—';
-  resBox.style.display = 'block';
-
-  onCampoChange();
-}
-
-/* ─── SCORE ─── */
-function recalcScore() {
-  let pts = 0;
-  const nombre   = document.getElementById('nombre').value.trim();
-  const telefono = document.getElementById('telefono').value.trim();
-  const vehiculo = document.getElementById('vehiculo').value.trim();
-  const precio   = document.getElementById('precio').value;
-  const prueba   = document.getElementById('pruebaManejo').value;
-  const tipoOp   = document.getElementById('tipoOperacion').value;
-  const estado   = document.getElementById('estadoOperacion').value;
-  const fuente   = document.getElementById('fuenteLead').value;
-  const gCount   = gestiones.length;
-
-  if (nombre)          pts += 10;
-  if (telefono)        pts += 10;
-  if (vehiculo)        pts += 10;
-  if (precio)          pts += 5;
-  if (fuente)          pts += 5;
-  if (prueba === 'si') pts += 20;
-  if (tipoOp)          pts += 15;
-  if (estado === 'cerrada')  { pts = 100; }
-  else if (estado === 'perdida') { pts = Math.min(pts, 15); }
-  pts += Math.min(gCount * 5, 25);
-  pts = Math.min(100, pts);
-
-  const arc    = document.getElementById('scoreArc');
-  const num    = document.getElementById('scoreNum');
-  const tag    = document.getElementById('scoreTag');
-  const desc   = document.getElementById('scoreDesc');
-  const circum = 220;
-  arc.style.strokeDashoffset = circum - (circum * pts / 100);
-  num.textContent = pts === 0 ? '—' : pts;
-
-  let color, tagTxt, descTxt;
-  if (estado === 'cerrada')      { color='#10B981'; tagTxt='✅ Cerrado';          descTxt='¡Venta cerrada! Activa el protocolo de posventa y solicita referidos.'; }
-  else if (estado === 'perdida') { color='#EF4444'; tagTxt='❌ Perdido';          descTxt='Documenta las razones y agenda reactivación en 30 días.'; }
-  else if (pts >= 75)            { color='#10B981'; tagTxt='🔥 Alta probabilidad';descTxt='Cliente muy calificado. Enfoca el esfuerzo en el cierre definitivo.'; }
-  else if (pts >= 50)            { color='#F97316'; tagTxt='⚡ Interés medio-alto';descTxt='Avanza correctamente. Sigue generando confianza y resuelve objeciones.'; }
-  else if (pts >= 20)            { color='#8B5CF6'; tagTxt='🌱 En desarrollo';    descTxt='Aún hay información por capturar. Califica mejor al cliente.'; }
-  else                           { color='#94A3B8'; tagTxt='Sin datos';           descTxt='Completa los datos del cliente para activar el análisis.'; }
-
-  arc.style.stroke  = color;
-  num.style.color   = color;
-  tag.textContent   = tagTxt;
-  tag.style.cssText = `background:${color}22;color:${color};display:inline-block;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px`;
-  desc.textContent  = descTxt;
-}
-
-/* Fecha completa en español, ej: "04 de julio de 2026" */
-function fechaCompletaEs(d) {
-  d = d || new Date();
-  return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
-}
-
-/* ─── SIGUIENTE PASO / ACCIÓN A SEGUIR ─── */
-
-/* Cálculo base, instantáneo y sin IA (reglas de negocio). Sirve como respuesta inmediata
-   ante cualquier cambio de campo y como respaldo si la llamada a IA fallara. */
-function calcularAccionBase() {
-  const estado = document.getElementById('estadoOperacion').value;
-  const prueba = document.getElementById('pruebaManejo').value;
-  const tipoOp = document.getElementById('tipoOperacion').value;
-  const nombre = document.getElementById('nombre').value.trim() || 'el cliente';
-  let texto = '', plazo = '';
-
-  if (estado === 'cerrada') {
-    const paso = PASOS_POSTVENTA[Math.min(postventaStep, PASOS_POSTVENTA.length - 1)];
-    texto = paso.texto(nombre);
-    plazo = paso.plazo;
-  }
-  else if (estado === 'perdida') { texto = `Registrar motivo de pérdida y analizar objeciones para mejorar el proceso. Agendar contacto de reactivación.`; plazo = 'en 30 días'; }
-  else if (!prueba)              { texto = `Coordinar prueba de manejo con ${nombre}. Prepara la unidad y presenta los diferenciadores clave del modelo.`; plazo = 'en las próximas 24-48 horas'; }
-  else if (!tipoOp)              { texto = `Presentar a ${nombre} las opciones de financiamiento y pago de contado. Preparar cotización formal.`; plazo = 'en los próximos 2-3 días'; }
-  else                           { texto = `Dar seguimiento a la decisión de ${nombre}. Resolver objeciones pendientes y proponer fecha de cierre.`; plazo = 'en las próximas 48-72 horas'; }
-
-  texto += ` Recomendado: hacerlo ${plazo}.`;
-  return { texto, plazo };
-}
-
-/* Aplica un texto de acción recomendada (base o generado por IA) a la interfaz y al estado. */
-function aplicarAccionRecomendada(texto, plazo) {
-  accionPlazoActual = plazo;
-
-  document.getElementById('nextStepFecha').textContent = `📅 Fecha de gestión: ${fechaCompletaEs()}`;
-  document.getElementById('nextStepText').textContent = texto;
-
-  // Si la acción recomendada cambió (por nuevos datos, gestiones, análisis, resúmenes o avance de
-  // postventa), es una acción NUEVA: se reinicia el estado para que el usuario vuelva a decidir manualmente.
-  if (accionSeguir.texto !== texto) {
-    accionSeguir = { texto, estado: null, fecha: '', motivo: '' };
-    localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
-  }
-  renderEstadoAccion();
-}
-
-/* Recalculo rápido (sin IA), usado ante cualquier cambio de campo y en la carga inicial,
-   para que la interfaz nunca se quede esperando una respuesta de red. */
-function actualizarPasoSiguiente() {
-  const base = calcularAccionBase();
-  aplicarAccionRecomendada(base.texto, base.plazo);
-}
-
-/* Recalculo coordinado con IA: sincroniza la acción recomendada con TODA la información ya
-   generada por el resto del "equipo" — datos del cliente, análisis inteligente, resúmenes y
-   gestiones — en vez de limitarse a no contradecirla. Se dispara en los momentos clave en que
-   esa otra información cambia (nueva gestión, nuevo análisis, nuevo resumen, guardado general),
-   no en cada tecla, para no saturar de llamadas a la IA. */
-let _generandoAccionIA = false;
-async function generarAccionRecomendadaIA() {
-  if (_generandoAccionIA) return;
-  const nombre = document.getElementById('nombre').value.trim();
-  const base = calcularAccionBase();
-
-  // Sin datos mínimos del cliente no tiene caso llamar a la IA: nos quedamos con la base.
-  if (!nombre) { aplicarAccionRecomendada(base.texto, base.plazo); return; }
-
-  const analisisEl = document.getElementById('resumenAnalisis');
-  const analisisTxt = analisisEl ? analisisEl.innerText.trim() : '';
-  const analisisPrevio = analisisTxt && !analisisTxt.startsWith('Registra una gestión') ? analisisTxt.slice(0, 3000) : '';
-
-  let resumenPrevio = '';
-  try {
-    const guardado = JSON.parse(localStorage.getItem('nexus_ultimo_resumen') || 'null');
-    if (guardado && guardado.texto) resumenPrevio = String(guardado.texto).slice(0, 2000);
-  } catch(e) {}
-
-  _generandoAccionIA = true;
-  const prevTexto = document.getElementById('nextStepText').textContent;
-  document.getElementById('nextStepText').textContent = '⏳ Coordinando la siguiente acción con el resto del expediente…';
-
-  const prompt = `Eres el gerente de ventas que coordina a un equipo: el Análisis Inteligente ya diagnosticó al cliente, el Resumen ya sintetizó el expediente y las Gestiones ya documentaron cada contacto. Tu única función es decidir, con visión de conjunto, cuál es EL SIGUIENTE PASO concreto que el vendedor debe dar ahora — sin repetir el trabajo de los demás, sin contradecirlo, dándole continuidad natural y coherente a la estrategia ya iniciada, con empatía profesional hacia el cliente.
-
-Expediente y gestiones:
-${buildContexto()}
-${analisisPrevio ? `\nDiagnóstico ya generado por el Análisis Inteligente:\n${analisisPrevio}\n` : ''}${resumenPrevio ? `\nÚltimo resumen guardado del expediente:\n${resumenPrevio}\n` : ''}
-Recomendación base calculada por reglas (referencia, puedes ajustarla, mejorarla o reemplazarla si el resto de la información sugiere algo distinto): "${base.texto}"
-
-Responde ÚNICAMENTE con la recomendación final en 1-2 frases, en español, tono profesional y empático. Sé específico y accionable, menciona al cliente por su nombre (${nombre}), y termina indicando el plazo recomendado para hacerlo. No agregues encabezados, comillas ni explicaciones adicionales.`;
-
-  try {
-    const texto = (await callAIConFallback(prompt, '', 300)).trim();
-    aplicarAccionRecomendada(texto || base.texto, base.plazo);
-  } catch(e) {
-    document.getElementById('nextStepText').textContent = prevTexto;
-    aplicarAccionRecomendada(base.texto, base.plazo);
-  }
-  _generandoAccionIA = false;
-}
-
-/* Formatea una fecha ISO (yyyy-mm-dd) [+ hora opcional HH:MM] a texto legible es-MX */
-function formatearFechaCorta(iso, hora) {
-  if (!iso) return '';
-  const [y,m,d] = iso.split('-');
-  return `${d}/${m}/${y}` + (hora ? ` ${hora}` : '');
-}
-
-function marcarAccion(estado) {
-  accionSeguir.estado = estado;
-  if (estado === 'realizado') {
-    accionSeguir.fecha = ''; accionSeguir.motivo = ''; accionSeguir.hora = '';
-  } else if (estado === 'no_realizado') {
-    accionSeguir.fecha = ''; accionSeguir.hora = '';
-  } else if (estado === 'posponer') {
-    accionSeguir.motivo = '';
-    if (!accionSeguir.fecha) {
-      // Sugerir por defecto 3 días a partir de hoy
-      const sugerida = new Date();
-      sugerida.setDate(sugerida.getDate() + 3);
-      accionSeguir.fecha = sugerida.toISOString().slice(0,10);
-    }
-  }
-  localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
-  renderEstadoAccion();
-}
-
-function onFechaProximoChange() {
-  accionSeguir.fecha = document.getElementById('fechaProximoSeguimiento').value;
-  accionSeguir.hora  = document.getElementById('horaProximoSeguimiento').value;
-  localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
-  renderEstadoAccion();
-}
-
-function onMotivoNoRealizadoChange() {
-  const val = document.getElementById('motivoNoRealizado').value;
-  accionSeguir.motivo = val;
-  localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
-  renderEstadoAccion();
-}
-
-function renderEstadoAccion() {
-  const btnR = document.getElementById('btnRealizado');
-  const btnN = document.getElementById('btnNoRealizado');
-  const btnP = document.getElementById('btnPosponer');
-  const bloqueFecha = document.getElementById('bloqueFechaPosponer');
-  const inputFecha = document.getElementById('fechaProximoSeguimiento');
-  const inputHora = document.getElementById('horaProximoSeguimiento');
-  const bloqueMotivo = document.getElementById('bloqueMotivoNoRealizado');
-  const inputMotivo = document.getElementById('motivoNoRealizado');
-  const info = document.getElementById('estadoAccionInfo');
-
-  btnR.classList.toggle('success', accionSeguir.estado === 'realizado');
-  btnN.classList.toggle('danger',  accionSeguir.estado === 'no_realizado');
-  btnP.classList.toggle('warning', accionSeguir.estado === 'posponer');
-
-  bloqueFecha.style.display  = accionSeguir.estado === 'posponer'    ? 'block' : 'none';
-  bloqueMotivo.style.display = accionSeguir.estado === 'no_realizado' ? 'block' : 'none';
-  if (accionSeguir.estado === 'posponer') {
-    inputFecha.value = accionSeguir.fecha || '';
-    inputHora.value  = accionSeguir.hora  || '';
-  }
-  if (accionSeguir.estado === 'no_realizado') inputMotivo.value = accionSeguir.motivo || '';
-
-  // El estado (Realizado/No realizado/Posponer) queda registrado localmente de inmediato;
-  // se refleja en la base de datos junto con todo lo demás al presionar "Guardar todo".
-  if (!accionSeguir.estado) {
-    info.style.display = 'block';
-    info.style.color = 'var(--muted)';
-    info.textContent = '🕓 Pendiente. Puedes marcarla como Realizado / No realizado / Posponer y luego presionar "Guardar todo".';
-  } else if (accionSeguir.estado === 'realizado') {
-    info.style.display = 'block';
-    info.style.color = 'var(--green)';
-    info.textContent = '✅ Marcada como realizada. Presiona "Guardar todo" para reflejarlo en el expediente.';
-  } else if (accionSeguir.estado === 'no_realizado') {
-    info.style.display = 'block';
-    info.style.color = 'var(--red)';
-    if (accionSeguir.motivo && accionSeguir.motivo.trim()) {
-      info.textContent = '✗ Marcada como no realizada. Presiona "Guardar todo" para reflejarlo en el expediente.';
-    } else {
-      info.textContent = '✗ Escribe el motivo por el que no se realizó antes de guardar todo.';
-    }
-  } else { // posponer
-    info.style.display = 'block';
-    if (accionSeguir.fecha) {
-      info.style.color = 'var(--orange)';
-      info.textContent = `⏸ Pospuesta — próximo seguimiento: ${formatearFechaCorta(accionSeguir.fecha, accionSeguir.hora)}`;
-    } else {
-      info.style.color = 'var(--orange)';
-      info.textContent = '⏸ Selecciona la fecha del próximo seguimiento antes de guardar todo.';
-    }
-  }
-}
-
-/* Guarda solo la parte de "acción a seguir" en Sheets y avanza el flujo de postventa si aplica.
-   Ya no tiene botón propio: es invocada internamente por guardarTodo(). */
-async function guardarAccionSeguirInterno(nombre) {
-  const estadoOperacionActual = document.getElementById('estadoOperacion').value;
-  const fechaGestionHoy = new Date().toISOString().slice(0,10);
-
-  const nuevoPostventaStep = (estadoOperacionActual === 'cerrada' && accionSeguir.estado === 'realizado' && postventaStep < PASOS_POSTVENTA.length - 1)
-    ? postventaStep + 1
-    : postventaStep;
-
-  const result = await enviarASheets({
-    tipo: 'accion_seguir',
-    nombreCliente: nombre,
-    fechaGestion: fechaGestionHoy,
-    fechaGestionTexto: fechaCompletaEs(),
-    accionTexto: accionSeguir.texto,
-    plazo: accionPlazoActual,
-    estado: accionSeguir.estado,
-    fecha: accionSeguir.fecha || '',
-    hora: accionSeguir.hora || '',
-    motivo: accionSeguir.motivo || '',
-    postventaStep: estadoOperacionActual === 'cerrada' ? nuevoPostventaStep : ''
-  });
-
-  // Guardar también un registro local del último envío, para mostrarlo al recargar este cliente en la sesión actual.
-  window._ultimaAccionLocal = {
-    fechaGestion: fechaCompletaEs(),
-    accionTexto: accionSeguir.texto,
-    plazo: accionPlazoActual,
-    estado: accionSeguir.estado,
-    fecha: accionSeguir.fecha || '',
-    hora: accionSeguir.hora || '',
-    motivo: accionSeguir.motivo || ''
-  };
-  renderUltimaAccionGuardada(window._ultimaAccionLocal);
-
-  // Flujo automático: si la operación está CERRADA y la acción se marcó como Realizado,
-  // avanza al siguiente paso de postventa (verificación → referidos → recompra).
-  postventaStep = nuevoPostventaStep;
-  localStorage.setItem('crm_postventa_step', String(postventaStep));
-
-  return result;
-}
-
-/* Frases genéricas de seguimiento, usadas cuando el usuario pide manualmente una nueva acción
-   recomendada (ej. después de marcar "Realizado") y los datos del cliente no cambiaron lo
-   suficiente como para que el sistema calcule automáticamente un paso distinto. */
-const SEGUIMIENTOS_MANUALES = [
-  (nombre) => `Dar un nuevo seguimiento a ${nombre} para reforzar el interés y resolver cualquier duda pendiente.`,
-  (nombre) => `Contactar nuevamente a ${nombre} para confirmar los siguientes pasos y mantener el impulso de la venta.`,
-  (nombre) => `Hacer un nuevo acercamiento con ${nombre}, aportando información de valor (disponibilidad, promociones, testimonios).`,
-  (nombre) => `Reforzar el vínculo con ${nombre} y evaluar si conviene una llamada del gerente de ventas para destrabar la decisión.`,
-  (nombre) => `Retomar contacto con ${nombre} para revisar si surgieron nuevas objeciones y ajustar la estrategia de cierre.`
-];
-
-/* El usuario indica manualmente que quiere una acción NUEVA (por ejemplo, después de marcar
-   Realizado, cuando el sistema no generó automáticamente un paso distinto). Genera una nueva
-   acción recomendada, reinicia su estado a "pendiente" y dejarla lista para guardar/gestionar. */
-function crearSiguienteAccionManual() {
-  const nombre = document.getElementById('nombre').value.trim() || 'el cliente';
-
-  accionManualCounter = (accionManualCounter || 0) + 1;
-  localStorage.setItem('crm_accion_manual_counter', String(accionManualCounter));
-
-  const genFn = SEGUIMIENTOS_MANUALES[(accionManualCounter - 1) % SEGUIMIENTOS_MANUALES.length];
-  const plazo = 'en las próximas 24-48 horas';
-  const texto = genFn(nombre) + ` Recomendado: hacerlo ${plazo}.`;
-
-  accionPlazoActual = plazo;
-  document.getElementById('nextStepFecha').textContent = `📅 Fecha de gestión: ${fechaCompletaEs()}`;
-  document.getElementById('nextStepText').textContent = texto;
-
-  accionSeguir = { texto, estado: null, fecha: '', motivo: '', hora: '' };
-  localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
-  renderEstadoAccion();
-  mostrarToast('🆕 Nueva acción recomendada generada. Presiona Guardar para registrarla.');
-}
-
-/* Muestra en la tarjeta el último registro de gestión guardado (fecha, acción, plazo, estado, motivo/fecha) */
-function renderUltimaAccionGuardada(reg) {
-  const box = document.getElementById('ultimaAccionGuardada');
-  if (!box || !reg) return;
-
-  let estadoTxt = '';
-  if (reg.estado === 'realizado')    estadoTxt = '✅ Realizado';
-  else if (reg.estado === 'no_realizado') estadoTxt = `❌ No realizado — Motivo: ${reg.motivo || 'sin especificar'}`;
-  else if (reg.estado === 'posponer')     estadoTxt = `⏸ Pospuesto → Próximo seguimiento: ${formatearFechaCorta(reg.fecha, reg.hora)}`;
-
-  box.innerHTML =
-    `<b>Última gestión guardada</b>\n` +
-    `📅 Fecha de gestión: ${reg.fechaGestion}\n` +
-    `📋 Acción: ${reg.accionTexto}${reg.plazo ? ` (${reg.plazo})` : ''}\n` +
-    `${estadoTxt}`;
-  box.style.display = 'block';
-}
-
-/* ─── BUSCAR CLIENTE (placeholder, pendiente de conectar a base de datos) ─── */
-async function buscarCliente() {
-  const q = document.getElementById('buscarClienteInput').value.trim();
-  const resultados = document.getElementById('buscarResultados');
-  const status = document.getElementById('buscarStatus');
-  const btn = document.getElementById('btnBuscarCliente');
-
-  if (!q) { mostrarToast('⚠️ Escribe un nombre, teléfono o correo para buscar'); return; }
-
-  const url = getSheetsUrl();
-  if (!url) {
-    mostrarToast('⚠️ Configura la URL de Sheets en ⚙️ Config');
-    toggleConfigModal();
-    return;
-  }
-
-  // UI: buscando
-  btn.disabled = true; btn.textContent = '⏳';
-  status.textContent = 'Buscando en Google Sheets…';
-  resultados.style.display = 'none'; resultados.innerHTML = '';
-
-  try {
-    const res = await fetch(`${url}?action=buscar&q=${encodeURIComponent(q)}`, {
-      method: 'GET', cache: 'no-cache'
-    });
-    const data = await res.json();
-
-    btn.disabled = false; btn.textContent = '🔍 Buscar';
-
-    if (!data.success || !data.clientes || data.clientes.length === 0) {
-      status.textContent = '❌ No se encontró ningún cliente con ese dato.';
-      status.style.color = 'var(--red)';
-      return;
-    }
-
-    status.textContent = `${data.clientes.length} resultado(s) encontrado(s). Selecciona uno:`;
-    status.style.color = 'var(--green)';
-    resultados.style.display = 'block';
-
-    resultados.innerHTML = data.clientes.map((c, i) => `
-      <div onclick="cargarClienteDesdeSheets(${i})" data-idx="${i}"
-        style="padding:11px 14px; cursor:pointer; border-bottom:1px solid var(--line); transition:background 0.15s"
-        onmouseover="this.style.background='var(--accent-dim)'" onmouseout="this.style.background=''">
-        <div style="font-weight:700; font-size:13px">${c.nombre}</div>
-        <div style="font-size:11px; color:var(--muted); margin-top:2px">${c.telefono || ''} ${c.correo ? '· ' + c.correo : ''} · <span style="color:var(--accent-bright)">${c.vehiculo || 'Sin vehículo'}</span></div>
-      </div>
-    `).join('');
-
-    // Guardar resultados globalmente para usarlos en cargarClienteDesdeSheets
-    window._buscarResultados = data.clientes;
-
-  } catch(err) {
-    btn.disabled = false; btn.textContent = '🔍 Buscar';
-    status.textContent = '❌ Error de conexión: ' + err.message;
-    status.style.color = 'var(--red)';
-  }
-}
-
-function cargarClienteDesdeSheets(idx) {
-  const c = window._buscarResultados?.[idx];
-  if (!c) return;
-
-  // Nuevo cliente cargado: la acción a seguir anterior ya no aplica, se recalculará desde cero
-  accionSeguir = { texto:'', estado:null, fecha:'', motivo:'', hora:'' };
-  localStorage.setItem('crm_accion_seguir', JSON.stringify(accionSeguir));
-  postventaStep = parseInt(c.pasoPostventa || '0', 10) || 0;
-  localStorage.setItem('crm_postventa_step', String(postventaStep));
-
-  // Mostrar la última gestión guardada previamente en Sheets (si existe), tal cual quedó registrada
-  const boxUltima = document.getElementById('ultimaAccionGuardada');
-  if (boxUltima) {
-    if (c.accionSeguir && c.accionSeguir.trim()) {
-      boxUltima.innerHTML = `<b>Última gestión guardada</b>\n${c.accionSeguir}`;
-      boxUltima.style.display = 'block';
-    } else {
-      boxUltima.style.display = 'none';
-      boxUltima.innerHTML = '';
-    }
-  }
-
-  // Mapa de campos Sheets → IDs del formulario
-  const map = {
-    nombre:'nombre', telefono:'telefono', correo:'correo', ciudad:'ciudad',
-    ocupacion:'ocupacion', fuenteLead:'fuenteLead', vehiculo:'vehiculo',
-    precio:'precio', pruebaManejo:'pruebaManejo', tipoOperacion:'tipoOperacion',
-    plazo:'plazo', tasaInteres:'tasaInteres', estadoOperacion:'estadoOperacion',
-    disponibilidad:'disponibilidad', tiempoLlegada:'tiempoLlegada',
-    descuento:'descuento', montoDescuento:'montoDescuento',
-    anticipo:'anticipo', documentacion:'documentacion',
-    estatusCredito:'estatusCredito', decision:'decision', urgencia:'urgencia'
-  };
-
-  Object.entries(map).forEach(([campo, id]) => {
-    const el = document.getElementById(id);
-    if (el && c[campo] !== undefined && c[campo] !== '') el.value = c[campo];
-  });
-
-  // Regalos (texto → checkboxes)
-  if (c.regalos) {
-    const regalos = c.regalos.toLowerCase();
-    const checarRegalo = (id, palabra) => {
-      const el = document.getElementById(id);
-      if (el) el.checked = regalos.includes(palabra);
-    };
-    checarRegalo('rTapetes',      'tapetes');
-    checarRegalo('rVidrios',      'vidrios');
-    checarRegalo('rPelicula',     'película');
-    checarRegalo('rKitSeguridad', 'kit');
-    checarRegalo('rPlacas',       'placas');
-  }
-
-  // Ocultar resultados
-  document.getElementById('buscarResultados').style.display = 'none';
-  document.getElementById('buscarStatus').textContent = `✅ Cliente "${c.nombre}" cargado correctamente.`;
-  document.getElementById('buscarStatus').style.color = 'var(--green)';
-  document.getElementById('buscarClienteInput').value = '';
-
-  // Cargar último resumen si viene de Sheets
-  if (c.ultimoResumen) {
-    localStorage.setItem('nexus_ultimo_resumen', JSON.stringify({
-      texto: c.ultimoResumen,
-      fecha: c.fechaUltimoResumen || 'Fecha no disponible'
-    }));
-    mostrarToast(`✅ "${c.nombre}" cargado · Resumen disponible en ✨`);
-  } else {
-    mostrarToast(`✅ "${c.nombre}" cargado desde Sheets`);
-  }
-
-  // Recalcular UI
-  onCampoChange();
-  if (typeof toggleTipoOperacion === 'function') toggleTipoOperacion();
-  if (typeof toggleDisponibilidad === 'function') toggleDisponibilidad();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-/* ─── AUTO-SAVE CAMPOS ─── */
-function onCampoChange() {
-  const campos = ['nombre','telefono','correo','ciudad','vehiculo','ocupacion','precio','fuenteLead',
-                  'pruebaManejo','tipoOperacion','estadoOperacion','seguro',
-                  'enganche','engancheModo','plazo','tasaInteres','asistieron','manejaron','comentariosPrueba',
-                  'disponibilidad','tiempoLlegada','descuento','montoDescuento','otroRegaloDesc',
-                  'anticipo','documentacion','estatusCredito','decision','urgencia'];
-  campos.forEach(id => { const el = document.getElementById(id); if (el) clienteData[id] = el.value; });
-  const checks = ['rTapetes','rVidrios','rPelicula','rKitSeguridad','rPlacas','rOtro'];
-  checks.forEach(id => { const el = document.getElementById(id); if (el) clienteData[id] = el.checked; });
-  localStorage.setItem('crm_cliente', JSON.stringify(clienteData));
-  recalcScore(); actualizarPasoSiguiente();
-}
-
-/* ─── GUARDAR GESTIÓN ─── */
-function guardarGestion(tipo, calidad, comentarios, origenMsg) {
-  if (!comentarios) { mostrarToast('Escribe los comentarios antes de guardar.'); return false; }
-  const g = { id: Date.now(), fecha: new Date().toLocaleString('es-MX'), tipo, calidad, comentarios };
-  gestiones.unshift(g);
-  localStorage.setItem('crm_gestiones', JSON.stringify(gestiones));
-  renderHistorial(); recalcScore(); actualizarPasoSiguiente();
-  mostrarToast(origenMsg || '✓ Gestión guardada correctamente');
-  // Sincroniza la acción recomendada con la nueva gestión recién registrada.
-  generarAccionRecomendadaIA();
-  return true;
-}
-
-document.getElementById('btnGuardar').addEventListener('click', () => {
-  const comentarios = document.getElementById('comentariosGestion').value.trim();
-  const ok = guardarGestion(
-    document.getElementById('tipoContacto').value,
-    document.getElementById('calidadContacto').value,
-    comentarios
-  );
-  if (ok) document.getElementById('comentariosGestion').value = '';
-});
-
-document.getElementById('btnGuardarPrimeraVisita').addEventListener('click', () => {
-  const comentarios = document.getElementById('comentariosPrimeraVisita').value.trim();
-  const ok = guardarGestion(
-    'primeravisita',
-    document.getElementById('calidadPrimeraVisita').value,
-    comentarios,
-    '✓ Primera visita guardada como gestión'
-  );
-  if (ok) document.getElementById('comentariosPrimeraVisita').value = '';
-});
-
-/* ─── HISTORIAL ─── */
-function renderHistorial() {
-  const lista = document.getElementById('listaGestiones');
-  const total = document.getElementById('totalGestiones');
-  total.textContent = gestiones.length;
-  if (gestiones.length === 0) {
-    lista.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px 0">Sin gestiones registradas aún.</p>';
-    return;
-  }
-  const tipoMap = { sincontacto:'⏳ Sin contacto aún', primeravisita:'🚗 Primera visita', llamada:'📞 Llamada', whatsapp:'💬 WhatsApp', cita:'🤝 Cita', seguimiento:'📋 Seguimiento', posventa:'⭐ Posventa', email:'📧 Correo' };
-  const colorMap = { positivo:'#10B981', neutral:'#F97316', negativo:'#EF4444' };
-  lista.innerHTML = gestiones.map(g => `
-    <div class="gestion-item" style="border-left-color:${colorMap[g.calidad]||'var(--accent)'}">
-      <div class="gestion-meta">
-        <span class="gestion-tipo">${tipoMap[g.tipo]||g.tipo}</span>
-        <span>${g.fecha}</span>
-      </div>
-      <p style="font-size:13px;line-height:1.5;color:var(--text)">${g.comentarios}</p>
-    </div>
-  `).join('');
-}
-
-/* ─── ANÁLISIS IA ─── */
-document.getElementById('btnAnalizar').addEventListener('click', analizarConIA);
-/* ─── REESCRIBIR / MEJORAR TEXTO CON IA ───
-   Reutilizable en cualquier campo de texto libre (motivo, comentarios, notas, etc.)
-   Corrige ortografía y gramática, ordena la idea y mejora la redacción,
-   pensado para notas dictadas rápido por voz o escritas desde el celular. */
-async function mejorarTextoIA(textareaId, btnId) {
-  const ta  = document.getElementById(textareaId);
-  const btn = document.getElementById(btnId);
-  if (!ta || !btn) return;
-
-  const texto = (ta.value || '').trim();
-  if (!texto) { mostrarToast('⚠️ Escribe algo primero para poder mejorarlo'); return; }
-
-  const textoBtnOriginal = btn.innerHTML;
-  btn.disabled = true; btn.innerHTML = '⏳ Mejorando…';
-
-  const prompt = `Actúa como un editor profesional de redacción para un vendedor de autos en México. Vas a recibir una nota tal cual la escribió o dictó por voz el vendedor (muchas veces desde el celular, manejando o de prisa), con errores de ortografía, gramática, puntuación o ideas desordenadas.
-
-Tu tarea:
-- Corrige por completo la ortografía, acentos, puntuación y gramática.
-- Ordena y clarifica las ideas para que se lean de forma profesional y fluida, en el mismo idioma (español).
-- Conserva TODOS los datos originales (nombres, cifras, fechas, acuerdos, objeciones) sin inventar ni agregar información nueva que no esté implícita en el texto.
-- Mantén la voz en primera persona del vendedor y un tono profesional pero natural, como una nota de CRM bien redactada.
-- No agregues encabezados, viñetas, comillas ni explicaciones. Responde ÚNICAMENTE con el texto ya corregido y mejorado, listo para pegarse directamente en el campo.
-
-Texto original del vendedor:
-"""
-${texto}
-"""`;
-
-  try {
-    const mejorado = (await callAIConFallback(prompt, '', 700)).trim();
-
-    if (mejorado) {
-      ta.value = mejorado;
-      ta.dispatchEvent(new Event('input', { bubbles: true })); // dispara onCampoChange / onMotivoNoRealizadoChange, etc.
-      mostrarToast('✨ Texto mejorado');
-    } else {
-      mostrarToast('⚠️ No se pudo mejorar el texto, intenta de nuevo');
-    }
-  } catch (e) {
-    if (e.message === 'CONFIG_REQUIRED') mostrarToast('⚠️ Configura tu IA en ⚙️ Config → 🤖 IA');
-    else mostrarToast('❌ Error al conectar con IA. Verifica tu conexión.');
-  }
-
-  btn.disabled = false; btn.innerHTML = textoBtnOriginal;
-}
-
-async function analizarConIA() {
-  const btn = document.getElementById('btnAnalizar');
-  const out = document.getElementById('resumenAnalisis');
-  btn.disabled = true; btn.textContent = '⏳ Analizando…';
-  out.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Generando análisis con IA…</div>';
-
-  const prompt = `Eres un experto coach de ventas automotriz y neuroventas en México. Analiza el siguiente expediente de cliente a fondo, con el mismo nivel de detalle y profundidad que usaría un consultor senior en un reporte real para el vendedor. Responde EXACTAMENTE con esta estructura de encabezados en texto plano, SIN emojis ni símbolos antes del texto (cada encabezado en su propia línea, seguido de dos puntos y luego el desarrollo). Dentro de cada bloque puedes usar sub-puntos con guion y texto en **negritas** para resaltar ideas clave, como lo haría un análisis profesional bien estructurado:
-
-Etapa detectada: Identifica con precisión en qué etapa del proceso está el cliente (prospección, calificación, presentación, manejo de objeciones, negociación o cierre). Explica por qué, citando evidencia concreta del expediente (visitas, pruebas de manejo, gestiones, montos, documentación).
-
-Diagnóstico y estado emocional: Desarrolla el perfil del cliente con profundidad. Incluye: un perfil narrativo breve (quién es como comprador), una lista de señales positivas (compromiso, comportamiento de compra real), una lista de señales de alerta (riesgos de enfriamiento, datos faltantes, inconsistencias en el seguimiento), y su estado emocional/actitud actual.
-
-Probabilidad de cierre: Da un rango estimado en % (ej. 68-72%) con una justificación sólida de 3-4 líneas explicando qué la sostiene y qué la haría bajar si no se actúa.
-
-Objeciones detectadas: Identifica la objeción principal (y si aplica, una secundaria latente). Para cada una explica qué hay realmente detrás de la objeción (no tomarla literal) y cómo manejarla con un guion de venta sugerido entre comillas, listo para usar con el cliente.
-
-Técnica y estrategia de cierre: Recomienda la técnica de venta más adecuada para este momento específico y explica por qué. Después desglosa 2-3 acciones concretas y numeradas (Acción 1, Acción 2...) con un título corto y una explicación práctica de cómo ejecutarlas.
-
-Voz activa: Si hay frases del cliente o del vendedor en las notas, sugiere 2-4 correcciones de frases débiles o pasivas a frases en voz activa y persuasiva, formato 'original' → 'mejorada'. Si no hay frases suficientes en las notas, omite este bloque por completo.
-
-Neuroventas aplicadas: Lista 3-4 principios de neuroventas aplicables a este caso específico (anclaje emocional, urgencia, prueba social, lenguaje de propiedad anticipada, micro-compromisos progresivos, etc.), explicando en cada uno cómo aplicarlo concretamente con este cliente y por qué funciona en su situación particular.
-
-Congruencia a verificar: Solo si hay una posible incongruencia entre la ocupación del cliente y el vehículo/monto de la operación, señálala con tacto, sin asumir mala fe. Si no aplica o no hay ocupación registrada, omite este bloque por completo.
-
-Qué decirle hoy: Da un script específico y listo para usar (cita textual entre comillas) para la próxima llamada o mensaje. Usa cierre de alternativa cuando sea pertinente (ofrecer dos opciones concretas en vez de una pregunta abierta).
-
-Expediente del cliente:
-${buildContexto()}
-
-Sé específico, profesional y bien desarrollado en cada sección — tienes espacio de sobra, así que no te quedes corto: profundiza como lo haría un consultor experto, usando los datos reales del expediente como evidencia en cada afirmación. Usa el nombre del cliente. Si falta información para alguna sección, indícalo brevemente en vez de inventar datos. IMPORTANTE: no agregues ningún emoji ni símbolo decorativo en ningún encabezado, solo el texto seguido de dos puntos.`;
-
-  try {
-    const texto = await callAIConFallback(prompt, '', 6000);
-    out.innerHTML = formatMD(texto || 'Sin respuesta.');
-    // Con un análisis nuevo disponible, la acción recomendada se recalcula en coordinación con él.
-    generarAccionRecomendadaIA();
-  } catch(e) {
-    if (e.message === 'CONFIG_REQUIRED') out.innerHTML = '<span style="color:var(--red)">Configura tu IA en ⚙️ Config → 🤖 IA.</span>';
-    else out.innerHTML = '<span style="color:var(--red)">Error al conectar con IA. Verifica tu conexión.</span>';
-  }
-  btn.disabled = false; btn.textContent = '⚡ Analizar con IA';
-}
-
-/* ─── SIGUIENTES PASOS RÁPIDOS (primera visita) ─── */
-document.getElementById('btnPasosRapidos').addEventListener('click', generarPasosRapidos);
-async function generarPasosRapidos() {
-  const btn = document.getElementById('btnPasosRapidos');
-  const out = document.getElementById('outputPasosRapidos');
-  out.classList.remove('hidden');
-  btn.disabled = true;
-  out.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Generando siguientes pasos…</div>';
-  out.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-  const nombre = document.getElementById('nombre').value || 'el cliente';
-  const comentarios = document.getElementById('comentariosPrimeraVisita').value || 'Sin comentarios registrados aún.';
-  const sentimiento = document.getElementById('calidadPrimeraVisita').value;
-
-  const prompt = `Eres un coach de ventas automotriz experto en México. Un vendedor acaba de tener la primera visita/presentación con un cliente y necesita una recomendación RÁPIDA y PRÁCTICA de siguientes pasos, sin un análisis profundo.
-
-Cliente: ${nombre}
-Vehículo de interés: ${document.getElementById('vehiculo').value||'No especificado'}
-Sentimiento de la visita: ${sentimiento}
-Comentarios de la primera visita: ${comentarios}
-
-Responde en formato de lista breve (máximo 4 puntos), directo y accionable, indicando qué hacer ahora mismo para avanzar con este cliente. Sin introducción ni cierre, solo los puntos con un guion. Cada punto de 1-2 líneas máximo.`;
-
-  try {
-    const texto = (await callAIConFallback(prompt, '', 400)) || 'Sin respuesta.';
-    out.innerHTML = texto.replace(/^[-•]\s+(.+)$/gm, '<div style="margin:6px 0;padding-left:10px;border-left:2px solid var(--line)">$1</div>').replace(/\n/g,'');
-  } catch(e) {
-    if (e.message === 'CONFIG_REQUIRED') out.innerHTML = '<span style="color:var(--red)">Configura tu IA en ⚙️ Config → 🤖 IA.</span>';
-    else out.innerHTML = '<span style="color:var(--red)">Error al generar siguientes pasos.</span>';
-  }
-  btn.disabled = false;
-}
-
-/* ─── MENSAJE IA (primera visita) ─── */
-document.getElementById('btnWhatsAppPrimeraVisita').addEventListener('click', generarMensajeWAPrimeraVisita);
-async function generarMensajeWAPrimeraVisita() {
-  const card = document.getElementById('cardWhatsAppPrimeraVisita');
-  const out  = document.getElementById('outputWhatsAppPrimeraVisita');
-  card.classList.remove('hidden');
-  out.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Generando mensaje…</div>';
-  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-  const nombre = document.getElementById('nombre').value || 'el cliente';
-  const comentarios = document.getElementById('comentariosPrimeraVisita').value || 'Sin comentarios registrados aún.';
-
-  const prompt = `Eres un vendedor de autos experto en comunicación por WhatsApp en México.
-
-Redacta UN mensaje de seguimiento para WhatsApp tras la primera visita/presentación con este cliente:
-Nombre: ${nombre}
-Vehículo de interés: ${document.getElementById('vehiculo').value||'No especificado'}
-Sentimiento de la visita: ${document.getElementById('calidadPrimeraVisita').value}
-Comentarios de la visita: ${comentarios}
-
-El mensaje debe:
-- Ser natural, cálido y profesional (no robótico)
-- Máximo 4-5 líneas
-- Incluir el nombre del cliente
-- Tener un call-to-action claro
-- Usar 1-2 emojis máximo
-- Estar listo para copiar y pegar
-
-Responde SOLO con el mensaje, sin comillas ni explicaciones.`;
-
-  try {
-    out.textContent = (await callAIConFallback(prompt, '', 300)) || 'Sin respuesta.';
-  } catch(e) {
-    if (e.message === 'CONFIG_REQUIRED') out.innerHTML = '<span style="color:var(--red)">Configura tu IA en ⚙️ Config → 🤖 IA.</span>';
-    else out.innerHTML = '<span style="color:var(--red)">Error al generar mensaje.</span>';
-  }
-}
-
-document.getElementById('btnCopiarMensajePrimeraVisita').addEventListener('click', () => {
-  const texto = document.getElementById('outputWhatsAppPrimeraVisita').innerText.trim();
-  if (!texto) { mostrarToast('Aún no hay mensaje para copiar.'); return; }
-  copiarTexto(texto, '✓ Mensaje copiado al portapapeles');
-});
-
-/* ─── MENSAJE WA IA ─── */
-document.getElementById('btnWhatsApp').addEventListener('click', generarMensajeWA);
-async function generarMensajeWA() {
-  const card = document.getElementById('cardWhatsApp');
-  const out  = document.getElementById('outputWhatsApp');
-  card.classList.remove('hidden');
-  out.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Generando mensaje…</div>';
-  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-  const prompt = `Eres un vendedor de autos experto en comunicación por WhatsApp en México.
-
-Redacta UN mensaje de seguimiento para WhatsApp basado en este expediente:
-${buildContexto()}
-
-El mensaje debe:
-- Ser natural, cálido y profesional (no robótico)
-- Máximo 4-5 líneas
-- Incluir el nombre del cliente
-- Tener un call-to-action claro
-- Usar 1-2 emojis máximo
-- Estar listo para copiar y pegar
-
-Responde SOLO con el mensaje, sin comillas ni explicaciones.`;
-
-  try {
-    out.textContent = (await callAIConFallback(prompt, '', 300)) || 'Sin respuesta.';
-  } catch(e) {
-    if (e.message === 'CONFIG_REQUIRED') out.innerHTML = '<span style="color:var(--red)">Configura tu IA en ⚙️ Config → 🤖 IA.</span>';
-    else out.innerHTML = '<span style="color:var(--red)">Error al generar mensaje.</span>';
-  }
-}
-
-document.getElementById('btnCopiarMensaje').addEventListener('click', () => {
-  const texto = document.getElementById('outputWhatsApp').innerText.trim();
-  if (!texto) { mostrarToast('Aún no hay mensaje para copiar.'); return; }
-  copiarTexto(texto, '✓ Mensaje copiado al portapapeles');
-});
-
-document.getElementById('btnCopiarAnalisis').addEventListener('click', () => {
-  const texto = document.getElementById('resumenAnalisis').innerText.trim();
-  if (!texto || texto.includes('Registra una gestión')) { mostrarToast('Aún no hay análisis para copiar.'); return; }
-  copiarTexto(texto, '✓ Análisis copiado al portapapeles');
-});
-
-/* ─── COPIAR (con fallback robusto) ─── */
-function copiarTexto(texto, mensajeOk) {
-  function fallback() {
-    const ta = document.createElement('textarea');
-    ta.value = texto;
-    ta.style.position = 'fixed';
-    ta.style.left = '-9999px';
-    document.body.appendChild(ta);
-    ta.focus(); ta.select();
-    try { document.execCommand('copy'); mostrarToast(mensajeOk); }
-    catch(e) { mostrarToast('No se pudo copiar. Selecciona el texto manualmente.'); }
-    document.body.removeChild(ta);
-  }
-  if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(texto).then(() => mostrarToast(mensajeOk)).catch(fallback);
-  } else {
-    fallback();
-  }
-}
-function buildContexto() {
-  const g = gestiones.slice(0,5).map(x=>`[${x.fecha}] ${x.tipo} (${x.calidad}): ${x.comentarios}`).join('\n');
-  const regalos = [];
-  if (document.getElementById('rTapetes').checked)      regalos.push('Tapetes');
-  if (document.getElementById('rVidrios').checked)       regalos.push('Vidrios de seguridad');
-  if (document.getElementById('rPelicula').checked)      regalos.push('Película antiasalto');
-  if (document.getElementById('rKitSeguridad').checked)  regalos.push('Kit de seguridad completo');
-  if (document.getElementById('rPlacas').checked)        regalos.push('Placas y tenencia');
-  if (document.getElementById('rOtro').checked)          regalos.push(document.getElementById('otroRegaloDesc').value || 'Otro (sin especificar)');
-
-  return `Nombre: ${document.getElementById('nombre').value||'—'}
-Teléfono: ${document.getElementById('telefono').value||'—'}
-Ciudad: ${document.getElementById('ciudad').value||'—'}
-Ocupación del cliente: ${document.getElementById('ocupacion').value||'No registrada'}
-Vehículo: ${document.getElementById('vehiculo').value||'—'}
-Precio: $${document.getElementById('precio').value||'—'} MXN
-Fuente: ${document.getElementById('fuenteLead').value||'—'}
-Prueba de manejo: ${document.getElementById('pruebaManejo').value||'No realizada'}
-Operación: ${document.getElementById('tipoOperacion').value||'—'}
-${document.getElementById('tipoOperacion').value === 'financiado' ? `Mensualidad estimada: ${document.getElementById('kpiMensualidad').textContent} a ${document.getElementById('plazo').value||'—'} meses` : ''}
-Estado: ${document.getElementById('estadoOperacion').value}
-
-— Información adicional —
-Disponibilidad del vehículo: ${document.getElementById('disponibilidad').value === 'si' ? 'En existencia' : document.getElementById('disponibilidad').value === 'no' ? `No disponible, llega en ${document.getElementById('tiempoLlegada').value||'tiempo no especificado'}` : '—'}
-Descuento otorgado: ${document.getElementById('descuento').value === 'si' ? `Sí, $${document.getElementById('montoDescuento').value||'—'} MXN` : document.getElementById('descuento').value === 'no' ? 'No' : '—'}
-Regalos/beneficios entregados: ${regalos.length ? regalos.join(', ') : 'Ninguno'}
-Anticipo o pedido: ${document.getElementById('anticipo').value||'—'}
-Documentación entregada: ${document.getElementById('documentacion').value||'—'}
-Estatus del crédito: ${document.getElementById('estatusCredito').value||'No aplica / no financiado'}
-Quién decide la compra: ${document.getElementById('decision').value||'—'}
-Urgencia / cuándo lo quiere: ${document.getElementById('urgencia').value||'No mencionó'}
-
-Gestiones totales: ${gestiones.length}
-Últimas gestiones:\n${g||'Ninguna'}`;
-}
-
-function formatMD(txt) {
-  // El modelo entrega encabezados en texto plano (sin emoji); nosotros inyectamos
-  // siempre el mismo emoji fijo y consistente para cada sección.
-  const encabezados = [
-    [/^\s*Etapa detectada\s*:/gmi,                        '📍 Etapa detectada:'],
-    [/^\s*Diagn[oó]stico y estado emocional\s*:/gmi,      '🧠 Diagnóstico y estado emocional:'],
-    [/^\s*Probabilidad de cierre\s*:/gmi,                 '📊 Probabilidad de cierre:'],
-    [/^\s*Objeciones detectadas\s*:/gmi,                  '🚧 Objeciones detectadas:'],
-    [/^\s*T[eé]cnica y estrategia de cierre\s*:/gmi,      '🎯 Técnica y estrategia de cierre:'],
-    [/^\s*Voz activa\s*:/gmi,                             '⚡ Voz activa:'],
-    [/^\s*Neuroventas aplicadas\s*:/gmi,                  '🧲 Neuroventas aplicadas:'],
-    [/^\s*Congruencia a verificar\s*:/gmi,                '⚠️ Congruencia a verificar:'],
-    [/^\s*Qu[eé] decirle hoy\s*:/gmi,                      '🔜 Qué decirle hoy:'],
-  ];
-  let out = txt;
-  encabezados.forEach(([regex, limpio]) => { out = out.replace(regex, limpio); });
-
-  return out
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text)">$1</strong>')
-    .replace(/^(📍|🧠|📊|🚧|🎯|⚡|🧲|⚠️|🔜)\s*(.+?):/gm, '<div style="font-weight:700;color:var(--accent-bright);margin:16px 0 6px;font-size:14.5px"><span style="font-family:\'Apple Color Emoji\',\'Segoe UI Emoji\',\'Noto Color Emoji\',\'Twemoji Mozilla\',sans-serif">$1</span> $2:</div>')
-    .replace(/^[-•]\s+(.+)$/gm, '<div style="margin:4px 0 4px 14px;padding-left:10px;border-left:2px solid var(--line)">$1</div>')
-    .replace(/^(Acción \d+[—\-–]?\s*.*)$/gm, '<div style="font-weight:700;color:var(--text);margin:10px 0 2px">$1</div>')
-    .replace(/\n\n/g, '<br><br>')
-    .replace(/\n/g, '<br>');
-}
-
-function mostrarToast(msg = '✓ Listo') {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2400);
-}
-
-/* ─── BOTONES PASO ─── */
-/* (Realizado/Posponer ahora se manejan vía marcarAccion(), ver sección ACCIÓN A SEGUIR) */
-
-/* ══════════════════════════════════════════════════════
-   ⚙️ CONFIG MODAL
-══════════════════════════════════════════════════════ */
-function toggleConfigModal() {
-  const m = document.getElementById('configModal');
-  m.classList.toggle('open');
-  if (m.classList.contains('open')) cargarConfigUI();
-}
-function closeModalOutside(e) { if (e.target === document.getElementById('configModal')) toggleConfigModal(); }
-function switchTab(tab) {
-  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  document.getElementById('pane-' + tab).classList.add('active');
-}
-function cargarConfigUI() {
-  const url = localStorage.getItem('nexus_sheets_url') || '';
-  const el = document.getElementById('sheetsWebAppUrl');
-  if (el) el.value = url;
-  const st = document.getElementById('sheetsStatus');
-  if (st && url) st.textContent = '✓ URL configurada';
-  ['claude','openai','gemini','grok'].forEach(p => {
-    const k = localStorage.getItem('nexus_apikey_' + p) || '';
-    const inp = document.getElementById('key-' + p);
-    if (inp) inp.value = k;
-    actualizarStatusKey(p, !!k);
-    document.getElementById('card-' + p).style.opacity = k ? '1' : '0.65';
-  });
-  const active = localStorage.getItem('nexus_ai_provider') || '';
-  if (active) {
-    const r = document.getElementById('radio-' + active);
-    if (r) r.checked = true;
-    document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
-    const card = document.getElementById('card-' + active);
-    if (card) card.classList.add('selected');
-  }
-}
-
-/* ══════════════════════════════════════════════════════
-   🔑 API KEYS
-══════════════════════════════════════════════════════ */
-function onApiKeyInput(provider) {
-  const val = document.getElementById('key-' + provider).value.trim();
-  localStorage.setItem('nexus_apikey_' + provider, val);
-  actualizarStatusKey(provider, !!val);
-  document.getElementById('card-' + provider).style.opacity = val ? '1' : '0.65';
-  if (val) actualizarChatHeader();
-}
-function actualizarStatusKey(provider, tieneKey) {
-  const el = document.getElementById('status-' + provider);
-  if (!el) return;
-  el.innerHTML = tieneKey
-    ? '<span class="key-ok">✓ API Key guardada en este navegador</span>'
-    : '<span style="color:var(--muted)">Sin clave configurada</span>';
-}
-function toggleKeyVisibility(provider) {
-  const inp = document.getElementById('key-' + provider);
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-}
-function eliminarApiKey(provider) {
-  localStorage.removeItem('nexus_apikey_' + provider);
-  document.getElementById('key-' + provider).value = '';
-  actualizarStatusKey(provider, false);
-  document.getElementById('card-' + provider).style.opacity = '0.65';
-  mostrarToast('🔑 API Key de ' + providerLabel(provider) + ' eliminada');
-  actualizarChatHeader();
-}
-function setActiveProvider(provider) {
-  localStorage.setItem('nexus_ai_provider', provider);
-  document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('card-' + provider).classList.add('selected');
-  actualizarChatHeader();
-  mostrarToast('🤖 IA activa: ' + providerLabel(provider));
-}
-function providerLabel(p) { return { claude:'Claude', openai:'ChatGPT', gemini:'Gemini', grok:'Grok' }[p] || p; }
-function providerAvatar(p) { return { claude:'🟣', openai:'🟢', gemini:'🔵', grok:'⚫' }[p] || '🤖'; }
-function providerModel(p) { return { claude:'claude-sonnet-4-6', openai:'gpt-4o-mini', gemini:'gemini-3.0-flash', grok:'grok-3-mini' }[p] || ''; }
-
-/* ══════════════════════════════════════════════════════
-   🗑️ ELIMINAR / RESET
-══════════════════════════════════════════════════════ */
-let _confirmCallback = null;
-function confirmarAccion(tipo, titulo, msg, callback) {
-  _confirmCallback = callback;
-  document.getElementById('confirmTitle').textContent = titulo;
-  document.getElementById('confirmMsg').textContent = msg;
-  document.getElementById('confirmModal').classList.add('open');
-}
-function closeConfirm() { document.getElementById('confirmModal').classList.remove('open'); _confirmCallback = null; }
-function closeConfirmOutside(e) { if (e.target === document.getElementById('confirmModal')) closeConfirm(); }
-function executeConfirm() { if (_confirmCallback) _confirmCallback(); closeConfirm(); }
-/* Elimina por completo al contacto actual: lo borra de Google Sheets (fila en "Clientes" y
-   todas sus gestiones) y libera el espacio en pantalla para capturar un nuevo cliente. */
-function eliminarContactoActual() {
-  const nombre = document.getElementById('nombre').value.trim();
-  if (!nombre) { mostrarToast('⚠️ No hay un cliente cargado para eliminar'); return; }
-  confirmarAccion(
-    'eliminar_cliente',
-    '¿Eliminar este contacto?',
-    `Se eliminará permanentemente a "${nombre}" de la base de datos (Google Sheets), junto con todo su historial de gestiones. Este espacio quedará libre para un nuevo cliente. Esta acción no se puede deshacer.`,
-    () => ejecutarEliminarContacto(nombre)
-  );
-}
-
-async function ejecutarEliminarContacto(nombre) {
-  if (getSheetsUrl()) {
-    mostrarToast('⏳ Eliminando contacto de Sheets…');
-    await enviarASheets({ tipo: 'eliminar_cliente', nombreCliente: nombre });
-  }
-  // Limpia todo el formulario y el estado local para dejar la ficha lista para un nuevo cliente
-  confirmarNuevaFicha();
-  mostrarToast('🗑️ Contacto eliminado de la base de datos');
-}
-
-function eliminarTodasApiKeys() {
-  ['claude','openai','gemini','grok'].forEach(p => {
-    localStorage.removeItem('nexus_apikey_' + p);
-    const inp = document.getElementById('key-' + p); if (inp) inp.value = '';
-    actualizarStatusKey(p, false);
-    document.getElementById('card-' + p).style.opacity = '0.65';
-  });
-  localStorage.removeItem('nexus_ai_provider');
-  document.querySelectorAll('.provider-radio').forEach(r => r.checked = false);
-  document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
-  actualizarChatHeader();
-  mostrarToast('🔑 Todas las API Keys eliminadas');
-}
-function eliminarHistorialGestiones() {
-  gestiones = []; localStorage.removeItem('crm_gestiones');
-  renderHistorial(); recalcScore();
-  mostrarToast('📋 Historial de gestiones eliminado');
-}
-function eliminarTodo() {
-  ['nexus_sheets_url','nexus_ai_provider','nexus_chat_history'].forEach(k => localStorage.removeItem(k));
-  ['claude','openai','gemini','grok'].forEach(p => localStorage.removeItem('nexus_apikey_' + p));
-  localStorage.removeItem('crm_gestiones');
-  crearNuevaFicha();
-  chatHistory = [];
-  const msgs = document.getElementById('chatMessages');
-  if (msgs) msgs.innerHTML = `<div class="chat-msg ai"><div class="chat-av">🤖</div><div class="chat-bubble">App reseteada. Configura tu API Key para comenzar. 🚀</div></div>`;
-  cargarConfigUI(); actualizarChatHeader();
-  mostrarToast('💥 App reseteada completamente');
-}
-
-/* ══════════════════════════════════════════════════════
-   🤖 AI CHAT
-══════════════════════════════════════════════════════ */
-let chatHistory = JSON.parse(localStorage.getItem('nexus_chat_history') || '[]');
-function toggleAIChat() {
-  document.getElementById('aiChatPanel').classList.toggle('open');
-  if (document.getElementById('aiChatPanel').classList.contains('open')) {
-    actualizarChatHeader(); document.getElementById('chatInput').focus();
-  }
-}
-function actualizarChatHeader() {
-  const provider = localStorage.getItem('nexus_ai_provider') || '';
-  const key = provider ? (localStorage.getItem('nexus_apikey_' + provider) || '') : '';
-  const badge = document.getElementById('aiFabBadge');
-  if (provider && key) {
-    badge.classList.add('on');
-    document.getElementById('chatAvatar').textContent = providerAvatar(provider);
-    document.getElementById('chatName').textContent   = providerLabel(provider);
-    document.getElementById('chatModel').textContent  = providerModel(provider) + ' · Listo';
-  } else {
-    badge.classList.remove('on');
-    document.getElementById('chatAvatar').textContent = '🤖';
-    document.getElementById('chatName').textContent   = 'Sin configurar';
-    document.getElementById('chatModel').textContent  = 'Ve a ⚙️ Config → 🤖 IA';
-  }
-}
-function getClienteContexto() {
-  const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-  return `CLIENTE EN CRM:\n- Nombre: ${g('nombre')||'Sin datos'}\n- Teléfono: ${g('telefono')}\n- Vehículo: ${g('vehiculo')}\n- Precio: $${g('precio')}\n- Operación: ${g('tipoOperacion')}, plazo: ${g('plazo')} meses\n- Estado: ${g('estadoOperacion')}\n- Decisión: ${g('decision')}\n- Urgencia: ${g('urgencia')}\n- Score: ${document.getElementById('scoreNum')?.textContent||'—'}\n- Gestiones: ${gestiones.length}`;
-}
-function sendContextMsg(msg) { document.getElementById('chatInput').value = msg; sendChat(); }
-async function sendChat() {
-  const input = document.getElementById('chatInput');
-  const text  = input.value.trim();
-  if (!text) return;
-  const provider = localStorage.getItem('nexus_ai_provider') || '';
-  const apiKey   = provider ? (localStorage.getItem('nexus_apikey_' + provider) || '') : '';
-  if (!provider || !apiKey) {
-    mostrarToast('⚠️ Configura tu IA en ⚙️ Config → 🤖 IA');
-    toggleConfigModal(); switchTab('ia'); return;
-  }
-  appendChatMsg('user', text);
-  input.value = ''; input.style.height = 'auto';
-  chatHistory.push({ role: 'user', content: text });
-  const typingId = appendTyping();
-  document.getElementById('chatSendBtn').disabled = true;
-  const sys = `Eres un asistente experto en ventas de automóviles. Ayudas a vendedores mexicanos con estrategias de cierre, seguimiento, manejo de objeciones y redacción de mensajes. Responde en español mexicano, de forma concisa y práctica. Usa emojis con moderación.\n\n${getClienteContexto()}`;
-  try {
-    let respuesta = '';
-    if (provider === 'claude')  respuesta = await callClaude(apiKey, sys, chatHistory);
-    if (provider === 'openai')  respuesta = await callOpenAI(apiKey, sys, chatHistory);
-    if (provider === 'gemini')  respuesta = await callGemini(apiKey, sys, chatHistory);
-    if (provider === 'grok')    respuesta = await callGrok(apiKey, sys, chatHistory);
-    removeTyping(typingId);
-    chatHistory.push({ role: 'assistant', content: respuesta });
-    appendChatMsg('ai', respuesta);
-    if (chatHistory.length > 40) chatHistory = chatHistory.slice(-40);
-    localStorage.setItem('nexus_chat_history', JSON.stringify(chatHistory));
-  } catch(err) {
-    removeTyping(typingId);
-    appendChatMsg('ai', '❌ Error: ' + err.message + '\n\nVerifica tu API Key y conexión.');
-  }
-  document.getElementById('chatSendBtn').disabled = false;
-}
-function appendChatMsg(role, text) {
-  const msgs = document.getElementById('chatMessages');
-  const av = role === 'ai' ? (providerAvatar(localStorage.getItem('nexus_ai_provider')||'')||'🤖') : '👤';
-  const div = document.createElement('div');
-  div.className = 'chat-msg ' + role;
-  div.innerHTML = `<div class="chat-av">${av}</div><div class="chat-bubble">${text.replace(/\n/g,'<br>')}</div>`;
-  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
-}
-function appendTyping() {
-  const msgs = document.getElementById('chatMessages');
-  const id = 'typing_' + Date.now();
-  const av = providerAvatar(localStorage.getItem('nexus_ai_provider')||'')||'🤖';
-  const div = document.createElement('div');
-  div.className = 'chat-msg ai'; div.id = id;
-  div.innerHTML = `<div class="chat-av">${av}</div><div class="chat-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
-  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight; return id;
-}
-function removeTyping(id) { const el = document.getElementById(id); if (el) el.remove(); }
-
-async function callClaude(apiKey, system, history) {
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1024, system, messages: history })
-  });
-  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || r.statusText); }
-  return (await r.json()).content[0].text;
-}
-async function callOpenAI(apiKey, system, history) {
-  const r = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 1024, messages: [{ role:'system', content:system }, ...history] })
-  });
-  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || r.statusText); }
-  return (await r.json()).choices[0].message.content;
-}
-// Modelos Gemini vía Google AI Studio (plan gratuito). Se intenta primero el modelo
-// principal y, si no está disponible (p. ej. 404 por región/acceso), se reintenta con el fallback.
-const GEMINI_MODEL_PRIMARY  = 'gemini-3.0-flash';
-const GEMINI_MODEL_FALLBACK = 'gemini-2.5-flash';
-
-function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
-
-// Realiza una única llamada a un modelo Gemini concreto.
-async function callGeminiModel(apiKey, model, system, contents) {
-  const body = { contents };
-  if (system && system.trim()) body.system_instruction = { parts: [{ text: system }] };
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-
-  if (!r.ok) {
-    let errBody = null;
-    try { errBody = await r.json(); } catch (_) { /* respuesta sin JSON */ }
-    const msg = errBody?.error?.message || r.statusText || `HTTP ${r.status}`;
-    const err = new Error(msg);
-    err.status = r.status;
-    err.raw = errBody;
-    throw err;
-  }
-  const data = await r.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (typeof text !== 'string') {
-    // Puede ocurrir si la respuesta fue bloqueada por filtros de seguridad, etc.
-    const reason = data?.candidates?.[0]?.finishReason || data?.promptFeedback?.blockReason;
-    throw new Error(reason ? `Gemini no devolvió texto (motivo: ${reason})` : 'Gemini no devolvió una respuesta válida.');
-  }
-  return text;
-}
-
-async function callGemini(apiKey, system, history) {
-  const contents = history.map(m => ({ role: m.role==='assistant'?'model':'user', parts:[{text:m.content}] }));
-
-  const modelsToTry = [GEMINI_MODEL_PRIMARY, GEMINI_MODEL_FALLBACK];
-  const maxRetriesPer429 = 3;      // reintentos por límite de peticiones (Error 429)
-  const baseDelayMs = 1500;        // backoff exponencial: 1.5s, 3s, 6s...
-
-  let lastError = null;
-
-  for (let m = 0; m < modelsToTry.length; m++) {
-    const model = modelsToTry[m];
-
-    for (let attempt = 0; attempt <= maxRetriesPer429; attempt++) {
-      try {
-        return await callGeminiModel(apiKey, model, system, contents);
-      } catch (err) {
-        lastError = err;
-
-        // 429 = límite de peticiones del plan gratuito excedido (rate limit / cuota)
-        if (err.status === 429) {
-          if (attempt < maxRetriesPer429) {
-            // Google suele indicar el tiempo de espera sugerido en retryInfo; si no, usamos backoff exponencial.
-            const retryInfo = err.raw?.error?.details?.find(d => d['@type']?.includes('RetryInfo'));
-            const suggestedSeconds = retryInfo?.retryDelay ? parseFloat(retryInfo.retryDelay) : null;
-            const delay = suggestedSeconds ? suggestedSeconds * 1000 : baseDelayMs * Math.pow(2, attempt);
-            await sleep(delay);
-            continue; // reintentar mismo modelo
-          }
-          // Se agotaron los reintentos para este modelo: probar el modelo de respaldo, si queda alguno.
-          break;
+    const raw  = e.postData ? e.postData.contents : '{}';
+    const data = JSON.parse(raw);
+    const ss   = SpreadsheetApp.getActiveSpreadsheet();
+
+    switch (data.tipo) {
+
+      case 'sync_completo':
+        // Guarda/actualiza el cliente y sincroniza todas sus gestiones
+        upsertCliente(ss, data);
+        if (Array.isArray(data.gestiones) && data.gestiones.length > 0) {
+          limpiarGestionesCliente(ss, data.nombre);
+          data.gestiones.forEach(g => guardarGestion(ss, {
+            ...g,
+            nombreCliente: data.nombre || 'Sin nombre'
+          }));
         }
+        break;
 
-        // 404 / modelo no disponible → probar el siguiente modelo de la lista, sin reintentos de 429.
-        if (err.status === 404 || /not found|not supported/i.test(err.message || '')) {
-          break;
-        }
+      case 'cliente':
+        upsertCliente(ss, data);
+        break;
 
-        // Otros errores (401, 400, red, etc.) no se solucionan reintentando ni cambiando de modelo.
-        throw new Error(traducirErrorGemini(err));
+      case 'gestion':
+        guardarGestion(ss, data);
+        break;
+
+      case 'accion_seguir':
+        // Actualiza el campo "Acción a Seguir" en la fila del cliente (siempre sobreescribe)
+        guardarAccionSeguir(ss, data);
+        break;
+
+      case 'eliminar_cliente':
+        eliminarClienteCompleto(ss, data.nombreCliente);
+        break;
+    }
+
+    return respuesta({ success: true, mensaje: 'Datos recibidos correctamente.' });
+
+  } catch (err) {
+    return respuesta({ success: false, error: err.toString() });
+  }
+}
+
+// ── GET: PING Y BÚSQUEDA DE CLIENTES ─────────────────────────────
+function doGet(e) {
+  const action = (e?.parameter?.action || 'ping');
+
+  if (action === 'buscar') {
+    const q = (e.parameter.q || '').trim().toLowerCase();
+    if (!q) return respuesta({ success: false, error: 'Sin término de búsqueda' });
+
+    const ss   = SpreadsheetApp.getActiveSpreadsheet();
+    const hoja = ss.getSheetByName('Clientes');
+    if (!hoja) return respuesta({ success: false, error: 'Hoja Clientes no existe aún' });
+
+    const datos   = hoja.getDataRange().getValues();
+    if (datos.length < 2) return respuesta({ success: false, error: 'No hay clientes registrados' });
+
+    const headers = datos[0];
+    const clientes = [];
+
+    for (let i = 1; i < datos.length; i++) {
+      const row    = datos[i];
+      const nombre = (row[1] || '').toString().toLowerCase();
+      const tel    = (row[2] || '').toString().toLowerCase();
+      const correo = (row[3] || '').toString().toLowerCase();
+
+      if (nombre.includes(q) || tel.includes(q) || correo.includes(q)) {
+        const cliente = {};
+        headers.forEach((h, idx) => {
+          cliente[normalizarHeader(h)] = row[idx] !== undefined ? row[idx].toString() : '';
+        });
+        clientes.push(cliente);
+        if (clientes.length >= 8) break;
       }
     }
-    // Si llegamos aquí, pasamos al siguiente modelo de la lista (fallback).
+
+    if (!clientes.length) return respuesta({ success: false, error: 'No encontrado' });
+    return respuesta({ success: true, clientes });
   }
 
-  // Se agotaron todos los modelos y reintentos.
-  if (lastError?.status === 429) {
-    throw new Error('Se alcanzó el límite de peticiones del plan gratuito de Gemini (Error 429). Espera unos segundos y vuelve a intentarlo. Si el problema persiste, revisa tu cuota en Google AI Studio.');
-  }
-  throw new Error(traducirErrorGemini(lastError) || 'No se pudo obtener respuesta de Gemini.');
-}
-
-function traducirErrorGemini(err) {
-  if (!err) return '';
-  const status = err.status;
-  const msg = err.message || '';
-  if (status === 401 || status === 403) return 'Clave de API de Gemini inválida o sin permisos. Verifica tu API Key de Google AI Studio.';
-  if (status === 429) return 'Límite de peticiones excedido (Error 429) en el plan gratuito de Gemini. Espera un momento antes de volver a intentarlo.';
-  if (status === 400) return `Solicitud inválida a Gemini: ${msg}`;
-  return msg;
-}
-async function callGrok(apiKey, system, history) {
-  const r = await fetch('https://api.x.ai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'grok-3-mini', max_tokens: 1024, messages: [{ role:'system', content:system }, ...history] })
-  });
-  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || r.statusText); }
-  return (await r.json()).choices[0].message.content;
-}
-
-/* ══════════════════════════════════════════════════════
-   ☁️ GOOGLE SHEETS
-══════════════════════════════════════════════════════ */
-function guardarSheetsUrl() {
-  const url = document.getElementById('sheetsWebAppUrl').value.trim();
-  localStorage.setItem('nexus_sheets_url', url);
-  const st = document.getElementById('sheetsStatus');
-  if (st) st.textContent = url ? '✓ URL guardada' : '';
-}
-function getSheetsUrl() { return localStorage.getItem('nexus_sheets_url') || ''; }
-function getRegalosList() {
-  const lista = [];
-  if (document.getElementById('rTapetes')?.checked)      lista.push('Tapetes');
-  if (document.getElementById('rVidrios')?.checked)       lista.push('Vidrios de seguridad');
-  if (document.getElementById('rPelicula')?.checked)      lista.push('Película antiasalto');
-  if (document.getElementById('rKitSeguridad')?.checked)  lista.push('Kit de seguridad');
-  if (document.getElementById('rPlacas')?.checked)        lista.push('Placas y tenencia');
-  if (document.getElementById('rOtro')?.checked) {
-    const desc = document.getElementById('otroRegaloDesc')?.value.trim();
-    lista.push(desc ? `Otro: ${desc}` : 'Otro');
-  }
-  return lista.join(', ') || 'Ninguno';
-}
-function buildClientePayload() {
-  const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-  return {
-    tipo:'cliente', nombre:g('nombre'), telefono:g('telefono'), correo:g('correo'),
-    ciudad:g('ciudad'), ocupacion:g('ocupacion'), fuenteLead:g('fuenteLead'),
-    vehiculo:g('vehiculo'), precio:g('precio'), pruebaManejo:g('pruebaManejo'),
-    tipoOperacion:g('tipoOperacion'), enganche:document.getElementById('kpiEnganche')?.textContent||'',
-    plazo:g('plazo'), tasaInteres:g('tasaInteres'), mensualidad:document.getElementById('kpiMensualidad')?.textContent||'',
-    estadoOperacion:g('estadoOperacion'), disponibilidad:g('disponibilidad'), tiempoLlegada:g('tiempoLlegada'),
-    descuento:g('descuento'), montoDescuento:g('montoDescuento'), regalos:getRegalosList(),
-    anticipo:g('anticipo'), documentacion:g('documentacion'), estatusCredito:g('estatusCredito'),
-    decision:g('decision'), urgencia:g('urgencia'), totalGestiones:gestiones.length,
-    score:document.getElementById('scoreNum')?.textContent||'—'
-  };
-}
-async function enviarASheets(payload) {
-  const url = getSheetsUrl();
-  if (!url) { mostrarToast('⚠️ Configura la URL de Sheets en ⚙️ Config'); toggleConfigModal(); return { ok:false }; }
-  try { await fetch(url, { method:'POST', mode:'no-cors', body:JSON.stringify(payload) }); return { ok:true }; }
-  catch(e) { return { ok:false, error:e.message }; }
-}
-async function syncCompletoSheets() {
-  const btn = document.getElementById('btnSyncSheets');
-  const nombre = document.getElementById('nombre').value.trim();
-  if (!nombre) { mostrarToast('⚠️ Ingresa el nombre del cliente'); return; }
-  btn.disabled = true; btn.textContent = '⏳ Enviando…';
-  await enviarASheets({ ...buildClientePayload(), tipo:'sync_completo', gestiones:gestiones.map(g=>({...g,nombreCliente:nombre})) });
-  btn.disabled = false; btn.textContent = '☁️ Sincronizar expediente completo';
-  mostrarToast('☁️ Sincronizado en Sheets');
-}
-async function syncGestionSheets(gestion) {
-  if (!getSheetsUrl()) return;
-  await enviarASheets({ tipo:'gestion', nombreCliente:document.getElementById('nombre').value.trim()||'Sin nombre', ...gestion });
-}
-document.getElementById('btnGuardar').addEventListener('click', async () => {
-  if (getSheetsUrl() && gestiones.length > 0) await syncGestionSheets(gestiones[0]);
-}, { capture: false });
-document.getElementById('btnGuardarPrimeraVisita').addEventListener('click', async () => {
-  if (getSheetsUrl() && gestiones.length > 0) await syncGestionSheets(gestiones[0]);
-}, { capture: false });
-
-/* ══════════════════════════════════════════════════════
-   ☁️ GUARDAR TODO — botón central único
-   Guarda en una sola operación: datos del contacto (cliente + proceso
-   de venta), la acción a seguir/recomendada y todas las gestiones.
-══════════════════════════════════════════════════════ */
-async function guardarTodo() {
-  const nombre = document.getElementById('nombre').value.trim();
-  if (!nombre) { mostrarToast('⚠️ Ingresa el nombre del cliente'); return; }
-  if (accionSeguir.estado === 'posponer' && !accionSeguir.fecha) { mostrarToast('⚠️ Selecciona la fecha del próximo seguimiento'); return; }
-  if (accionSeguir.estado === 'no_realizado' && !(accionSeguir.motivo || '').trim()) { mostrarToast('⚠️ Escribe el motivo por el que no se realizó'); return; }
-
-  const btn = document.getElementById('btnGuardarTodo');
-  const msg = document.getElementById('msgGuardarTodo');
-  const textoOriginal = btn.textContent;
-  btn.disabled = true; btn.textContent = '⏳ Guardando todo…';
-  if (msg) msg.style.display = 'none';
-
-  if (!getSheetsUrl()) {
-    btn.disabled = false; btn.textContent = textoOriginal;
-    mostrarToast('⚠️ Configura la URL de Sheets en ⚙️ Config para guardar en la nube');
-    toggleConfigModal();
-    return;
+  if (action === 'agenda') {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    return respuesta({ success: true, tareas: obtenerAgenda(ss) });
   }
 
-  // 1. Datos del contacto + gestiones (expediente completo)
-  const resultCliente = await enviarASheets({
-    ...buildClientePayload(),
-    tipo: 'sync_completo',
-    gestiones: gestiones.map(g => ({ ...g, nombreCliente: nombre }))
-  });
-
-  // 2. Acción a seguir / recomendada (incluye avance de flujo de postventa)
-  const resultAccion = await guardarAccionSeguirInterno(nombre);
-
-  btn.disabled = false; btn.textContent = textoOriginal;
-
-  const ok = resultCliente.ok !== false && resultAccion.ok !== false;
-  if (msg) {
-    msg.style.display = 'block';
-    msg.innerHTML = ok
-      ? '<span style="color:var(--green)">✅ Todo guardado correctamente</span>'
-      : '<span style="color:var(--red)">❌ Hubo un error al guardar. Verifica la URL del Web App.</span>';
-  }
-  mostrarToast(ok ? '☁️ Todo guardado' : '❌ Error al guardar');
-
-  // Recalcula la acción recomendada (puede haber avanzado el flujo de postventa)
-  // coordinando con el resto de la información ya guardada.
-  generarAccionRecomendadaIA();
+  return respuesta({ status: 'Nexus CRM Apps Script activo ✅', action: 'ping', timestamp: new Date().toLocaleString('es-MX') });
 }
 
-/* ══════════════════════════════════════════════════════
-   ✨ RESUMEN IA
-══════════════════════════════════════════════════════ */
-let _resumenTextoCompleto = ''; // para copiar y guardar
+// ── AGENDA: TODAS LAS PRÓXIMAS ACCIONES PENDIENTES DE TODOS LOS CLIENTES ──
+function obtenerAgenda(ss) {
+  const hoja = ss.getSheetByName('Clientes');
+  if (!hoja) return [];
 
-function abrirResumenIA() {
-  const nombre = document.getElementById('nombre').value.trim();
-  document.getElementById('resumenModalSub').textContent =
-    nombre ? `${nombre} · ${gestiones.length} gestión(es)` : `${gestiones.length} gestión(es)`;
-  // Mostrar último resumen guardado si existe
-  const ultimo = localStorage.getItem('nexus_ultimo_resumen');
-  if (ultimo) {
-    const data = JSON.parse(ultimo);
-    document.getElementById('ultimoResumenBox').style.display = 'block';
-    document.getElementById('ultimoResumenTexto').textContent = data.texto;
-    document.getElementById('ultimoResumenFecha').textContent = 'Guardado el ' + data.fecha;
-  } else {
-    document.getElementById('ultimoResumenBox').style.display = 'none';
-  }
-  document.getElementById('resumenModal').classList.add('open');
-}
-function cerrarResumenModal() {
-  document.getElementById('resumenModal').classList.remove('open');
-}
+  const datos = hoja.getDataRange().getValues();
+  if (datos.length < 2) return [];
 
-async function callAIConFallback(prompt, sys, maxTokens) {
-  // 1) Si el usuario ya configuró su propio proveedor (ej. Gemini gratuito de Google AI Studio),
-  //    SIEMPRE se usa ese — así se garantiza que nunca se dependa del acceso gratuito de Claude
-  //    (que puede saturarse con "high demand") ni se generen costos inesperados.
-  const provider = localStorage.getItem('nexus_ai_provider') || '';
-  const apiKey   = provider ? (localStorage.getItem('nexus_apikey_' + provider) || '') : '';
-  if (provider && apiKey) {
-    const msgs = [{ role: 'user', content: prompt }];
-    if (provider === 'claude')  return await callClaude(apiKey, sys, msgs);
-    if (provider === 'openai')  return await callOpenAI(apiKey, sys, msgs);
-    if (provider === 'gemini')  return await callGemini(apiKey, sys, msgs);
-    if (provider === 'grok')    return await callGrok(apiKey, sys, msgs);
-  }
+  const headers = datos[0];
+  const col = (nombreHeader) => headers.indexOf(nombreHeader);
 
-  // 2) Sin proveedor configurado: intenta el acceso directo gratuito de Claude
-  //    (solo disponible dentro del entorno de Claude.ai/artefactos).
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: maxTokens, system: sys, messages: [{ role: 'user', content: prompt }] })
-    });
-    if (res.ok) {
-      const data  = await res.json();
-      const texto = data.content?.map(b => b.text || '').join('') || '';
-      if (texto) return texto;
+  const colNombre = col('Nombre');
+  const colTel    = col('Teléfono');
+  const colFecha  = col('Fecha Próxima Acción');
+  const colHora   = col('Hora Próxima Acción');
+  const colDur    = col('Duración Estimada (min)');
+  const colDesc   = col('Descripción Próxima Acción');
+  const colEstado = col('Estado Última Acción');
+
+  if (colFecha === -1) return []; // Aún no se ha guardado ninguna acción con fecha
+
+  const tareas = [];
+  for (let i = 1; i < datos.length; i++) {
+    const row = datos[i];
+    const fechaRaw = row[colFecha];
+    if (!fechaRaw) continue; // Sin próxima acción pendiente para este cliente
+
+    const estado = colEstado > -1 ? (row[colEstado] || '').toString() : '';
+    if (estado === 'realizado') continue; // Ya resuelto, no es pendiente
+
+    let fechaISO = fechaRaw;
+    if (fechaRaw instanceof Date) {
+      fechaISO = Utilities.formatDate(fechaRaw, Session.getScriptTimeZone(), 'yyyy-MM-dd');
     }
-  } catch (e) { /* no disponible */ }
 
-  throw new Error('CONFIG_REQUIRED');
+    let horaTxt = colHora > -1 ? row[colHora] : '';
+    if (horaTxt instanceof Date) {
+      horaTxt = Utilities.formatDate(horaTxt, Session.getScriptTimeZone(), 'HH:mm');
+    }
+
+    tareas.push({
+      nombre:      colNombre > -1 ? (row[colNombre] || '').toString() : '',
+      telefono:    colTel    > -1 ? (row[colTel]    || '').toString() : '',
+      fecha:       fechaISO.toString(),
+      hora:        (horaTxt || '').toString(),
+      duracionMin: colDur    > -1 ? (parseInt(row[colDur], 10) || 20) : 20,
+      accion:      colDesc   > -1 ? (row[colDesc]   || '').toString() : '',
+      estado:      estado || 'pendiente'
+    });
+  }
+  return tareas;
 }
 
-async function generarResumenIA() {
-  if (gestiones.length === 0) {
-    mostrarToast('⚠️ No hay gestiones registradas aún');
-    return;
+// ── RESPUESTA JSON ────────────────────────────────────────────────
+function respuesta(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ── UPSERT CLIENTE ────────────────────────────────────────────────
+function upsertCliente(ss, data) {
+  let hoja = ss.getSheetByName('Clientes');
+
+  if (!hoja) {
+    hoja = ss.insertSheet('Clientes');
+    const headers = [
+      'Última actualización', 'Nombre', 'Teléfono', 'Correo', 'Ciudad', 'Ocupación',
+      'Fuente del Lead', 'Vehículo', 'Precio ($)', 'Prueba de Manejo',
+      'Tipo de Operación', 'Enganche', 'Plazo (meses)', 'Tasa de Interés (%)',
+      'Mensualidad Est.', 'Estado de Operación', 'Disponibilidad Vehículo',
+      'Tiempo de Llegada', 'Descuento', 'Monto Descuento ($)', 'Regalos / Beneficios',
+      'Anticipo / Pedido', 'Documentación', 'Estatus Crédito',
+      'Decisión de Compra', 'Urgencia', 'Total de Gestiones', 'Score CRM', 'Acción a Seguir'
+    ];
+    const rng = hoja.appendRow(headers).offset ? hoja.getRange(1,1,1,headers.length) : hoja.getRange(1,1,1,headers.length);
+    hoja.appendRow(headers);
+    const headerRange = hoja.getRange(1, 1, 1, headers.length);
+    headerRange.setFontWeight('bold').setBackground('#1C2E45').setFontColor('#FFFFFF');
+    hoja.setFrozenRows(1);
+    [1,2,3,4,5,6,7,8,9,15,21,29].forEach((col, i) => {
+      const widths = [165,160,130,130,140,140,120,200,100,120,220,320];
+      hoja.setColumnWidth(col, widths[i] || 140);
+    });
+    // Si appendRow ya insertó la primera fila, eliminar la fila duplicada
+    if (hoja.getLastRow() > 1) hoja.deleteRow(2);
   }
 
-  // UI: loading
-  document.getElementById('resumenEstadoInicial').style.display = 'none';
-  document.getElementById('resumenContenido').style.display     = 'none';
-  document.getElementById('resumenTyping').style.display        = 'block';
-  document.getElementById('btnGenerarResumen').disabled         = true;
-  document.getElementById('btnCopiarResumen').style.display     = 'none';
-  document.getElementById('btnGuardarResumen').style.display    = 'none';
-  document.getElementById('resumenGuardadoMsg').style.display   = 'none';
+  const nombre = (data.nombre || '').trim();
+  const fila   = encontrarFilaCliente(hoja, nombre);
 
-  // Recolectar contexto completo
-  const g = id => { const el = document.getElementById(id); return el ? el.innerText.trim() || el.textContent.trim() : ''; };
-  const historialTexto = gestiones.map((gest, i) =>
-    `Gestión ${i+1} [${gest.fecha}] Tipo: ${gest.tipo} | Calidad: ${gest.calidad}\nNotas: ${gest.comentarios}`
-  ).join('\n\n');
-  const analisisIA     = g('resumenAnalisis');
-  const pasosRapidos   = g('outputPasosRapidos');
-  const mensajeWA      = g('outputWhatsApp');
-  const mensajeWAPV    = g('outputWhatsAppPrimeraVisita');
+  const valores = [
+    new Date().toLocaleString('es-MX'),
+    nombre,
+    data.telefono        || '',
+    data.correo          || '',
+    data.ciudad          || '',
+    data.ocupacion       || '',
+    data.fuenteLead      || '',
+    data.vehiculo        || '',
+    data.precio          || '',
+    data.pruebaManejo    || '',
+    data.tipoOperacion   || '',
+    data.enganche        || '',
+    data.plazo           || '',
+    data.tasaInteres     || '',
+    data.mensualidad     || '',
+    data.estadoOperacion || '',
+    data.disponibilidad  || '',
+    data.tiempoLlegada   || '',
+    data.descuento       || '',
+    data.montoDescuento  || '',
+    data.regalos         || '',
+    data.anticipo        || '',
+    data.documentacion   || '',
+    data.estatusCredito  || '',
+    data.decision        || '',
+    data.urgencia        || '',
+    data.totalGestiones  || 0,
+    data.score           || '—'
+    // Columna 29 "Acción a Seguir" se actualiza por separado vía guardarAccionSeguir
+  ];
 
-  const contextoCliente = getClienteContexto();
+  if (fila > 0) {
+    hoja.getRange(fila, 1, 1, valores.length).setValues([valores]);
+  } else {
+    hoja.appendRow(valores);
+    const ultima = hoja.getLastRow();
+    if (ultima % 2 === 0) hoja.getRange(ultima, 1, 1, valores.length).setBackground('#F8FAFC');
+  }
+}
 
-  const prompt = `Eres un asistente experto en ventas automotrices. Basándote en TODA la siguiente información de este cliente, genera un resumen ejecutivo estructurado.
+// ── BUSCAR FILA DEL CLIENTE POR NOMBRE ───────────────────────────
+function encontrarFilaCliente(hoja, nombre) {
+  if (!nombre) return -1;
+  const datos = hoja.getDataRange().getValues();
+  for (let i = 1; i < datos.length; i++) {
+    if ((datos[i][1]||'').toString().trim().toLowerCase() === nombre.trim().toLowerCase()) return i + 1;
+  }
+  return -1;
+}
 
-${contextoCliente}
+// ── GUARDAR GESTIÓN (registro permanente, nunca sobrescribe) ──────
+function guardarGestion(ss, data) {
+  let hoja = ss.getSheetByName('Gestiones');
 
-═══ HISTORIAL DE GESTIONES (${gestiones.length} registradas) ═══
-${historialTexto || 'Sin gestiones'}
+  if (!hoja) {
+    hoja = ss.insertSheet('Gestiones');
+    const headers = [
+      'Fecha de Registro', 'Cliente', 'Fecha del Contacto',
+      'Tipo de Contacto', 'Calidad', 'Notas del Vendedor',
+      'Siguiente Paso / Acción', 'Mensaje IA Vinculado'
+    ];
+    hoja.appendRow(headers);
+    const rng = hoja.getRange(1, 1, 1, headers.length);
+    rng.setFontWeight('bold').setBackground('#1C2E45').setFontColor('#FFFFFF');
+    hoja.setFrozenRows(1);
+    [1,2,3,4,5,6,7,8].forEach((col, i) => {
+      const widths = [165,160,165,160,100,320,280,320];
+      hoja.setColumnWidth(col, widths[i]||160);
+    });
+  }
 
-═══ ANÁLISIS IA PREVIO ═══
-${analisisIA || 'No generado'}
+  const tipoMap = {
+    sincontacto:'Sin contacto aún', primeravisita:'Primera visita',
+    llamada:'Llamada', whatsapp:'WhatsApp', cita:'Cita presencial',
+    seguimiento:'Seguimiento', posventa:'Posventa', email:'Correo'
+  };
+  const calidadMap = { positivo:'🟢 Positivo', neutral:'🟡 Neutral', negativo:'🔴 Negativo' };
 
-═══ PASOS A SEGUIR GENERADOS ═══
-${pasosRapidos || 'No generados'}
+  const valores = [
+    new Date().toLocaleString('es-MX'),
+    data.nombreCliente   || '',
+    data.fecha           || '',
+    tipoMap[data.tipo]   || data.tipo || '',
+    calidadMap[data.calidad] || data.calidad || '',
+    data.comentarios     || '',
+    data.pasoSiguiente   || '',
+    data.mensajeIA       ? 'El mensaje correspondiente a esta gestión es el siguiente:\n' + data.mensajeIA : ''
+  ];
 
-═══ MENSAJES REDACTADOS ═══
-${[mensajeWA, mensajeWAPV].filter(Boolean).join('\n---\n') || 'No redactados'}
+  hoja.appendRow(valores);
 
-Responde EXACTAMENTE en este formato JSON (sin markdown, sin explicaciones extra):
-{
-  "gestiones": "Resumen cronológico de todas las gestiones, qué se hizo, cómo respondió el cliente",
-  "situacion": "Diagnóstico actual: nivel de interés, objeciones detectadas, probabilidad de cierre",
-  "pasos": "Lista numerada de próximos pasos concretos y accionables, con tiempos sugeridos",
-  "mensajes": "Mensajes listos para copiar y enviar al cliente (WhatsApp/llamada), adaptados al contexto actual"
-}`;
+  // Color en columna de calidad
+  const ultima   = hoja.getLastRow();
+  const celdaCal = hoja.getRange(ultima, 5);
+  if (data.calidad === 'positivo')     celdaCal.setFontColor('#059669');
+  else if (data.calidad === 'negativo') celdaCal.setFontColor('#DC2626');
+  else                                  celdaCal.setFontColor('#EA580C');
 
-  try {
-    const sys = 'Responde SOLO con el JSON solicitado, sin texto adicional ni bloques de código.';
-    const raw = await callAIConFallback(prompt, sys, 1500);
+  // Activar ajuste de texto en columnas largas
+  hoja.getRange(ultima, 6, 1, 3).setWrap(true);
+}
 
-    // Parsear JSON
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const data  = JSON.parse(clean);
-
-    document.getElementById('resumenGestiones').textContent = data.gestiones || '';
-    document.getElementById('resumenSituacion').textContent = data.situacion || '';
-    document.getElementById('resumenPasos').textContent     = data.pasos     || '';
-    document.getElementById('resumenMensajes').textContent  = data.mensajes  || '';
-
-    _resumenTextoCompleto = `📋 RESUMEN DE GESTIONES\n${data.gestiones}\n\n?? SITUACIÓN ACTUAL\n${data.situacion}\n\n🎯 PRÓXIMOS PASOS\n${data.pasos}\n\n💬 MENSAJES\n${data.mensajes}`;
-
-    document.getElementById('resumenTyping').style.display     = 'none';
-    document.getElementById('resumenContenido').style.display  = 'block';
-    document.getElementById('btnCopiarResumen').style.display  = 'inline-flex';
-    document.getElementById('btnGuardarResumen').style.display = 'inline-flex';
-
-  } catch(err) {
-    document.getElementById('resumenTyping').style.display = 'none';
-    if (err.message === 'CONFIG_REQUIRED') {
-      mostrarToast('⚠️ Configura tu IA en ⚙️ Config → 🤖 IA');
-      cerrarResumenModal(); toggleConfigModal(); switchTab('ia');
-    } else {
-      document.getElementById('resumenEstadoInicial').style.display = 'block';
-      document.getElementById('resumenEstadoInicial').innerHTML = `<div style="font-size:32px;margin-bottom:10px">❌</div><div style="font-size:13px;color:var(--red)">${err.message}</div>`;
-      mostrarToast('❌ Error al generar resumen');
+// ── LIMPIAR GESTIONES DE UN CLIENTE (para re-sync) ───────────────
+function limpiarGestionesCliente(ss, nombre) {
+  const hoja = ss.getSheetByName('Gestiones');
+  if (!hoja || !nombre) return;
+  const datos = hoja.getDataRange().getValues();
+  const filasBorrar = [];
+  for (let i = datos.length - 1; i >= 1; i--) {
+    if ((datos[i][1]||'').toString().trim().toLowerCase() === nombre.trim().toLowerCase()) {
+      filasBorrar.push(i + 1);
     }
   }
-  document.getElementById('btnGenerarResumen').disabled = false;
+  filasBorrar.forEach(f => hoja.deleteRow(f));
 }
 
-function copiarResumen() {
-  if (!_resumenTextoCompleto) { mostrarToast('Aún no hay resumen para copiar.'); return; }
-  copiarTexto(_resumenTextoCompleto, '📋 Resumen copiado al portapapeles');
-}
+// ── GUARDAR / ACTUALIZAR ACCIÓN A SEGUIR ─────────────────────────
+function guardarAccionSeguir(ss, data) {
+  const hoja = ss.getSheetByName('Clientes');
+  if (!hoja || !data.nombreCliente) return;
 
-async function guardarResumenComoGestion() {
-  if (!_resumenTextoCompleto) return;
-  const btn = document.getElementById('btnGuardarResumen');
-  btn.disabled = true;
+  const fila = encontrarFilaCliente(hoja, data.nombreCliente);
+  if (fila < 1) return;
 
-  const nombre = document.getElementById('nombre').value.trim() || 'Sin nombre';
-  const fecha  = new Date().toLocaleString('es-MX');
+  const colIdx = getOrCreateColumnaFija(hoja, 'Acción a Seguir');
 
-  // 1. Guardar localmente como gestión
-  const gestion = {
-    id: Date.now(), fecha, tipo: 'resumen_ia',
-    calidad: 'positivo', comentarios: _resumenTextoCompleto
-  };
-  gestiones.unshift(gestion);
-  localStorage.setItem('crm_gestiones', JSON.stringify(gestiones));
-  renderHistorial(); recalcScore();
+  const accionTexto  = data.accionTexto || '';
+  const plazo        = data.plazo || '';
+  const fechaGestion = data.fechaGestionTexto ||
+    new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
 
-  // 2. Guardar último resumen en localStorage para mostrar en modal
-  localStorage.setItem('nexus_ultimo_resumen', JSON.stringify({ texto: _resumenTextoCompleto, fecha }));
-  document.getElementById('ultimoResumenBox').style.display = 'block';
-  document.getElementById('ultimoResumenTexto').textContent = _resumenTextoCompleto;
-  document.getElementById('ultimoResumenFecha').textContent = 'Guardado el ' + fecha;
-
-  // 3. Enviar a Sheets con tipo especial
-  const url = getSheetsUrl();
-  if (url) {
-    await enviarASheets({
-      tipo: 'resumen_gestion',
-      nombreCliente: nombre,
-      fecha,
-      resumen: _resumenTextoCompleto
-    });
-    mostrarToast('✅ Resumen guardado como gestión y enviado a Sheets');
+  let estadoLinea, color;
+  if (data.estado === 'realizado') {
+    estadoLinea = '✅ Realizado';
+    color = '#059669';
+  } else if (data.estado === 'no_realizado') {
+    estadoLinea = `❌ No realizado — Motivo: ${data.motivo || 'Sin especificar'}`;
+    color = '#DC2626';
+  } else if (data.estado === 'pospuesto') {
+    const fecha = data.fecha
+      ? new Date(data.fecha + 'T00:00:00').toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' })
+      : 'Sin definir';
+    estadoLinea = `⏸ Pospuesto → Próximo seguimiento: ${fecha}${data.hora ? ' ' + data.hora : ''}`;
+    color = '#EA580C';
   } else {
-    mostrarToast('✅ Resumen guardado como gestión (sin Sheets configurado)');
+    estadoLinea = '🕓 Pendiente';
+    color = '#64748B';
   }
 
-  document.getElementById('resumenGuardadoMsg').style.display = 'inline';
-  btn.disabled = false;
+  const texto =
+    `📅 Fecha: ${fechaGestion}\n` +
+    `📋 Acción: ${accionTexto}` + (plazo ? ` (${plazo})` : '') + `\n` +
+    estadoLinea;
 
-  // El resumen recién guardado también forma parte del "equipo" de información: sincroniza la acción recomendada.
-  generarAccionRecomendadaIA();
+  const celda = hoja.getRange(fila, colIdx);
+  celda.setValue(texto).setWrap(true).setFontColor(color);
+
+  // Columnas de soporte para reportes y filtros
+  hoja.getRange(fila, getOrCreateColumnaFija(hoja, 'Fecha Última Gestión')).setValue(fechaGestion);
+  hoja.getRange(fila, getOrCreateColumnaFija(hoja, 'Estado Última Acción')).setValue(data.estado || '');
+
+  // ── Columnas estructuradas para la AGENDA (fecha/hora/duración reales, no texto) ──
+  const colFechaAgenda = getOrCreateColumnaFija(hoja, 'Fecha Próxima Acción');
+  const colHoraAgenda  = getOrCreateColumnaFija(hoja, 'Hora Próxima Acción');
+  const colDurAgenda   = getOrCreateColumnaFija(hoja, 'Duración Estimada (min)');
+  const colDescAgenda  = getOrCreateColumnaFija(hoja, 'Descripción Próxima Acción');
+
+  if (data.estado === 'pospuesto' && data.fecha) {
+    // Forzar texto plano para que 'fecha' y 'hora' siempre regresen como string (evita
+    // que Sheets las convierta a Date con otro huso horario al leerlas de vuelta).
+    hoja.getRange(fila, colFechaAgenda).setNumberFormat('@').setValue(data.fecha);
+    hoja.getRange(fila, colHoraAgenda).setNumberFormat('@').setValue(data.hora || '');
+    hoja.getRange(fila, colDurAgenda).setValue(data.duracionMin || 20);
+    hoja.getRange(fila, colDescAgenda).setValue(accionTexto);
+  } else if (data.estado === 'realizado') {
+    // Ya no queda pendiente: se limpia para que desaparezca de la Agenda.
+    hoja.getRange(fila, colFechaAgenda).setValue('');
+    hoja.getRange(fila, colHoraAgenda).setValue('');
+  }
+  // Si es "no_realizado" se deja la fecha/hora previa intacta, por si se quiere reagendar.
 }
 
-/* ══════════════════════════════════════════════════════
-   ── INIT ──
-══════════════════════════════════════════════════════ */
-(function() {
-  const url = localStorage.getItem('nexus_sheets_url') || '';
-  const el = document.getElementById('sheetsWebAppUrl');
-  if (el && url) el.value = url;
-  actualizarChatHeader();
-})();
+// ── ELIMINAR CLIENTE COMPLETO ─────────────────────────────────────
+function eliminarClienteCompleto(ss, nombreCliente) {
+  const nombre = (nombreCliente || '').toString().trim();
+  if (!nombre) return;
 
-</script>
-</body>
-</html>
+  const hojaClientes = ss.getSheetByName('Clientes');
+  if (hojaClientes) {
+    const fila = encontrarFilaCliente(hojaClientes, nombre);
+    if (fila > 0) hojaClientes.deleteRow(fila);
+  }
+  limpiarGestionesCliente(ss, nombre);
+}
+
+// ── BUSCAR O CREAR COLUMNA FIJA POR ENCABEZADO ───────────────────
+function getOrCreateColumnaFija(hoja, nombreHeader) {
+  const ultimaCol  = Math.max(hoja.getLastColumn(), 1);
+  const headerRow  = hoja.getRange(1, 1, 1, ultimaCol).getValues()[0];
+  let colIdx       = headerRow.indexOf(nombreHeader) + 1; // 0 = no existe
+
+  if (colIdx === 0) {
+    colIdx = ultimaCol + 1;
+    const cell = hoja.getRange(1, colIdx);
+    cell.setValue(nombreHeader).setFontWeight('bold').setBackground('#1C2E45').setFontColor('#FFFFFF');
+    hoja.setColumnWidth(colIdx, 260);
+  }
+  return colIdx;
+}
+
+// ── NORMALIZAR ENCABEZADO → CAMPO JS ─────────────────────────────
+function normalizarHeader(h) {
+  const map = {
+    'Última actualización':'timestamp','Nombre':'nombre','Teléfono':'telefono',
+    'Correo':'correo','Ciudad':'ciudad','Ocupación':'ocupacion',
+    'Fuente del Lead':'fuenteLead','Vehículo':'vehiculo','Precio ($)':'precio',
+    'Prueba de Manejo':'pruebaManejo','Tipo de Operación':'tipoOperacion',
+    'Enganche':'enganche','Plazo (meses)':'plazo','Tasa de Interés (%)':'tasaInteres',
+    'Mensualidad Est.':'mensualidad','Estado de Operación':'estadoOperacion',
+    'Disponibilidad Vehículo':'disponibilidad','Tiempo de Llegada':'tiempoLlegada',
+    'Descuento':'descuento','Monto Descuento ($)':'montoDescuento',
+    'Regalos / Beneficios':'regalos','Anticipo / Pedido':'anticipo',
+    'Documentación':'documentacion','Estatus Crédito':'estatusCredito',
+    'Decisión de Compra':'decision','Urgencia':'urgencia',
+    'Total de Gestiones':'totalGestiones','Score CRM':'score',
+    'Acción a Seguir':'accionSeguir','Fecha Última Gestión':'fechaUltimaGestion',
+    'Estado Última Acción':'estadoUltimaAccion'
+  };
+  return map[h] || h.toLowerCase().replace(/\s+/g,'_');
+}
