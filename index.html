@@ -70,8 +70,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 /* ── LAYOUT ── */
 .wrap{max-width:860px;margin:0 auto;padding:24px 16px;position:relative;z-index:1;}
 @media(min-width:960px){
-  .wrap{max-width:1720px;}
-  #modalConfiguracion>div,#modalAgenda>div{max-width:1100px;}
+  .wrap{max-width:1032px;} /* pantalla principal: manda el ancho para toda la app */
 }
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
@@ -736,7 +735,7 @@ function confirmarNuevaFicha(){
 
 <!-- ══ MODAL CONFIGURACIÓN (pantalla completa) ══ -->
 <div id="modalConfiguracion" class="hidden" style="position:fixed;inset:0;z-index:1050;background:var(--bg);overflow-y:auto;animation:fadeUp 0.25s ease both">
-  <div style="max-width:600px;margin:0 auto;padding:20px 16px 80px">
+  <div class="wrap" style="padding-top:20px;padding-bottom:80px">
     <!-- Header -->
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--line)">
       <button class="btn-back" onclick="cerrarModalConfig()">←</button>
@@ -831,7 +830,7 @@ function confirmarNuevaFicha(){
 
 <!-- ══ MODAL AGENDA (pantalla completa) ══ -->
 <div id="modalAgenda" class="hidden" style="position:fixed;inset:0;z-index:1050;background:var(--bg);overflow-y:auto;animation:fadeUp 0.25s ease both">
-  <div style="max-width:600px;margin:0 auto;padding:20px 16px 80px">
+  <div class="wrap" style="padding-top:20px;padding-bottom:80px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--line)">
       <button class="btn-back" onclick="cerrarAgenda()">←</button>
       <div style="flex:1">
