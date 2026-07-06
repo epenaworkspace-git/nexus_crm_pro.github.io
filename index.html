@@ -64,9 +64,15 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;
   font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);font-family:var(--font);}
 .icon-btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn-back{width:36px;height:36px;background:var(--grad);border:none;border-radius:var(--radius-pill);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0;color:#fff;box-shadow:0 2px 14px var(--grad-glow);transition:var(--transition);}
+.btn-back:hover{transform:scale(1.08) translateX(-1px);}
 
 /* ── LAYOUT ── */
 .wrap{max-width:860px;margin:0 auto;padding:24px 16px;position:relative;z-index:1;}
+@media(min-width:960px){
+  .wrap{max-width:1720px;}
+  #modalConfiguracion>div,#modalAgenda>div{max-width:1100px;}
+}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
 .col-2{grid-column:span 2;}
@@ -123,6 +129,8 @@ textarea.inp{resize:vertical;min-height:90px;line-height:1.6;}
 .btn-sm.warning{border-color:var(--orange);color:var(--orange);}
 .agenda-tab{justify-content:center;}
 .agenda-tab.active{background:var(--grad);border-color:transparent;color:#fff;}
+.proveedor-tab{justify-content:center;}
+.proveedor-tab.active{background:var(--grad);border-color:transparent;color:#fff;}
 
 /* ── SECTION TITLE ── */
 .section-title{font-size:11px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;
@@ -717,8 +725,8 @@ function confirmarNuevaFicha(){
 <div id="modalApiKey" class="hidden" style="position:fixed;inset:0;z-index:1001;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)">
   <div class="card" style="max-width:400px;width:100%;margin:0;animation:cardIn 0.25s ease both">
     <div class="card-header"><div class="card-icon">🔑</div><div class="card-title">API Key de Anthropic</div></div>
-    <p style="color:var(--text-dim);font-size:13px;line-height:1.6;margin-bottom:14px">Para usar la IA en el navegador necesitas una API key de Anthropic. Se guardará localmente en este dispositivo.</p>
-    <div class="campo"><label>Tu API Key</label><input class="inp" type="password" id="inputApiKey" placeholder="sk-ant-..."></div>
+    <p style="color:var(--text-dim);font-size:13px;line-height:1.6;margin-bottom:14px">Para usar la IA en el navegador necesitas una API key de Anthropic o de Gemini. Se guardará localmente en este dispositivo. Si prefieres usar Gemini, ve a ⚙️ Configuración.</p>
+    <div class="campo"><label>Tu API Key de Anthropic</label><input class="inp" type="password" id="inputApiKey" placeholder="sk-ant-..."></div>
     <div style="display:flex;gap:10px;margin-top:4px">
       <button class="btn-ghost" style="flex:1" onclick="cancelarApiKey()">Cancelar</button>
       <button class="btn-primary" style="flex:1" onclick="guardarApiKey()">Guardar y continuar</button>
@@ -731,7 +739,7 @@ function confirmarNuevaFicha(){
   <div style="max-width:600px;margin:0 auto;padding:20px 16px 80px">
     <!-- Header -->
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--line)">
-      <button onclick="cerrarModalConfig()" style="width:36px;height:36px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0">←</button>
+      <button class="btn-back" onclick="cerrarModalConfig()">←</button>
       <div>
         <div style="font-size:17px;font-weight:700;color:var(--text)">⚙️ Configuración</div>
         <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em">Nexus CRM</div>
@@ -753,7 +761,17 @@ function confirmarNuevaFicha(){
       <div id="sheetsEstado" style="font-size:13px;color:var(--muted);min-height:18px"></div>
     </div>
 
-    <!-- API Key -->
+    <!-- Proveedor de IA preferido -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-header"><div class="card-icon">🤖</div><div class="card-title">Proveedor de IA preferido</div></div>
+      <p class="text-muted" style="font-size:12px;margin-bottom:12px;line-height:1.5">Si configuras ambas API keys, esta elige cuál se intenta primero. Si la preferida falla, se intenta automáticamente con la otra.</p>
+      <div style="display:flex;gap:10px" id="selectorProveedorIA">
+        <button class="btn-sm proveedor-tab" id="tabProveedorAnthropic" onclick="fijarProveedorIA('anthropic')" style="flex:1">🔶 Anthropic</button>
+        <button class="btn-sm proveedor-tab" id="tabProveedorGemini" onclick="fijarProveedorIA('gemini')" style="flex:1">✨ Gemini</button>
+      </div>
+    </div>
+
+    <!-- API Key Anthropic -->
     <div class="card" style="margin-bottom:14px">
       <div class="card-header"><div class="card-icon">🔑</div><div class="card-title">API Key de Anthropic</div></div>
       <div class="campo">
@@ -761,10 +779,33 @@ function confirmarNuevaFicha(){
         <input class="inp" type="password" id="apiKeyConfig" placeholder="sk-ant-...">
         <p class="text-muted" style="font-size:12px;margin-top:6px;line-height:1.5">Solo necesaria al usar la app en navegador externo. Dentro de Claude.ai la IA funciona automáticamente sin API key.</p>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn-ghost" onclick="guardarApiKeyConfig()">💾 Guardar API key</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn-primary" onclick="guardarApiKeyConfig()">💾 Guardar y verificar</button>
+        <button class="btn-ghost" onclick="probarConexionAnthropic()">🔌 Probar conexión</button>
         <button class="btn-sm danger" onclick="borrarApiKey()">🗑 Eliminar</button>
       </div>
+      <div id="anthropicEstado" style="font-size:13px;color:var(--muted);min-height:18px"></div>
+    </div>
+
+    <!-- API Key Gemini -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-header"><div class="card-icon">✨</div><div class="card-title">API Key de Gemini</div></div>
+      <div class="campo">
+        <label>API Key</label>
+        <input class="inp" type="password" id="geminiApiKeyConfig" placeholder="AIza...">
+        <p class="text-muted" style="font-size:12px;margin-top:6px;line-height:1.5">Alternativa a Anthropic. Se guarda localmente en este dispositivo y tiene los mismos privilegios que la IA de Anthropic dentro de la app.</p>
+      </div>
+      <div class="campo">
+        <label>Modelo</label>
+        <input class="inp" type="text" id="geminiModeloConfig" placeholder="gemini-flash-latest" value="gemini-flash-latest">
+        <p class="text-muted" style="font-size:12px;margin-top:6px;line-height:1.5">Déjalo como "gemini-flash-latest" para usar siempre el modelo gratuito más reciente de Google (2.5, 3.0 y futuras versiones se resuelven solas). También puedes escribir un modelo específico, p. ej. "gemini-2.5-flash" o "gemini-3.0-flash".</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn-primary" onclick="guardarGeminiKeyConfig()">💾 Guardar y verificar</button>
+        <button class="btn-ghost" onclick="probarConexionGemini()">🔌 Probar conexión</button>
+        <button class="btn-sm danger" onclick="borrarGeminiKey()">🗑 Eliminar</button>
+      </div>
+      <div id="geminiEstado" style="font-size:13px;color:var(--muted);min-height:18px"></div>
     </div>
 
     <!-- Tema -->
@@ -792,7 +833,7 @@ function confirmarNuevaFicha(){
 <div id="modalAgenda" class="hidden" style="position:fixed;inset:0;z-index:1050;background:var(--bg);overflow-y:auto;animation:fadeUp 0.25s ease both">
   <div style="max-width:600px;margin:0 auto;padding:20px 16px 80px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--line)">
-      <button onclick="cerrarAgenda()" style="width:36px;height:36px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0">←</button>
+      <button class="btn-back" onclick="cerrarAgenda()">←</button>
       <div style="flex:1">
         <div style="font-size:17px;font-weight:700;color:var(--text)">🗓️ Agenda</div>
         <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em">Próximas acciones — todos los clientes</div>
@@ -1803,21 +1844,109 @@ async function llamarIA(prompt, maxTokens){
   if(typeof window!=='undefined' && window.claude && typeof window.claude.complete==='function'){
     return await window.claude.complete(prompt);
   }
-  const apiKey = localStorage.getItem('nexus_api_key')||'';
-  if(!apiKey){
-    document.getElementById('modalApiKey').classList.remove('hidden');
-    throw new Error('Ingresa tu API key de Anthropic para continuar. Después vuelve a presionar el botón.');
+  const anthropicKey = localStorage.getItem('nexus_api_key')||'';
+  const geminiKey = localStorage.getItem('nexus_gemini_key')||'';
+
+  if(!anthropicKey && !geminiKey){
+    if(typeof irAConfiguracion==='function') irAConfiguracion();
+    else document.getElementById('modalApiKey').classList.remove('hidden');
+    throw new Error('Configura una API key de Anthropic o de Gemini en ⚙️ Configuración para continuar.');
   }
-  const res = await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,messages:[{role:'user',content:prompt}]})
-  });
-  if(res.status===401){ localStorage.removeItem('nexus_api_key'); document.getElementById('modalApiKey').classList.remove('hidden'); throw new Error('API key inválida.'); }
-  if(!res.ok) throw new Error(`Error de API (${res.status}). Intenta de nuevo.`);
+
+  const preferido = localStorage.getItem('nexus_ai_provider') || (anthropicKey ? 'anthropic' : 'gemini');
+  const orden = preferido==='gemini' ? ['gemini','anthropic'] : ['anthropic','gemini'];
+
+  let ultimoError = null;
+  for(const proveedor of orden){
+    try{
+      if(proveedor==='anthropic' && anthropicKey){
+        return await llamarAnthropic(prompt, maxTokens, anthropicKey);
+      }
+      if(proveedor==='gemini' && geminiKey){
+        return await llamarGemini(prompt, maxTokens, geminiKey);
+      }
+    }catch(e){
+      ultimoError = e;
+    }
+  }
+  throw ultimoError || new Error('No se pudo conectar con ningún proveedor de IA configurado.');
+}
+
+async function llamarAnthropic(prompt, maxTokens, apiKeyParam){
+  const apiKey = apiKeyParam || localStorage.getItem('nexus_api_key') || '';
+  if(!apiKey) throw new Error('No hay API key de Anthropic configurada.');
+  let res;
+  try{
+    res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,messages:[{role:'user',content:prompt}]})
+    });
+  }catch(networkErr){
+    throw new Error('No se pudo conectar con Anthropic. Revisa tu conexión a internet.');
+  }
+  if(res.status===401){ localStorage.removeItem('nexus_api_key'); if(document.getElementById('modalApiKey'))document.getElementById('modalApiKey').classList.remove('hidden'); throw new Error('API key de Anthropic inválida o expirada.'); }
+  if(res.status===403) throw new Error('Acceso denegado por Anthropic. Verifica los permisos de tu API key.');
+  if(res.status===429) throw new Error('Anthropic alcanzó el límite de uso. Espera un momento e intenta de nuevo.');
+  if(res.status>=500) throw new Error('El servidor de Anthropic no está disponible en este momento.');
+  if(!res.ok){
+    let detalle='';
+    try{ const errJson=await res.json(); detalle=errJson?.error?.message||''; }catch(_e){}
+    throw new Error(`Error de Anthropic (${res.status}). ${detalle}`.trim());
+  }
   const data = await res.json();
   return data.content?.map(b=>b.text||'').join('')||'Sin respuesta.';
 }
+
+async function llamarGemini(prompt, maxTokens, apiKeyParam, modeloParam){
+  const apiKey = apiKeyParam || localStorage.getItem('nexus_gemini_key') || '';
+  if(!apiKey) throw new Error('No hay API key de Gemini configurada.');
+  const modelo = (modeloParam || localStorage.getItem('nexus_gemini_modelo') || 'gemini-flash-latest').trim();
+
+  async function intentar(modeloUsar){
+    let res;
+    try{
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modeloUsar)}:generateContent?key=${encodeURIComponent(apiKey)}`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:maxTokens}})
+      });
+    }catch(networkErr){
+      throw {retryable:false, error:new Error('No se pudo conectar con Gemini. Revisa tu conexión a internet.')};
+    }
+    if(res.status===400){
+      let detalle='';
+      try{ const errJson=await res.json(); detalle=errJson?.error?.message||''; }catch(_e){}
+      throw {retryable:false, error:new Error(`Clave o solicitud de Gemini inválida. ${detalle}`.trim())};
+    }
+    if(res.status===401 || res.status===403) throw {retryable:false, error:new Error('API key de Gemini inválida o sin permisos.')};
+    if(res.status===404) throw {retryable:true, error:new Error(`Modelo "${modeloUsar}" no encontrado.`)};
+    if(res.status===429) throw {retryable:false, error:new Error('Gemini alcanzó el límite de uso gratuito. Espera un momento e intenta de nuevo.')};
+    if(res.status>=500) throw {retryable:false, error:new Error('El servidor de Gemini no está disponible en este momento.')};
+    if(!res.ok){
+      let detalle='';
+      try{ const errJson=await res.json(); detalle=errJson?.error?.message||''; }catch(_e){}
+      throw {retryable:false, error:new Error(`Error de Gemini (${res.status}). ${detalle}`.trim())};
+    }
+    const data = await res.json();
+    const candidato = data?.candidates?.[0];
+    if(candidato?.finishReason==='SAFETY') throw {retryable:false, error:new Error('Gemini bloqueó la respuesta por políticas de seguridad.')};
+    const texto = candidato?.content?.parts?.map(p=>p.text||'').join('') || '';
+    if(!texto) throw {retryable:false, error:new Error('Gemini no devolvió contenido. Intenta de nuevo.')};
+    return texto;
+  }
+
+  try{
+    return await intentar(modelo);
+  }catch(fallo){
+    if(fallo.retryable && modelo!=='gemini-flash-latest'){
+      try{ return await intentar('gemini-flash-latest'); }
+      catch(fallo2){ throw fallo2.error || fallo2; }
+    }
+    throw fallo.error || fallo;
+  }
+}
+
 function guardarApiKey(){ const k=(document.getElementById('inputApiKey').value||'').trim(); if(!k){mostrarToast('Ingresa una API key válida.');return;} localStorage.setItem('nexus_api_key',k); document.getElementById('modalApiKey').classList.add('hidden'); mostrarToast('✓ API key guardada. Vuelve a presionar el botón de IA.'); }
 function cancelarApiKey(){ document.getElementById('modalApiKey').classList.add('hidden'); }
 
@@ -2105,8 +2234,13 @@ function mostrarToast(msg='✓ Listo'){
 (function initConfig(){
   const url = localStorage.getItem('nexus_sheets_url')||'';
   const key = localStorage.getItem('nexus_api_key')||'';
+  const geminiKey = localStorage.getItem('nexus_gemini_key')||'';
+  const geminiModelo = localStorage.getItem('nexus_gemini_modelo')||'';
   if(url){ const el=document.getElementById('sheetsUrl'); if(el) el.value=url; }
   if(key){ const el=document.getElementById('apiKeyConfig'); if(el) el.value=key; }
+  if(geminiKey){ const el=document.getElementById('geminiApiKeyConfig'); if(el) el.value=geminiKey; }
+  if(geminiModelo){ const el=document.getElementById('geminiModeloConfig'); if(el) el.value=geminiModelo; }
+  actualizarTabsProveedorIA();
 })();
 
 function guardarConfigSheets(){
@@ -2118,14 +2252,84 @@ function guardarApiKeyConfig(){
   const key = (document.getElementById('apiKeyConfig').value||'').trim();
   if(!key){ mostrarToast('Ingresa una API key válida.'); return; }
   localStorage.setItem('nexus_api_key', key);
-  mostrarToast('✓ API key guardada correctamente.');
+  mostrarToast('✓ API key de Anthropic guardada. Verificando conexión…');
+  probarConexionAnthropic();
 }
 
 function borrarApiKey(){
   localStorage.removeItem('nexus_api_key');
   const el = document.getElementById('apiKeyConfig');
   if(el) el.value='';
-  mostrarToast('🗑 API key eliminada.');
+  const est = document.getElementById('anthropicEstado');
+  if(est){ est.textContent=''; }
+  mostrarToast('🗑 API key de Anthropic eliminada.');
+}
+
+async function probarConexionAnthropic(){
+  const key = (document.getElementById('apiKeyConfig').value||localStorage.getItem('nexus_api_key')||'').trim();
+  const est = document.getElementById('anthropicEstado');
+  if(!key){ mostrarToast('Primero ingresa una API key de Anthropic.'); return; }
+  est.textContent='Probando conexión…'; est.style.color='var(--muted)';
+  try{
+    await llamarAnthropic('Responde solo con la palabra: OK', 10, key);
+    est.textContent='✅ Conexión exitosa con Anthropic.';
+    est.style.color='var(--green)';
+  }catch(e){
+    est.textContent='❌ '+(e.message||'No se pudo conectar con Anthropic.');
+    est.style.color='var(--red)';
+  }
+}
+
+function guardarGeminiKeyConfig(){
+  const key = (document.getElementById('geminiApiKeyConfig').value||'').trim();
+  const modelo = (document.getElementById('geminiModeloConfig').value||'').trim() || 'gemini-flash-latest';
+  if(!key){ mostrarToast('Ingresa una API key de Gemini válida.'); return; }
+  localStorage.setItem('nexus_gemini_key', key);
+  localStorage.setItem('nexus_gemini_modelo', modelo);
+  mostrarToast('✓ API key de Gemini guardada. Verificando conexión…');
+  probarConexionGemini();
+}
+
+function borrarGeminiKey(){
+  localStorage.removeItem('nexus_gemini_key');
+  localStorage.removeItem('nexus_gemini_modelo');
+  const el = document.getElementById('geminiApiKeyConfig');
+  if(el) el.value='';
+  const elModelo = document.getElementById('geminiModeloConfig');
+  if(elModelo) elModelo.value='gemini-flash-latest';
+  const est = document.getElementById('geminiEstado');
+  if(est){ est.textContent=''; }
+  mostrarToast('🗑 API key de Gemini eliminada.');
+}
+
+async function probarConexionGemini(){
+  const key = (document.getElementById('geminiApiKeyConfig').value||localStorage.getItem('nexus_gemini_key')||'').trim();
+  const modelo = (document.getElementById('geminiModeloConfig').value||localStorage.getItem('nexus_gemini_modelo')||'gemini-flash-latest').trim();
+  const est = document.getElementById('geminiEstado');
+  if(!key){ mostrarToast('Primero ingresa una API key de Gemini.'); return; }
+  est.textContent='Probando conexión…'; est.style.color='var(--muted)';
+  try{
+    await llamarGemini('Responde solo con la palabra: OK', 10, key, modelo);
+    est.textContent=`✅ Conexión exitosa con Gemini (${modelo}).`;
+    est.style.color='var(--green)';
+  }catch(e){
+    est.textContent='❌ '+(e.message||'No se pudo conectar con Gemini.');
+    est.style.color='var(--red)';
+  }
+}
+
+function fijarProveedorIA(proveedor){
+  localStorage.setItem('nexus_ai_provider', proveedor);
+  actualizarTabsProveedorIA();
+  mostrarToast(proveedor==='gemini' ? '✓ Gemini será el proveedor de IA preferido.' : '✓ Anthropic será el proveedor de IA preferido.');
+}
+
+function actualizarTabsProveedorIA(){
+  const preferido = localStorage.getItem('nexus_ai_provider') || (localStorage.getItem('nexus_api_key') ? 'anthropic' : (localStorage.getItem('nexus_gemini_key') ? 'gemini' : 'anthropic'));
+  const tabA = document.getElementById('tabProveedorAnthropic');
+  const tabG = document.getElementById('tabProveedorGemini');
+  if(tabA) tabA.classList.toggle('active', preferido==='anthropic');
+  if(tabG) tabG.classList.toggle('active', preferido==='gemini');
 }
 
 async function probarConexionSheets(){
