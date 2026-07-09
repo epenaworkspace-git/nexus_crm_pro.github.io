@@ -271,6 +271,7 @@ function confirmarNuevaFicha(){
     localStorage.removeItem('crm_gestiones');
     localStorage.removeItem('crm_pv_guardada');
     localStorage.removeItem('crm_pv_msg');
+    localStorage.removeItem('crm_cliente_id');
   }catch(e){}
   cancelarNuevaFicha();
   location.reload();
@@ -327,6 +328,17 @@ function confirmarNuevaFicha(){
 
 <div class="wrap">
 
+  <!-- ══ BUSCAR CLIENTE ══ -->
+  <div class="card" id="cardBuscarCliente">
+    <label>Buscar cliente</label>
+    <div style="display:flex;gap:8px">
+      <input class="inp" type="text" id="buscarClienteInput" placeholder="Nombre, apellidos o ID único…"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();buscarClienteGlobal();}">
+      <button class="btn-primary" type="button" onclick="buscarClienteGlobal()" style="white-space:nowrap">🔍 Buscar</button>
+    </div>
+    <div id="resultadosBuscarCliente" class="hidden" style="margin-top:12px"></div>
+  </div>
+
   <!-- ══ SCORE ══ -->
   <div class="score-widget">
     <div class="score-ring-wrap">
@@ -360,8 +372,11 @@ function confirmarNuevaFicha(){
   </div>
 
   <!-- ══ DATOS DEL CLIENTE ══ -->
-  <div class="card">
-    <div class="card-header"><div class="card-icon">👤</div><div class="card-title">Datos del Cliente</div></div>
+  <div class="card" id="cardDatosCliente">
+    <div class="card-header" style="position:relative">
+      <div class="card-icon">👤</div><div class="card-title">Datos del Cliente</div>
+      <div id="clienteIdBadge" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-pill);padding:4px 14px;letter-spacing:0.04em;white-space:nowrap">ID: —</div>
+    </div>
     <div class="grid-2">
       <div class="campo"><label>Nombre completo</label><input class="inp" type="text" id="nombre" placeholder="Ej. Juan García López" oninput="onCampoChange()"></div>
       <div class="campo"><label>Teléfono / WhatsApp</label><input class="inp" type="tel" id="telefono" placeholder="+52 55 0000 0000" oninput="onCampoChange()"></div>
@@ -382,10 +397,17 @@ function confirmarNuevaFicha(){
         </select>
       </div>
     </div>
+    <div style="margin-top:16px">
+      <button class="btn-primary full" id="btnGuardarDatos" onclick="guardarDatosCliente()">💾 Guardar datos</button>
+    </div>
   </div>
 
   <!-- ══ PROCESO DE VENTA ══ -->
-  <div class="card">
+  <div class="card bloque-bloqueado bloqueado" id="cardProcesoVenta">
+    <div class="bloque-overlay">
+      <div class="overlay-icon">🔒</div>
+      <p class="overlay-texto">Completa los <strong>Datos del Cliente</strong> y pulsa <strong>Guardar datos</strong> para habilitar esta sección.</p>
+    </div>
     <div class="card-header"><div class="card-icon">📋</div><div class="card-title">Proceso de Venta</div></div>
     <div class="campo"><label>¿Se realizó la prueba de manejo?</label>
       <select class="inp" id="pruebaManejo" onchange="togglePrueba();onCampoChange()">
@@ -444,7 +466,11 @@ function confirmarNuevaFicha(){
   </div>
 
   <!-- ══ INFORMACIÓN ADICIONAL ══ -->
-  <div class="card">
+  <div class="card bloque-bloqueado bloqueado" id="cardInfoAdicional">
+    <div class="bloque-overlay">
+      <div class="overlay-icon">🔒</div>
+      <p class="overlay-texto">Completa los <strong>Datos del Cliente</strong> y pulsa <strong>Guardar datos</strong> para habilitar esta sección.</p>
+    </div>
     <div class="card-header"><div class="card-icon">🎁</div><div class="card-title">Información Adicional</div></div>
     <div class="section-title">Disponibilidad</div>
     <div class="grid-2">
@@ -523,7 +549,11 @@ function confirmarNuevaFicha(){
   </div>
 
   <!-- ══ PRIMERA VISITA — SECCIÓN INDEPENDIENTE ══ -->
-  <div class="card" id="cardPrimeraVisita" style="position:relative">
+  <div class="card bloque-bloqueado bloqueado" id="cardPrimeraVisita" style="position:relative">
+    <div class="bloque-overlay">
+      <div class="overlay-icon">🔒</div>
+      <p class="overlay-texto">Completa los <strong>Datos del Cliente</strong> y pulsa <strong>Guardar datos</strong> para habilitar esta sección.</p>
+    </div>
     <div class="card-header"><div class="card-icon">🚗</div><div class="card-title">Primera Visita / Presentación del Producto</div></div>
 
     <!-- Indicadores de requisitos -->
@@ -676,7 +706,11 @@ function confirmarNuevaFicha(){
   </div>
 
   <!-- ══ ANÁLISIS IA — en su lugar original ══ -->
-  <div class="card">
+  <div class="card bloque-bloqueado bloqueado" id="cardAnalisisIA">
+    <div class="bloque-overlay">
+      <div class="overlay-icon">🔒</div>
+      <p class="overlay-texto">Completa los <strong>Datos del Cliente</strong> y pulsa <strong>Guardar datos</strong> para habilitar esta sección.</p>
+    </div>
     <div class="card-header">
       <div class="card-icon">🧠</div>
       <div class="card-title">Análisis Inteligente</div>
@@ -689,7 +723,11 @@ function confirmarNuevaFicha(){
   </div>
 
   <!-- ══ HISTORIAL ══ -->
-  <div class="card">
+  <div class="card bloque-bloqueado bloqueado" id="cardHistorialGestiones">
+    <div class="bloque-overlay">
+      <div class="overlay-icon">🔒</div>
+      <p class="overlay-texto">Completa los <strong>Datos del Cliente</strong> y pulsa <strong>Guardar datos</strong> para habilitar esta sección.</p>
+    </div>
     <div class="card-header">
       <div class="card-icon">📅</div><div class="card-title">Historial de Gestiones</div>
       <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
@@ -881,6 +919,16 @@ function confirmarNuevaFicha(){
   </div>
 </div>
 
+<!-- ══ MODAL COINCIDENCIAS DE CLIENTE (control de duplicados) ══ -->
+<div id="modalCoincidencias" class="hidden" style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px)">
+  <div class="card" style="max-width:440px;width:100%;margin:0;animation:cardIn 0.25s ease both">
+    <div class="card-header"><div class="card-icon">🔎</div><div class="card-title">Posibles coincidencias</div></div>
+    <p style="color:var(--text-dim);font-size:13px;line-height:1.6;margin-bottom:14px">Encontramos clientes ya registrados con un nombre parecido. ¿Es alguno de estos?</p>
+    <div id="listaCoincidencias" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:320px;overflow-y:auto"></div>
+    <button class="btn-ghost" style="width:100%" onclick="confirmarRegistrarComoNuevo()">➕ Ninguno, registrar como nuevo</button>
+  </div>
+</div>
+
 <script>
 /* ════════════════════════════════════════════
    NEXUS CRM — JAVASCRIPT COMPLETO
@@ -908,6 +956,12 @@ function toggleTheme(){
 /* ─── STATE ─── */
 let gestiones   = JSON.parse(localStorage.getItem('crm_gestiones') || '[]');
 let clienteData = JSON.parse(localStorage.getItem('crm_cliente')   || '{}');
+let clienteId         = localStorage.getItem('crm_cliente_id') || '';
+let fichaDesbloqueada = !!clienteId; // solo "Datos del cliente" está habilitado hasta guardar/confirmar
+const SECCIONES_BLOQUEO_GENERAL = [
+  'cardProcesoVenta','cardInfoAdicional','cardPrimeraVisita','cardAnalisisIA','cardHistorialGestiones'
+];
+let coincidenciasCandidatas = [];
 let pvGuardada  = localStorage.getItem('crm_pv_guardada') === '1';
 let pvMsgActual = localStorage.getItem('crm_pv_msg') || '';
 let pvPasosGenerados  = false;
@@ -946,6 +1000,12 @@ const accionCallbacks = {};
   togglePrueba(); toggleOperacion(); toggleDisponibilidad(); toggleDescuento(); toggleOtroRegalo();
   renderHistorial(); recalcScore(); actualizarPasoSiguiente(); calcularFinanciamiento();
   scheduleScoreIA();
+  actualizarClienteIdBadge();
+
+  // Control de duplicados / bloqueo inicial: solo "Datos del cliente" queda
+  // habilitado hasta que se confirme el registro (nuevo o existente).
+  if(fichaDesbloqueada) desbloquearSeccionesGenerales();
+  else bloquearSeccionesIniciales();
 
   // Restaurar formulario/banner de Primera Visita
   if(pvGuardada){
@@ -1317,14 +1377,14 @@ function estimarDuracionAccion(texto){
   return 20;
 }
 
-function renderAccionModule(container, prefix, resumen, tiempoTexto, diasSugeridos, onGuardar){
+function renderAccionModule(container, prefix, resumen, tiempoTexto, diasSugeridos, onGuardar, gestionId){
   if(!container) return;
   const hoy = new Date();
   const fechaGenerada = hoy.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
   const sugerida = new Date(hoy.getTime() + (diasSugeridos||1)*86400000);
   const fechaValue = sugerida.toISOString().slice(0,10);
   const duracionDefault = estimarDuracionAccion(resumen);
-  accionState[prefix] = { estado:'', resumen, tiempoTexto };
+  accionState[prefix] = { estado:'', resumen, tiempoTexto, gestionId, agendado:false };
   accionCallbacks[prefix] = onGuardar;
   container.innerHTML = `
     <div class="accion-recomendada-card">
@@ -1357,23 +1417,28 @@ function renderAccionModule(container, prefix, resumen, tiempoTexto, diasSugerid
           <button class="btn-ia sm" type="button" onclick="reescribirTexto('${prefix}Explicacion', this)">🪄 Reescribir</button>
         </div>
       </div>
-      <div style="margin-top:14px">
-        <button class="btn-primary full" id="${prefix}BtnGuardar" onclick="guardarAccion('${prefix}')" disabled>💾 Guardar</button>
+      <p id="${prefix}AgendadoTag" class="hidden" style="font-size:12px;color:var(--accent-bright);font-weight:600;margin-top:12px">🗓️ Agendado en la Agenda como pendiente por realizar.</p>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button type="button" class="btn-ghost" id="${prefix}BtnAgendar" onclick="agendarAccion('${prefix}')" style="flex:1">🗓️ Agendar</button>
+        <button class="btn-primary" id="${prefix}BtnGuardar" onclick="guardarAccion('${prefix}')" style="flex:1" disabled>💾 Guardar</button>
       </div>
     </div>`;
 }
 
 function marcarEstadoAccion(prefix, estado){
   accionState[prefix] = accionState[prefix] || {};
-  accionState[prefix].estado = estado;
+  // Permite deseleccionar: si se pulsa el mismo estado ya activo, se quita.
+  const yaActivo = accionState[prefix].estado === estado;
+  const nuevoEstado = yaActivo ? '' : estado;
+  accionState[prefix].estado = nuevoEstado;
   const map = {Realizado:'realizado', NoRealizado:'no_realizado', Posponer:'pospuesto'};
   Object.keys(map).forEach(k=>{
     const btn = document.getElementById(prefix+'Btn'+k);
-    if(btn) btn.classList.toggle('active', map[k]===estado);
+    if(btn) btn.classList.toggle('active', map[k]===nuevoEstado);
   });
   const campoExp = document.getElementById(prefix+'CampoExplicacion');
-  if(campoExp) campoExp.classList.toggle('hidden', estado!=='no_realizado');
-  if(estado==='pospuesto'){
+  if(campoExp) campoExp.classList.toggle('hidden', nuevoEstado!=='no_realizado');
+  if(nuevoEstado==='pospuesto'){
     const fechaInp = document.getElementById(prefix+'Fecha');
     if(fechaInp){ try{ fechaInp.focus(); if(typeof fechaInp.showPicker==='function') fechaInp.showPicker(); }catch(e){} }
   }
@@ -1439,6 +1504,7 @@ async function inicializarAccionRecomendada(){
     ultima.accionEstado = st.estado; ultima.accionExplicacion = st.explicacion;
     ultima.accionFecha = st.fecha; ultima.accionHora = st.hora;
     localStorage.setItem('crm_gestiones', JSON.stringify(gestiones));
+    if(accionState[prefix]) accionState[prefix].agendado = false;
     cont.innerHTML = accionGuardadaHTML(st);
     if(prefix === 'pvAccion'){
       evaluarBloqueoRC(true);
@@ -1448,7 +1514,7 @@ async function inicializarAccionRecomendada(){
       mostrarToast('✓ Acción registrada.');
       setTimeout(resetearRC, 1100);
     }
-  });
+  }, ultima.gestionId || ultima.id);
 }
 
 function guardarAccion(prefix){
@@ -1519,22 +1585,54 @@ async function finalizarGuardadoAccion(prefix, st){
   if(localStorage.getItem('nexus_sheets_url')){
     await sincronizarSheets();
   }
-  await enviarAccionASheets(prefix, st);
+  await enviarAccionASheets(prefix, st, false);
 }
 
-/* ─── Envía la Acción a Seguir (con fecha/hora/duración) al Script para la Agenda ─── */
-async function enviarAccionASheets(prefix, st){
+/* ─── Botón "Agendar": guarda de inmediato la acción programada con estado
+   "Pendiente por realizar" en la columna "Acción a seguir", sin esperar a que
+   se marque el resultado (Realizado / No realizado / Posponer). ─── */
+async function agendarAccion(prefix){
+  const url = localStorage.getItem('nexus_sheets_url')||'';
+  if(!url){ mostrarToast('Configura primero la URL de Google Sheets en ⚙️ Configuración.'); return; }
+  const st = {
+    fecha: (document.getElementById(prefix+'Fecha')||{}).value || '',
+    hora:  (document.getElementById(prefix+'Hora')||{}).value  || '',
+    duracionMin: parseInt((document.getElementById(prefix+'Duracion')||{}).value, 10) || 20
+  };
+  if(!st.fecha){ mostrarToast('Elige una fecha para agendar la acción.'); return; }
+
+  const btn = document.getElementById(prefix+'BtnAgendar');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Agendando…'; }
+
+  if(localStorage.getItem('nexus_sheets_url')) await sincronizarSheets();
+  await enviarAccionASheets(prefix, st, true);
+
+  if(accionState[prefix]) accionState[prefix].agendado = true;
+  const tag = document.getElementById(prefix+'AgendadoTag');
+  if(tag) tag.classList.remove('hidden');
+  if(btn){ btn.disabled = false; btn.textContent = '🗓️ Agendar'; }
+  mostrarToast('🗓️ Acción agendada como pendiente por realizar.');
+}
+
+/* ─── Envía la Acción a Seguir (con fecha/hora/duración) al Script para la Agenda ───
+   esAgendar=true → botón "Agendar" (columna "Acción a seguir" = Pendiente por realizar).
+   esAgendar=false → botón "Guardar" del bloque (resultado real ya ejecutado). ─── */
+async function enviarAccionASheets(prefix, st, esAgendar){
   const url = localStorage.getItem('nexus_sheets_url')||'';
   if(!url) return;
   const nombreCliente = (document.getElementById('nombre').value||'').trim();
   if(!nombreCliente) return;
   const info = accionState[prefix] || {};
   const payload = {
-    tipo: 'accion_seguir',
+    tipo: esAgendar ? 'agendar_accion' : 'accion_seguir',
+    clienteId: clienteId || '',
+    gestionId: info.gestionId || '',
     nombreCliente,
+    telefono: (document.getElementById('telefono').value||'').trim(),
+    correo:   (document.getElementById('correo').value||'').trim(),
     accionTexto: info.resumen || '',
     plazo: info.tiempoTexto || '',
-    estado: st.estado,
+    estado: st.estado || '',
     motivo: st.explicacion || '',
     fecha: st.fecha || '',
     hora: st.hora || '',
@@ -2154,9 +2252,9 @@ function renderAgenda(vista){
           <span class="gestion-tipo">🕐 ${t.hora||'sin hora'} · ${t.duracionMin||20} min</span>
           <span>${t.estado||'pendiente'}</span>
         </div>
-        <p style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">${t.nombre||'Cliente'}</p>
+        <p style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">${t.nombre||'Cliente'} <span style="font-weight:600;color:var(--muted);font-size:11px">· ID ${t.id||'—'}</span></p>
         ${t.accion ? `<p style="font-size:12px;color:var(--text-dim);line-height:1.5">${t.accion}</p>` : ''}
-        ${t.telefono ? `<p style="font-size:11px;color:var(--muted);margin-top:4px">📞 ${t.telefono}</p>` : ''}
+        <p style="font-size:11px;color:var(--muted);margin-top:4px">${t.telefono ? '📞 '+t.telefono : ''}${t.telefono && t.correo ? ' · ' : ''}${t.correo ? '✉️ '+t.correo : ''}</p>
       </div>`;
   });
   cont.innerHTML = html;
@@ -2188,6 +2286,7 @@ async function generarResumenGestiones(){
 /* ─── GUARDAR FICHA COMPLETA (sync) ─── */
 async function guardarFichaCompleta(){
   cerrarMenu();
+  if(!clienteId){ mostrarToast('Primero guarda los "Datos del cliente" para generar su ID.'); return; }
   const url = localStorage.getItem('nexus_sheets_url')||'';
   if(!url){
     mostrarToast('Configura primero la URL de Google Sheets en ⚙️ Configuración.');
@@ -2196,6 +2295,232 @@ async function guardarFichaCompleta(){
   }
   mostrarToast('☁️ Guardando ficha completa…');
   await sincronizarSheets();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CONTROL DE DUPLICADOS Y BLOQUEO INICIAL
+   Al iniciar un registro nuevo solo "Datos del cliente" está
+   habilitado. El resto se desbloquea al confirmar (existente o
+   nuevo) mediante "Guardar datos", respetando además la lógica
+   fina de "Registrar Contacto" (evaluarBloqueoRC).
+════════════════════════════════════════════════════════════════ */
+function generarIdCliente(){
+  return 'C' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
+}
+
+function actualizarClienteIdBadge(){
+  const el = document.getElementById('clienteIdBadge');
+  if(el) el.textContent = 'ID: ' + (clienteId || '—');
+}
+
+function bloquearSeccionesIniciales(){
+  SECCIONES_BLOQUEO_GENERAL.forEach(id => {
+    const card = document.getElementById(id);
+    if(!card) return;
+    card.classList.add('bloqueado');
+    card.querySelectorAll('input,select,textarea,button').forEach(el => el.setAttribute('disabled',''));
+  });
+  // "Registrar Contacto" queda controlado aparte por evaluarBloqueoRC (no lo tocamos aquí).
+}
+
+function desbloquearSeccionesGenerales(){
+  SECCIONES_BLOQUEO_GENERAL.forEach(id => {
+    const card = document.getElementById(id);
+    if(!card) return;
+    card.classList.remove('bloqueado');
+    card.querySelectorAll('input,select,textarea,button').forEach(el => el.removeAttribute('disabled'));
+  });
+  // Algunos botones tienen su propia lógica de habilitado condicional
+  // (ej. "Guardar gestión" de Primera Visita requiere pasos + mensaje IA
+  // generados). Se re-evalúa para no dejarlos habilitados de más.
+  if(typeof evaluarBtnGuardarPV === 'function') evaluarBtnGuardarPV();
+}
+
+/* ─── BOTÓN "Guardar datos" (Datos del Cliente) ─── */
+async function guardarDatosCliente(){
+  const nombre = (document.getElementById('nombre').value||'').trim();
+  if(!nombre){ mostrarToast('Escribe el nombre completo del cliente primero.'); return; }
+
+  const url = localStorage.getItem('nexus_sheets_url')||'';
+  if(!url){
+    // Sin base de datos configurada: se registra localmente como nuevo, sin poder comparar duplicados.
+    mostrarToast('⚠️ Configura la URL de Google Sheets para poder comparar duplicados.');
+    confirmarRegistrarComoNuevo();
+    return;
+  }
+
+  const btn = document.getElementById('btnGuardarDatos');
+  btn.disabled = true; const textoOriginal = btn.innerHTML; btn.innerHTML='⏳ Buscando coincidencias…';
+  try{
+    const res  = await fetch(url + '?action=buscarCliente&q=' + encodeURIComponent(nombre));
+    const data = await res.json();
+    const resultados = (data.success && Array.isArray(data.resultados)) ? data.resultados : [];
+    if(resultados.length){
+      coincidenciasCandidatas = resultados;
+      mostrarModalCoincidencias(resultados);
+    } else {
+      confirmarRegistrarComoNuevo();
+    }
+  }catch(e){
+    mostrarToast('⚠️ No se pudo comparar con la base de datos. Se registrará como nuevo.');
+    confirmarRegistrarComoNuevo();
+  }
+  btn.disabled = false; btn.innerHTML = textoOriginal;
+}
+
+function mostrarModalCoincidencias(resultados){
+  const cont = document.getElementById('listaCoincidencias');
+  cont.innerHTML = resultados.map((r,i) => `
+    <button type="button" class="btn-ghost" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 14px" onclick="seleccionarCoincidencia(${i})">
+      <div>
+        <div style="font-weight:700;color:var(--text)">${r.nombre||'Sin nombre'}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">ID ${r.id||'—'}${r.telefono?' · 📞 '+r.telefono:''}${r.vehiculo?' · 🚗 '+r.vehiculo:''}</div>
+      </div>
+    </button>`).join('');
+  document.getElementById('modalCoincidencias').classList.remove('hidden');
+}
+
+async function seleccionarCoincidencia(indice){
+  const r = coincidenciasCandidatas[indice];
+  document.getElementById('modalCoincidencias').classList.add('hidden');
+  if(!r) return;
+  mostrarToast('☁️ Descargando ficha de ' + (r.nombre||'cliente') + '…');
+  await cargarClienteCompleto(r.id);
+}
+
+function confirmarRegistrarComoNuevo(){
+  document.getElementById('modalCoincidencias').classList.add('hidden');
+  if(!clienteId) clienteId = generarIdCliente();
+  localStorage.setItem('crm_cliente_id', clienteId);
+  fichaDesbloqueada = true;
+  actualizarClienteIdBadge();
+  desbloquearSeccionesGenerales();
+  mostrarToast('✓ Cliente nuevo registrado. Ficha desbloqueada.');
+  if(localStorage.getItem('nexus_sheets_url')) sincronizarSheets();
+}
+
+/* ─── CAMPOS QUE SE RESTAURAN AL CARGAR UNA FICHA EXISTENTE ─── */
+const CAMPOS_CLIENTE_FORM = ['nombre','telefono','correo','ciudad','vehiculo','ocupacion','precio','fuenteLead',
+  'pruebaManejo','tipoOperacion','estadoOperacion','enganche','plazo',
+  'tasaInteres','asistieron','manejaron','comentariosPrueba','disponibilidad','tiempoLlegada',
+  'descuento','montoDescuento','otroRegaloDesc','anticipo','documentacion','estatusCredito','decision','urgencia'];
+
+const MAPA_CAMPOS_BACKEND = {
+  nombre:'Nombre', telefono:'Telefono', correo:'Correo', ciudad:'Ciudad', ocupacion:'Ocupacion',
+  fuenteLead:'FuenteLead', vehiculo:'Vehiculo', precio:'Precio', pruebaManejo:'PruebaManejo',
+  asistieron:'Asistieron', manejaron:'Manejaron', comentariosPrueba:'ComentariosPrueba',
+  tipoOperacion:'TipoOperacion', enganche:'Enganche', plazo:'Plazo', tasaInteres:'TasaInteres',
+  estadoOperacion:'EstadoOperacion', disponibilidad:'Disponibilidad', tiempoLlegada:'TiempoLlegada',
+  descuento:'Descuento', montoDescuento:'MontoDescuento', anticipo:'Anticipo',
+  documentacion:'Documentacion', estatusCredito:'EstatusCredito', decision:'Decision', urgencia:'Urgencia'
+};
+
+/* ─── BUSCAR CLIENTE (barra superior) ─── */
+async function buscarClienteGlobal(){
+  const q = (document.getElementById('buscarClienteInput').value||'').trim();
+  const cont = document.getElementById('resultadosBuscarCliente');
+  if(!q){ mostrarToast('Escribe un nombre o ID para buscar.'); return; }
+  const url = localStorage.getItem('nexus_sheets_url')||'';
+  if(!url){ mostrarToast('Configura primero la URL de Google Sheets en ⚙️ Configuración.'); return; }
+
+  cont.classList.remove('hidden');
+  cont.innerHTML = '<div class="ai-loading"><div class="spinner"></div> Buscando…</div>';
+  try{
+    const res  = await fetch(url + '?action=buscarCliente&q=' + encodeURIComponent(q));
+    const data = await res.json();
+    const resultados = (data.success && Array.isArray(data.resultados)) ? data.resultados : [];
+    if(!resultados.length){
+      cont.innerHTML = '<p class="text-muted" style="text-align:center;padding:14px 0">Sin resultados para "'+q+'".</p>';
+      return;
+    }
+    cont.innerHTML = resultados.map(r => `
+      <button type="button" class="btn-ghost" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 14px;margin-bottom:8px" onclick="cargarClienteCompleto('${r.id}')">
+        <div>
+          <div style="font-weight:700;color:var(--text)">${r.nombre||'Sin nombre'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">ID ${r.id||'—'}${r.telefono?' · 📞 '+r.telefono:''}${r.ciudad?' · '+r.ciudad:''}</div>
+        </div>
+      </button>`).join('');
+  }catch(e){
+    cont.innerHTML = '<p class="text-muted" style="text-align:center;padding:14px 0">❌ Error de conexión al buscar.</p>';
+  }
+}
+
+/* ─── DESCARGAR Y CARGAR FICHA COMPLETA DE UN CLIENTE EXISTENTE ─── */
+async function cargarClienteCompleto(id){
+  const url = localStorage.getItem('nexus_sheets_url')||'';
+  if(!url || !id) return;
+  try{
+    const res  = await fetch(url + '?action=obtenerCliente&id=' + encodeURIComponent(id));
+    const data = await res.json();
+    if(!data.success){ mostrarToast('❌ ' + (data.error||'No se pudo descargar la ficha.')); return; }
+
+    clienteId = data.cliente.ID || id;
+    localStorage.setItem('crm_cliente_id', clienteId);
+
+    // Poblar campos del formulario
+    CAMPOS_CLIENTE_FORM.forEach(campoLocal => {
+      const backendKey = MAPA_CAMPOS_BACKEND[campoLocal];
+      if(!backendKey) return;
+      const el = document.getElementById(campoLocal);
+      if(el && data.cliente[backendKey] !== undefined) el.value = data.cliente[backendKey];
+    });
+
+    // Poblar gestiones descargadas (formato backend → formato local)
+    gestiones = (data.gestiones||[]).map(g => ({
+      id: g.GestionID, gestionId: g.GestionID, fecha: g.Fecha, tipo: g.Tipo, calidad: g.Calidad,
+      comentarios: g.Comentarios, pasoSiguiente: g.PasoSiguiente, mensajeIA: g.MensajeIA,
+      accionEstado: mapearEstadoBackendALocal(g.AccionASeguir),
+      accionFecha: g.AccionFecha, accionHora: g.AccionHora,
+      accionDuracionMin: g.AccionDuracionMin, accionExplicacion: g.AccionExplicacion,
+      accionTiempo: '24-48 horas'
+    })).sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+
+    localStorage.setItem('crm_gestiones', JSON.stringify(gestiones));
+    localStorage.setItem('crm_cliente', JSON.stringify(clienteData));
+
+    fichaDesbloqueada = true;
+    actualizarClienteIdBadge();
+    desbloquearSeccionesGenerales();
+
+    document.getElementById('resultadosBuscarCliente').classList.add('hidden');
+    document.getElementById('buscarClienteInput').value = '';
+
+    togglePrueba(); toggleOperacion(); toggleDisponibilidad(); toggleDescuento();
+    calcularFinanciamiento();
+    aplicarEstadoDesdeGestiones();
+    renderHistorial(); recalcScore(); inicializarAccionRecomendada();
+    mostrarToast('✓ Ficha de ' + (data.cliente.Nombre||'cliente') + ' cargada y desbloqueada.');
+  }catch(e){
+    mostrarToast('❌ Error de conexión al descargar la ficha.');
+  }
+}
+
+function mapearEstadoBackendALocal(estadoBackend){
+  const mapa = { 'Realizado':'realizado', 'No realizado':'no_realizado', 'Pospuesto':'pospuesto' };
+  return mapa[estadoBackend] || ''; // "Pendiente por realizar" o vacío → sin resultado aún
+}
+
+/* ─── Restaura banners de Primera Visita / bloqueo de Registrar Contacto
+   tras cargar una ficha existente (misma lógica que corre en init()) ─── */
+function aplicarEstadoDesdeGestiones(){
+  const pvGestion = gestiones.find(g => g.tipo === 'primeravisita');
+  if(pvGestion){
+    pvGuardada = true;
+    localStorage.setItem('crm_pv_guardada','1');
+    if(pvGestion.mensajeIA) localStorage.setItem('crm_pv_msg', pvGestion.mensajeIA);
+    document.getElementById('comentariosPrimeraVisita').value = pvGestion.comentarios||'';
+    if(pvGestion.calidad) document.getElementById('calidadPrimeraVisita').value = pvGestion.calidad;
+    mostrarPVGuardada(pvGestion);
+    const rcYaExiste = gestiones.some(g => g.tipo !== 'primeravisita');
+    evaluarBloqueoRC(!!pvGestion.accionEstado || rcYaExiste);
+  } else {
+    pvGuardada = false;
+    localStorage.removeItem('crm_pv_guardada');
+    localStorage.removeItem('crm_pv_msg');
+    document.getElementById('pvGuardada').classList.add('hidden');
+    document.getElementById('pvFormulario').classList.remove('hidden');
+    evaluarBloqueoRC(false);
+  }
 }
 
 /* ─── ELIMINAR CLIENTE EN SHEETS ─── */
@@ -2215,7 +2540,7 @@ async function confirmarEliminarCliente(){
       await fetch(url,{
         method:'POST',
         headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({ tipo:'eliminar_cliente', nombreCliente:nombre })
+        body:JSON.stringify({ tipo:'eliminar_cliente', clienteId:clienteId, nombreCliente:nombre })
       });
       mostrarToast('✓ Cliente eliminado de Google Sheets');
     }catch(e){ mostrarToast('⚠️ No se pudo conectar con Sheets, pero se limpió localmente.'); }
@@ -2225,6 +2550,7 @@ async function confirmarEliminarCliente(){
   localStorage.removeItem('crm_gestiones');
   localStorage.removeItem('crm_pv_guardada');
   localStorage.removeItem('crm_pv_msg');
+  localStorage.removeItem('crm_cliente_id');
   location.reload();
 }
 function cancelarEliminarCliente(){
@@ -2374,6 +2700,7 @@ async function sincronizarSheets(){
 
   const payload = {
     tipo:            'sync_completo',
+    clienteId:       clienteId||'',
     nombre:          document.getElementById('nombre').value||'',
     telefono:        document.getElementById('telefono').value||'',
     correo:          document.getElementById('correo').value||'',
@@ -2402,12 +2729,17 @@ async function sincronizarSheets(){
     totalGestiones:  gestiones.length,
     score:           document.getElementById('scoreNum').textContent||'—',
     gestiones:       gestiones.map(g => ({
+      gestionId:   g.gestionId || g.id,
       fecha:       g.fecha,
       tipo:        g.tipo,
       calidad:     g.calidad,
       comentarios: g.comentarios,
       pasoSiguiente: g.pasoSiguiente||'',
-      mensajeIA:   g.mensajeIA||''
+      mensajeIA:   g.mensajeIA||'',
+      accionFecha: g.accionFecha||'',
+      accionHora:  g.accionHora||'',
+      accionDuracionMin: g.accionDuracionMin||'',
+      accionExplicacion: g.accionExplicacion||''
     }))
   };
 
@@ -2419,6 +2751,11 @@ async function sincronizarSheets(){
     });
     const data = await res.json();
     if(data.success){
+      if(data.clienteId && data.clienteId !== clienteId){
+        clienteId = data.clienteId;
+        localStorage.setItem('crm_cliente_id', clienteId);
+        actualizarClienteIdBadge();
+      }
       est.textContent='✅ Sincronización completa — ' + new Date().toLocaleTimeString('es-MX');
       est.style.color='var(--green)';
       mostrarToast('✅ Datos sincronizados con Google Sheets');
