@@ -996,14 +996,21 @@ function confirmarNuevaFicha(){
    VentaMinds), así que si inicias sesión con el mismo email en cualquiera de
    esas apps, tus API keys de Claude y Gemini aparecen aquí automáticamente
    (y viceversa). Se guardan en Firestore bajo usuarios/{uid}.apiKeys. */
-const firebaseConfig = {
-  apiKey: "AIzaSyATTrYMqivDJGLhQYDDjEqLCyv-YEMSK2A",
-  authDomain: "nexus-pro-plus.firebaseapp.com",
-  projectId: "nexus-pro-plus",
-  storageBucket: "nexus-pro-plus.firebasestorage.app",
-  messagingSenderId: "5726048688",
-  appId: "1:5726048688:web:f51184138fe76b3d008675"
-};
+const firebaseConfig = (function(){
+  var LS_KEY = 'fbcfg_nexus_crm_pro';
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch(e) { saved = null; }
+  if (saved && saved.apiKey) return saved;
+  var pasted = window.prompt('Configuracion de Firebase para Nexus CRM Pro (solo la primera vez en este dispositivo).\nPega aqui el JSON de configuracion:');
+  if (pasted) {
+    try {
+      var cfg = JSON.parse(pasted);
+      localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+      return cfg;
+    } catch(e) { console.warn('Configuracion de Firebase invalida, la sincronizacion quedara desactivada.'); }
+  }
+  return { apiKey:'', authDomain:'', projectId:'', storageBucket:'', messagingSenderId:'', appId:'' };
+})();
 let fbApp=null, fbAuth=null, fbDb=null, fbUser=null, fbUserDocRef=null;
 let fbSyncTimer=null, fbApplyingRemote=false;
 
