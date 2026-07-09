@@ -253,8 +253,50 @@ textarea.inp{resize:vertical;min-height:90px;line-height:1.6;}
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes barGrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}
 </style>
+<!-- ══ Firebase (sincronización de API keys entre dispositivos) ══ -->
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
+<style>
+  .auth-gate-overlay{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;
+    background:rgba(6,10,16,.92);backdrop-filter:blur(6px);padding:20px;}
+  .auth-gate-box{width:100%;max-width:380px;background:#0e1620;border:1px solid rgba(0,245,196,.25);
+    border-radius:18px;padding:28px 24px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .auth-gate-box h2{margin:0 0 6px;font-size:1.25rem;color:#f2f6f8;}
+  .auth-gate-sub{margin:0 0 20px;color:#8a97a3;font-size:.85rem;}
+  .auth-gate-box input{width:100%;box-sizing:border-box;margin-bottom:10px;padding:11px 12px;border-radius:10px;
+    border:1px solid rgba(255,255,255,.12);background:#141d29;color:#f2f6f8;font-size:.95rem;}
+  .auth-gate-btn{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:10px;border:none;
+    font-weight:600;font-size:.9rem;cursor:pointer;margin-bottom:10px;}
+  .auth-gate-btn.google{background:#fff;color:#1f1f1f;}
+  .auth-gate-btn.primary{background:#00F5C4;color:#052018;}
+  .auth-gate-btn.neutral{background:#1c2733;color:#e8eef2;border:1px solid rgba(255,255,255,.1);}
+  .auth-gate-row{display:flex;gap:8px;}
+  .auth-gate-row .auth-gate-btn{margin-bottom:0;}
+  .auth-gate-divider{display:flex;align-items:center;gap:10px;margin:14px 0;color:#5c6975;font-size:.75rem;}
+  .auth-gate-divider::before,.auth-gate-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.1);}
+  .auth-gate-msg{margin-top:8px;font-size:.8rem;min-height:16px;line-height:1.4;}
+</style>
+<div id="authGateOverlay" class="auth-gate-overlay">
+  <div class="auth-gate-box">
+    <h2>🔒 Inicia sesión para continuar</h2>
+    <p class="auth-gate-sub">Tus datos se guardan de forma segura y sincronizada entre tus dispositivos.</p>
+    <button id="gateGoogleBtn" class="auth-gate-btn google" type="button">🔵 Continuar con Google</button>
+    <div class="auth-gate-divider"><span>o con tu email</span></div>
+    <input type="email" id="gateEmail" placeholder="tu@email.com" autocomplete="email">
+    <input type="password" id="gatePass" placeholder="Contraseña (mínimo 6 caracteres)" autocomplete="current-password">
+    <div class="auth-gate-row">
+      <button id="gateLoginBtn" class="auth-gate-btn primary" type="button">Iniciar sesión</button>
+      <button id="gateRegisterBtn" class="auth-gate-btn neutral" type="button">Crear cuenta</button>
+    </div>
+    <div class="auth-gate-divider"><span>o sin contraseña</span></div>
+    <button id="gateLinkBtn" class="auth-gate-btn neutral" type="button">✉️ Enviarme un enlace de acceso</button>
+    <div id="gateMsg" class="auth-gate-msg"></div>
+  </div>
+</div>
+
 
 <!-- ══ NUEVA FICHA ══ -->
 <script>
@@ -783,6 +825,21 @@ function confirmarNuevaFicha(){
       </div>
     </div>
 
+    <!-- Cuenta (sincroniza tus API keys entre dispositivos) -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-header"><div class="card-icon">👤</div><div class="card-title">Cuenta</div></div>
+      <div id="accountStatusBox" class="text-muted" style="font-size:13px;margin-bottom:10px">Cargando…</div>
+      <div id="accountLinkForm" style="display:none;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+        <input class="inp" type="email" id="accountEmail" placeholder="tu@email.com" style="flex:1;min-width:160px">
+        <input class="inp" type="password" id="accountPass" placeholder="Contraseña (mín. 6 caracteres)" style="flex:1;min-width:160px">
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-primary" id="accountCreateBtn" style="flex:1">Crear cuenta</button>
+        <button class="btn-ghost" id="accountLoginBtn" style="flex:1">Ya tengo cuenta, iniciar sesión</button>
+        <button class="btn-sm danger hidden" id="accountSignoutBtn">Cerrar sesión</button>
+      </div>
+    </div>
+
     <!-- Google Sheets -->
     <div class="card" style="margin-bottom:14px">
       <div class="card-header"><div class="card-icon">📊</div><div class="card-title">Google Sheets</div></div>
@@ -933,6 +990,224 @@ function confirmarNuevaFicha(){
 /* ════════════════════════════════════════════
    NEXUS CRM — JAVASCRIPT COMPLETO
 ════════════════════════════════════════════ */
+
+/* ══ MÓDULO NUBE (Firebase: Auth + Firestore) ══
+   Comparte proyecto con el resto de la familia Nexus (Nexus.html, Nexus Pro,
+   VentaMinds), así que si inicias sesión con el mismo email en cualquiera de
+   esas apps, tus API keys de Claude y Gemini aparecen aquí automáticamente
+   (y viceversa). Se guardan en Firestore bajo usuarios/{uid}.apiKeys. */
+const firebaseConfig = {
+  apiKey: "AIzaSyATTrYMqivDJGLhQYDDjEqLCyv-YEMSK2A",
+  authDomain: "nexus-pro-plus.firebaseapp.com",
+  projectId: "nexus-pro-plus",
+  storageBucket: "nexus-pro-plus.firebasestorage.app",
+  messagingSenderId: "5726048688",
+  appId: "1:5726048688:web:f51184138fe76b3d008675"
+};
+let fbApp=null, fbAuth=null, fbDb=null, fbUser=null, fbUserDocRef=null;
+let fbSyncTimer=null, fbApplyingRemote=false;
+
+// ─── Auth Gate: exige inicio de sesión real en navegador (no aplica en modo artefacto) ──
+const AUTH_GATE_EMAIL_KEY = 'nexusAuthGateEmail';
+
+function showAuthGate(){ const el=document.getElementById('authGateOverlay'); if(el) el.style.display='flex'; }
+function hideAuthGate(){ const el=document.getElementById('authGateOverlay'); if(el) el.style.display='none'; }
+function gateMsg(text, isError){
+  const m=document.getElementById('gateMsg'); if(!m) return;
+  m.textContent = text||''; m.style.color = isError ? '#ff6b6b' : '#00F5C4';
+}
+async function gateSignInGoogle(){
+  try{ await fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+  catch(e){ gateMsg('No se pudo iniciar sesión con Google: '+(e.message||e.code), true); }
+}
+async function gateSignInEmail(){
+  const email=(document.getElementById('gateEmail').value||'').trim();
+  const pass=document.getElementById('gatePass').value||'';
+  if(!email||!pass){ gateMsg('Escribe email y contraseña.', true); return; }
+  try{ await fbAuth.signInWithEmailAndPassword(email, pass); }
+  catch(e){ gateMsg('No se pudo iniciar sesión: '+(e.message||e.code), true); }
+}
+async function gateRegisterEmail(){
+  const email=(document.getElementById('gateEmail').value||'').trim();
+  const pass=document.getElementById('gatePass').value||'';
+  if(!email||!pass){ gateMsg('Escribe email y contraseña.', true); return; }
+  try{ await fbAuth.createUserWithEmailAndPassword(email, pass); }
+  catch(e){
+    if(e.code==='auth/email-already-in-use') gateMsg('Ese email ya tiene cuenta. Usa "Iniciar sesión".', true);
+    else if(e.code==='auth/weak-password') gateMsg('La contraseña debe tener al menos 6 caracteres.', true);
+    else gateMsg('No se pudo crear la cuenta: '+(e.message||e.code), true);
+  }
+}
+async function gateSendEmailLink(){
+  const email=(document.getElementById('gateEmail').value||'').trim();
+  if(!email){ gateMsg('Escribe tu email para enviarte el enlace.', true); return; }
+  const actionCodeSettings = { url: window.location.href.split('#')[0], handleCodeInApp: true };
+  try{
+    await fbAuth.sendSignInLinkToEmail(email, actionCodeSettings);
+    window.localStorage.setItem(AUTH_GATE_EMAIL_KEY, email);
+    gateMsg('✅ Te enviamos un enlace a '+email+'. Ábrelo desde este mismo navegador para entrar.', false);
+  }catch(e){ gateMsg('No se pudo enviar el enlace: '+(e.message||e.code), true); }
+}
+async function gateCompleteEmailLinkIfNeeded(){
+  try{
+    if(fbAuth.isSignInWithEmailLink(window.location.href)){
+      let email = window.localStorage.getItem(AUTH_GATE_EMAIL_KEY);
+      if(!email) email = window.prompt('Confirma tu email para completar el acceso:');
+      if(email){
+        await fbAuth.signInWithEmailLink(email, window.location.href);
+        window.localStorage.removeItem(AUTH_GATE_EMAIL_KEY);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }catch(e){ console.warn('[Nube] No se pudo completar el acceso por enlace:', e); }
+}
+function initAuthGate(){
+  const map=[['gateGoogleBtn',gateSignInGoogle],['gateLoginBtn',gateSignInEmail],
+             ['gateRegisterBtn',gateRegisterEmail],['gateLinkBtn',gateSendEmailLink]];
+  map.forEach(([id,fn])=>{ const b=document.getElementById(id); if(b) b.addEventListener('click', fn); });
+}
+
+function fbInit(){
+  if(typeof firebase==='undefined'){
+    // Entorno sin acceso al SDK de Firebase (ej. visor de artifacts, sin internet) — silencioso, no es un error real.
+    // La app sigue funcionando en modo local, sin exigir login.
+    return;
+  }
+  try{
+    fbApp = firebase.initializeApp(firebaseConfig);
+    fbAuth = firebase.auth();
+    fbDb = firebase.firestore();
+    initAuthGate();
+    gateCompleteEmailLinkIfNeeded().finally(()=>{
+      fbAuth.onAuthStateChanged(async (user)=>{
+        if(user){
+          hideAuthGate();
+          fbUser = user;
+          fbUserDocRef = fbDb.collection('usuarios').doc(user.uid);
+          await fbLoadRemoteState();
+          fbListenRemoteState();
+          renderAccountUI();
+        } else {
+          // Ya no se crea sesión anónima automática: en navegador real se exige login (Google, email+contraseña o enlace por correo)
+          showAuthGate();
+        }
+      });
+    });
+  }catch(e){
+    // Esto sí es un error real (config, cuota, reglas, etc.), no un bloqueo de entorno
+    console.warn('[Nube] Firebase falló al inicializar:', e);
+  }
+}
+
+async function fbLoadRemoteState(){
+  try{
+    const snap = await fbUserDocRef.get();
+    if(snap.exists) fbApplyRemoteData(snap.data());
+    else await fbUserDocRef.set({ creado: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true});
+  }catch(e){ console.warn('[Nube] No se pudo leer el estado remoto:',e); }
+}
+function fbListenRemoteState(){
+  fbUserDocRef.onSnapshot(snap=>{
+    if(snap.metadata.hasPendingWrites) return; // eco de nuestra propia escritura
+    if(snap.exists) fbApplyRemoteData(snap.data());
+  }, err=>console.warn('[Nube] Error en la sincronización en vivo:',err));
+}
+
+// Aplica las API keys que vengan de la nube (si son distintas a las locales)
+function fbApplyRemoteData(d){
+  fbApplyingRemote = true;
+  try{
+    if(d.apiKeys && typeof d.apiKeys==='object'){
+      const remoteClaude = d.apiKeys.claude||'';
+      const remoteGemini = d.apiKeys.gemini||'';
+      if(remoteClaude && remoteClaude!==(localStorage.getItem('nexus_api_key')||'')){
+        localStorage.setItem('nexus_api_key', remoteClaude);
+        const el=document.getElementById('apiKeyConfig'); if(el) el.value=remoteClaude;
+      }
+      if(remoteGemini && remoteGemini!==(localStorage.getItem('nexus_gemini_key')||'')){
+        localStorage.setItem('nexus_gemini_key', remoteGemini);
+        const el=document.getElementById('geminiApiKeyConfig'); if(el) el.value=remoteGemini;
+      }
+      if(typeof actualizarTabsProveedorIA==='function') actualizarTabsProveedorIA();
+    }
+  } finally { fbApplyingRemote = false; }
+}
+
+function fbQueueApiKeysWrite(){
+  if(fbApplyingRemote || !fbUserDocRef) return;
+  clearTimeout(fbSyncTimer);
+  fbSyncTimer = setTimeout(async ()=>{
+    try{
+      await fbUserDocRef.set({
+        apiKeys: { claude: localStorage.getItem('nexus_api_key')||'', gemini: localStorage.getItem('nexus_gemini_key')||'' },
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, {merge:true});
+    }catch(e){ console.warn('[Nube] Error guardando en la nube:',e); }
+  }, 600);
+}
+
+// ─── Cuenta: vincular sesión anónima a email/contraseña, o iniciar sesión ────
+function renderAccountUI(){
+  const box = document.getElementById('accountStatusBox');
+  if(!box || !fbUser) return;
+  const linked = !fbUser.isAnonymous;
+  box.textContent = linked
+    ? '✓ Conectado como '+fbUser.email+' — tus API keys se sincronizan en todos tus dispositivos y en el resto de tus apps Nexus.'
+    : 'Usando la app como invitado en este dispositivo. Crea una cuenta para tener tus API keys listas en otro celular o PC.';
+  box.className = 'text-muted' + (linked ? '' : '');
+  if(linked) box.classList.add('text-green');
+  const linkForm = document.getElementById('accountLinkForm');
+  const createBtn = document.getElementById('accountCreateBtn');
+  const loginBtn = document.getElementById('accountLoginBtn');
+  const signoutBtn = document.getElementById('accountSignoutBtn');
+  if(linkForm) linkForm.style.display = linked ? 'none' : 'flex';
+  if(createBtn) createBtn.style.display = linked ? 'none' : 'inline-flex';
+  if(loginBtn) loginBtn.style.display = linked ? 'none' : 'inline-flex';
+  if(signoutBtn) signoutBtn.classList.toggle('hidden', !linked);
+}
+async function fbCrearCuenta(email, pass){
+  try{
+    const cred = firebase.auth.EmailAuthProvider.credential(email, pass);
+    await fbUser.linkWithCredential(cred);
+    mostrarToast('✅ Cuenta creada. Ya puedes entrar desde otro dispositivo con este email.');
+    renderAccountUI();
+  }catch(e){
+    if(e.code==='auth/email-already-in-use') mostrarToast('Ese email ya tiene cuenta. Usa "Ya tengo cuenta" para iniciar sesión.');
+    else if(e.code==='auth/weak-password') mostrarToast('La contraseña debe tener al menos 6 caracteres.');
+    else mostrarToast('No se pudo crear la cuenta: '+(e.message||e.code));
+  }
+}
+async function fbIniciarSesion(email, pass){
+  try{
+    await fbAuth.signInWithEmailAndPassword(email, pass);
+    mostrarToast('✅ Sesión iniciada. Cargando tus API keys…');
+  }catch(e){ mostrarToast('No se pudo iniciar sesión: '+(e.message||e.code)); }
+}
+function fbCerrarSesion(){
+  fbAuth.signOut(); // onAuthStateChanged crea una sesión anónima nueva
+  mostrarToast('Sesión cerrada. Ahora estás como invitado.');
+}
+function initAccountUI(){
+  const btnCrear = document.getElementById('accountCreateBtn');
+  const btnEntrar = document.getElementById('accountLoginBtn');
+  const btnSalir = document.getElementById('accountSignoutBtn');
+  const emailInput = document.getElementById('accountEmail');
+  const passInput = document.getElementById('accountPass');
+  if(btnCrear) btnCrear.addEventListener('click', ()=>{
+    const email=(emailInput.value||'').trim(), pass=passInput.value||'';
+    if(!email||!pass) return mostrarToast('Escribe email y contraseña.');
+    fbCrearCuenta(email, pass);
+  });
+  if(btnEntrar) btnEntrar.addEventListener('click', ()=>{
+    const email=(emailInput.value||'').trim(), pass=passInput.value||'';
+    if(!email||!pass) return mostrarToast('Escribe email y contraseña.');
+    fbIniciarSesion(email, pass);
+  });
+  if(btnSalir) btnSalir.addEventListener('click', fbCerrarSesion);
+}
+document.addEventListener('DOMContentLoaded', ()=>{ initAccountUI(); fbInit(); });
+// ══ FIN MÓDULO NUBE ══
+
 
 /* ─── THEME ─── */
 (function(){
@@ -2586,12 +2861,14 @@ function guardarApiKeyConfig(){
   const key = (document.getElementById('apiKeyConfig').value||'').trim();
   if(!key){ mostrarToast('Ingresa una API key válida.'); return; }
   localStorage.setItem('nexus_api_key', key);
+  fbQueueApiKeysWrite();
   mostrarToast('✓ API key de Anthropic guardada. Verificando conexión…');
   probarConexionAnthropic();
 }
 
 function borrarApiKey(){
   localStorage.removeItem('nexus_api_key');
+  fbQueueApiKeysWrite();
   const el = document.getElementById('apiKeyConfig');
   if(el) el.value='';
   const est = document.getElementById('anthropicEstado');
@@ -2620,6 +2897,7 @@ function guardarGeminiKeyConfig(){
   if(!key){ mostrarToast('Ingresa una API key de Gemini válida.'); return; }
   localStorage.setItem('nexus_gemini_key', key);
   localStorage.setItem('nexus_gemini_modelo', modelo);
+  fbQueueApiKeysWrite();
   mostrarToast('✓ API key de Gemini guardada. Verificando conexión…');
   probarConexionGemini();
 }
@@ -2627,6 +2905,7 @@ function guardarGeminiKeyConfig(){
 function borrarGeminiKey(){
   localStorage.removeItem('nexus_gemini_key');
   localStorage.removeItem('nexus_gemini_modelo');
+  fbQueueApiKeysWrite();
   const el = document.getElementById('geminiApiKeyConfig');
   if(el) el.value='';
   const elModelo = document.getElementById('geminiModeloConfig');
