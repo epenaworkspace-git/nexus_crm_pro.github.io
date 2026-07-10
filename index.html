@@ -1252,6 +1252,27 @@ function toggleTheme(){
 }
 
 /* ─── STATE ─── */
+/* ─── EVITA QUE LA APP "RECARGUE SIEMPRE EL MISMO CONTACTO" ───
+   Antes, el último cliente abierto quedaba guardado indefinidamente y
+   reaparecía cada vez que se abría la app (parecía "datos predefinidos"
+   que no se podían quitar, incluso si ya se habían borrado en Sheets).
+   Ahora solo se conserva si lo dejaste a medias hace menos de 20 minutos
+   (por si se refrescó la página sin querer); pasado ese tiempo, la app
+   siempre arranca en blanco y el cliente se debe buscar o crear de nuevo. */
+const MINUTOS_RECUPERACION_SESION = 20;
+(function limpiarSesionSiEsVieja(){
+  const ultimaActividad = parseInt(localStorage.getItem('crm_ultima_actividad') || '0', 10);
+  const minutosTranscurridos = (Date.now() - ultimaActividad) / 60000;
+  if (!ultimaActividad || minutosTranscurridos > MINUTOS_RECUPERACION_SESION) {
+    localStorage.removeItem('crm_cliente');
+    localStorage.removeItem('crm_gestiones');
+    localStorage.removeItem('crm_cliente_id');
+    localStorage.removeItem('crm_pv_guardada');
+    localStorage.removeItem('crm_pv_msg');
+  }
+  localStorage.setItem('crm_ultima_actividad', Date.now().toString());
+})();
+
 let gestiones   = JSON.parse(localStorage.getItem('crm_gestiones') || '[]');
 let clienteData = JSON.parse(localStorage.getItem('crm_cliente')   || '{}');
 let clienteId         = localStorage.getItem('crm_cliente_id') || '';
@@ -1583,6 +1604,7 @@ function onCampoChange(){
   const checks=['rTapetes','rVidrios','rPelicula','rKitSeguridad','rPlacas','rOtro'];
   checks.forEach(id => { const el=document.getElementById(id); if(el) clienteData[id]=el.checked; });
   localStorage.setItem('crm_cliente',JSON.stringify(clienteData));
+  localStorage.setItem('crm_ultima_actividad', Date.now().toString());
   recalcScore(); actualizarPasoSiguiente();
   scheduleScoreIA();
 }
@@ -2733,7 +2755,7 @@ async function buscarClienteGlobal(){
       return;
     }
     cont.innerHTML = resultados.map(r => `
-      <button type="button" class="btn-ghost" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 14px;margin-bottom:8px" onclick="cargarClienteCompleto('${r.id}')">
+      <button type="button" class="btn-ghost" style="width:100%;justify-content:flex-start;text-align:left;padding:12px 14px;margin-bottom:8px" onclick="cargarClienteCompleto('${r.id}', this)">
         <div>
           <div style="font-weight:700;color:var(--text)">${r.nombre||'Sin nombre'}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px">ID ${r.id||'—'}${r.telefono?' · 📞 '+r.telefono:''}${r.ciudad?' · '+r.ciudad:''}</div>
@@ -2744,10 +2766,26 @@ async function buscarClienteGlobal(){
   }
 }
 
-/* ─── DESCARGAR Y CARGAR FICHA COMPLETA DE UN CLIENTE EXISTENTE ─── */
-async function cargarClienteCompleto(id){
+/* ─── DESCARGAR Y CARGAR FICHA COMPLETA DE UN CLIENTE EXISTENTE ───
+   PASO CLICS: recibe el botón que se tocó (btnOrigen) para dar feedback
+   inmediato ("⏳ Cargando…") y para bloquear todos los botones del mismo
+   listado mientras se descarga. Antes no había ninguna señal visual, así
+   que si la respuesta tardaba (Apps Script puede tardar unos segundos),
+   la persona tocaba varias veces creyendo que no había funcionado, y esos
+   toques repetidos disparaban varias descargas a la vez que competían
+   entre sí — eso era lo que hacía que "casi nunca llamara a la primera". */
+let cargandoClienteEnCurso = false;
+async function cargarClienteCompleto(id, btnOrigen){
   const url = localStorage.getItem('nexus_sheets_url')||'';
   if(!url || !id) return;
+  if(cargandoClienteEnCurso) return; // evita doble toque mientras ya está cargando
+  cargandoClienteEnCurso = true;
+
+  const listaBotones = btnOrigen ? btnOrigen.parentElement.querySelectorAll('button') : [];
+  const textoOriginal = btnOrigen ? btnOrigen.innerHTML : '';
+  listaBotones.forEach(b => b.disabled = true);
+  if(btnOrigen) btnOrigen.innerHTML = '<div style="padding:2px 0">⏳ Cargando ficha…</div>';
+
   try{
     const res  = await fetch(url + '?action=obtenerCliente&id=' + encodeURIComponent(id));
     const data = await res.json();
@@ -2788,9 +2826,14 @@ async function cargarClienteCompleto(id){
     calcularFinanciamiento();
     aplicarEstadoDesdeGestiones();
     renderHistorial(); recalcScore(); inicializarAccionRecomendada();
+    localStorage.setItem('crm_ultima_actividad', Date.now().toString());
     mostrarToast('✓ Ficha de ' + (data.cliente.Nombre||'cliente') + ' cargada y desbloqueada.');
   }catch(e){
     mostrarToast('❌ Error de conexión al descargar la ficha.');
+  }finally{
+    cargandoClienteEnCurso = false;
+    listaBotones.forEach(b => b.disabled = false);
+    if(btnOrigen) btnOrigen.innerHTML = textoOriginal;
   }
 }
 
