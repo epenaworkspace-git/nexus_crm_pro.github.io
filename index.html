@@ -2624,13 +2624,31 @@ async function guardarFichaCompleta(){
    nuevo) mediante "Guardar datos", respetando además la lógica
    fina de "Registrar Contacto" (evaluarBloqueoRC).
 ════════════════════════════════════════════════════════════════ */
+// ── FORMATO DE ID DE CLIENTE (7 dígitos, ceros a la izquierda) ───
+// Debe ser IDÉNTICO al formato que usa formatId() en el Apps Script
+// (columna A de la hoja "Clientes"), para que el ID mostrado en esta
+// tarjeta y el que queda guardado en la hoja SIEMPRE coincidan.
+function formatearIdCliente(valor){
+  const soloDigitos = (valor || '').toString().replace(/\D/g, '');
+  if(!soloDigitos) return (valor || '').toString();
+  return soloDigitos.padStart(7, '0');
+}
+
+// Genera un ID local PROVISIONAL (mismo formato de 7 dígitos) para un
+// cliente nuevo mientras aún no se confirma con la hoja de cálculo (por
+// ejemplo, sin URL de Google Sheets configurada). Usa un contador propio
+// guardado en este navegador para que, incluso sin conexión, el ID ya
+// nazca con el formato correcto de 7 dígitos en vez de un código alfanumérico
+// que nunca coincidiría con el de la hoja.
 function generarIdCliente(){
-  return 'C' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
+  const siguiente = parseInt(localStorage.getItem('crm_local_id_counter') || '0', 10) + 1;
+  localStorage.setItem('crm_local_id_counter', String(siguiente));
+  return formatearIdCliente(siguiente);
 }
 
 function actualizarClienteIdBadge(){
   const el = document.getElementById('clienteIdBadge');
-  if(el) el.textContent = 'ID: ' + (clienteId || '—');
+  if(el) el.textContent = 'ID: ' + (clienteId ? formatearIdCliente(clienteId) : '—');
 }
 
 function bloquearSeccionesIniciales(){
@@ -2791,7 +2809,7 @@ async function cargarClienteCompleto(id, btnOrigen){
     const data = await res.json();
     if(!data.success){ mostrarToast('❌ ' + (data.error||'No se pudo descargar la ficha.')); return; }
 
-    clienteId = data.cliente.ID || id;
+    clienteId = formatearIdCliente(data.cliente.ID || id);
     localStorage.setItem('crm_cliente_id', clienteId);
 
     // Poblar campos del formulario
@@ -2879,12 +2897,19 @@ async function confirmarEliminarCliente(){
   const url    = localStorage.getItem('nexus_sheets_url')||'';
   if(url){
     try{
-      await fetch(url,{
+      const res  = await fetch(url,{
         method:'POST',
         headers:{'Content-Type':'text/plain'},
         body:JSON.stringify({ tipo:'eliminar_cliente', clienteId:clienteId, nombreCliente:nombre })
       });
-      mostrarToast('✓ Cliente eliminado de Google Sheets');
+      const data = await res.json();
+      if(data.success && data.filasEliminadas > 0){
+        mostrarToast(`✓ Cliente eliminado de Google Sheets (${data.filasEliminadas} fila${data.filasEliminadas>1?'s':''}).`);
+      } else if(data.success){
+        mostrarToast('⚠️ No se encontró ese cliente en Google Sheets (puede que ya estuviera borrado).');
+      } else {
+        mostrarToast('❌ ' + (data.error||'No se pudo eliminar en Sheets.'));
+      }
     }catch(e){ mostrarToast('⚠️ No se pudo conectar con Sheets, pero se limpió localmente.'); }
   }
   // Limpiar local igual que Nueva Ficha
@@ -2893,6 +2918,7 @@ async function confirmarEliminarCliente(){
   localStorage.removeItem('crm_pv_guardada');
   localStorage.removeItem('crm_pv_msg');
   localStorage.removeItem('crm_cliente_id');
+  localStorage.removeItem('crm_ultima_actividad');
   location.reload();
 }
 function cancelarEliminarCliente(){
@@ -3103,10 +3129,13 @@ async function sincronizarSheets(){
     });
     const data = await res.json();
     if(data.success){
-      if(data.clienteId && data.clienteId !== clienteId){
-        clienteId = data.clienteId;
-        localStorage.setItem('crm_cliente_id', clienteId);
-        actualizarClienteIdBadge();
+      if(data.clienteId){
+        const idServidor = formatearIdCliente(data.clienteId);
+        if(idServidor !== clienteId){
+          clienteId = idServidor;
+          localStorage.setItem('crm_cliente_id', clienteId);
+          actualizarClienteIdBadge();
+        }
       }
       est.textContent='✅ Sincronización completa — ' + new Date().toLocaleTimeString('es-MX');
       est.style.color='var(--green)';
