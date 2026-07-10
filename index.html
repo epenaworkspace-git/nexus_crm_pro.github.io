@@ -2699,15 +2699,16 @@ function confirmarRegistrarComoNuevo(){
 
 /* ─── CAMPOS QUE SE RESTAURAN AL CARGAR UNA FICHA EXISTENTE ─── */
 const CAMPOS_CLIENTE_FORM = ['nombre','telefono','correo','ciudad','vehiculo','ocupacion','precio','fuenteLead',
-  'pruebaManejo','tipoOperacion','estadoOperacion','enganche','plazo',
+  'pruebaManejo','tipoOperacion','estadoOperacion','enganche','engancheModo','plazo','seguro',
   'tasaInteres','asistieron','manejaron','comentariosPrueba','disponibilidad','tiempoLlegada',
-  'descuento','montoDescuento','otroRegaloDesc','anticipo','documentacion','estatusCredito','decision','urgencia'];
+  'descuento','montoDescuento','anticipo','documentacion','estatusCredito','decision','urgencia'];
 
 const MAPA_CAMPOS_BACKEND = {
   nombre:'Nombre', telefono:'Telefono', correo:'Correo', ciudad:'Ciudad', ocupacion:'Ocupacion',
   fuenteLead:'FuenteLead', vehiculo:'Vehiculo', precio:'Precio', pruebaManejo:'PruebaManejo',
   asistieron:'Asistieron', manejaron:'Manejaron', comentariosPrueba:'ComentariosPrueba',
-  tipoOperacion:'TipoOperacion', enganche:'Enganche', plazo:'Plazo', tasaInteres:'TasaInteres',
+  tipoOperacion:'TipoOperacion', enganche:'Enganche', engancheModo:'EngancheModo',
+  plazo:'Plazo', tasaInteres:'TasaInteres', seguro:'Seguro',
   estadoOperacion:'EstadoOperacion', disponibilidad:'Disponibilidad', tiempoLlegada:'TiempoLlegada',
   descuento:'Descuento', montoDescuento:'MontoDescuento', anticipo:'Anticipo',
   documentacion:'Documentacion', estatusCredito:'EstatusCredito', decision:'Decision', urgencia:'Urgencia'
@@ -3012,10 +3013,15 @@ async function sincronizarSheets(){
     vehiculo:        document.getElementById('vehiculo').value||'',
     precio:          document.getElementById('precio').value||'',
     pruebaManejo:    document.getElementById('pruebaManejo').value||'',
+    asistieron:      document.getElementById('asistieron').value||'',
+    manejaron:       document.getElementById('manejaron').value||'',
+    comentariosPrueba: document.getElementById('comentariosPrueba').value||'',
     tipoOperacion:   document.getElementById('tipoOperacion').value||'',
     enganche:        document.getElementById('enganche').value||'',
+    engancheModo:    document.getElementById('engancheModo').value||'',
     plazo:           document.getElementById('plazo').value||'',
     tasaInteres:     document.getElementById('tasaInteres').value||'',
+    seguro:          document.getElementById('seguro').value||'',
     mensualidad:     mensualidadEl ? mensualidadEl.textContent : '',
     estadoOperacion: document.getElementById('estadoOperacion').value||'',
     disponibilidad:  document.getElementById('disponibilidad').value||'',
@@ -3038,6 +3044,7 @@ async function sincronizarSheets(){
       comentarios: g.comentarios,
       pasoSiguiente: g.pasoSiguiente||'',
       mensajeIA:   g.mensajeIA||'',
+      accionEstado: g.accionEstado||'',
       accionFecha: g.accionFecha||'',
       accionHora:  g.accionHora||'',
       accionDuracionMin: g.accionDuracionMin||'',
